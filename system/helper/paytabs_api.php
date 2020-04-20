@@ -354,6 +354,7 @@ class PaytabsCatalogController
         $subtotal = $this->controller->cart->getSubTotal();
         $discount = $subtotal + $cost - $order_info['total'];
         $price1 = $subtotal + $cost;
+        $amount = $this->getPrice($price1, $order_info);
 
         $products_str = implode(' || ', array_map(function ($p) {
             return $p['name'];
@@ -368,10 +369,17 @@ class PaytabsCatalogController
         }, $products));
 
 
-        $amount = $this->getPrice($price1, $order_info);
         $cdetails = PaytabsHelper::getCountryDetails($order_info['payment_iso_code_2']);
         $phoneext = $cdetails['phone'];
+        $telephone = $order_info['telephone'];
+
+        // Remove country_code from phone_number if it is same as the user's Country code
+        $telephone = preg_replace("/^[\+|00]+{$phoneext}/", '', $telephone);
+
         $postalCode = empty($order_info['payment_postcode']) ? 11111 : $order_info['payment_postcode'];
+
+        $lang_code = $this->controller->language->get('code');
+        $lang = ($lang_code == 'ar') ? 'Arabic' : 'English';
 
         $params = [
             'payment_type'         => $this->controller->_code,
@@ -386,7 +394,7 @@ class PaytabsCatalogController
             'cc_first_name'        => $order_info['payment_firstname'],
             'cc_last_name'         => $order_info['payment_lastname'],
             'cc_phone_number'      => $phoneext,
-            'phone_number'         => $order_info['telephone'],
+            'phone_number'         => $telephone,
             'country'              => $order_info['payment_iso_code_3'],
             'state'                => $order_info['payment_zone'] == '' ? $order_info['payment_city'] : $order_info['payment_zone'],
             'city'                 => $order_info['payment_city'],
@@ -407,7 +415,7 @@ class PaytabsCatalogController
             'cms_with_version'     => 'OpenCart ' . VERSION,
             'site_url'             => $siteUrl,
             'return_url'           => $return_url,
-            'msg_lang'             => 'English',
+            'msg_lang'             => $lang,
         ];
 
         return $params;
