@@ -1,54 +1,20 @@
 <?php
 
-
+define('PAYTABS_PAYPAGE_VERSION', '1.0.2');
 class PaytabsController
 {
     private $controller;
 
-    /**
-     * Main keys foreach payment method
-     * key: used in HTML forms
-     * configKey: used for Database store, each payment method has different configKey value
-     * required: used in validate() function when saving the payment settings form
-     */
-    private $keys = [
-        'status' => [
-            'key' => 'payment_paytabs_status',
-            'configKey' => 'payment_paytabs_{PAYMENTMETHOD}_status',
-            'required' => false,
-        ],
-        'merchant_email' => [
-            'key' => 'payment_paytabs_merchant_email',
-            'configKey' => 'payment_paytabs_{PAYMENTMETHOD}_merchant_email',
-            'required' => true,
-        ],
-        'merchant_secret_key' => [
-            'key' => 'payment_paytabs_merchant_secret_key',
-            'configKey' => 'payment_paytabs_{PAYMENTMETHOD}_merchant_secret_key',
-            'required' => true,
-        ],
-        'total' => [
-            'key' => 'payment_paytabs_total',
-            'configKey' => 'payment_paytabs_{PAYMENTMETHOD}_total',
-            'required' => false,
-        ],
-        'order_status_id' => [
-            'key' => 'payment_paytabs_order_status_id',
-            'configKey' => 'payment_paytabs_{PAYMENTMETHOD}_order_status_id',
-            'required' => false,
-        ],
-        'geo_zone_id' => [
-            'key' => 'payment_paytabs_geo_zone_id',
-            'configKey' => 'payment_paytabs_{PAYMENTMETHOD}_geo_zone_id',
-            'required' => false,
-        ],
-        'sort_order' => [
-            'key' => 'payment_paytabs_sort_order',
-            'configKey' => 'payment_paytabs_{PAYMENTMETHOD}_sort_order',
-            'required' => false,
-        ],
-    ];
+    private $keys = PaytabsHelper::KEYS;
 
+    private $userToken_str = '';
+
+    private $urlExtensions = 'marketplace/extension';
+    // private $urlExtensions = 'extension/extension'; // OpenCart 2.3
+
+    private $settingsKey = '';
+
+    //
 
     function __construct($controller)
     {
@@ -59,14 +25,22 @@ class PaytabsController
         $this->controller->load->language("extension/payment/paytabs_strings");
         $this->controller->load->model('setting/setting');
 
-        $this->controller->userToken = $this->controller->session->data['user_token'];
+        $token_str = 'user_token';
+        // $token_str = 'token'; // OpenCart 2.3
+        $this->controller->userToken = $this->controller->session->data[$token_str];
 
         $this->controller->document->setTitle($this->controller->language->get("{$this->controller->_code}_heading_title"));
 
 
         foreach ($this->keys as $key => &$value) {
-            $value['configKey'] = str_replace('_{PAYMENTMETHOD}_', "_{$this->controller->_code}_", $value['configKey']);
+            $value['configKey'] = PaytabsHelper::KEY_PREFIX . str_replace('_{PAYMENTMETHOD}_', "_{$this->controller->_code}_", $value['configKey']);
         }
+
+        $this->userToken_str = "user_token={$this->controller->userToken}";
+        // $this->userToken_str = "token={$this->controller->userToken}"; // OpenCart 2.3
+
+        $this->settingsKey = "payment_paytabs_{$this->controller->_code}";
+        // $this->settingsKey = "paytabs_{$this->controller->_code}"; // OpenCart 2.3
     }
 
 
@@ -109,23 +83,23 @@ class PaytabsController
         $data['breadcrumbs'] = [
             [
                 'text' => $this->controller->language->get('text_home'),
-                'href' => $this->controller->url->link('common/dashboard', "user_token={$this->controller->userToken}", true)
+                'href' => $this->controller->url->link('common/dashboard', "{$this->userToken_str}", true)
             ],
             [
                 'text' => $this->controller->language->get('text_extension'),
-                'href' => $this->controller->url->link('marketplace/extension', "user_token={$this->controller->userToken}&type=payment", true)
+                'href' => $this->controller->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true)
             ],
             [
                 'text' => $this->controller->language->get("{$this->controller->_code}_heading_title"),
-                'href' => $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}", "user_token={$this->controller->userToken}", true)
+                'href' => $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}", "{$this->userToken_str}", true)
             ]
         ];
 
 
         /** Actions */
 
-        $data['action'] = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}", "user_token={$this->controller->userToken}", true);
-        $data['cancel'] = $this->controller->url->link('marketplace/extension', "user_token={$this->controller->userToken}&type=payment", true);
+        $data['action'] = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}", "{$this->userToken_str}", true);
+        $data['cancel'] = $this->controller->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true);
 
 
         /** Fetch page parts */
@@ -153,11 +127,11 @@ class PaytabsController
             $values[$configKey] = $this->controller->request->post[$postKey];
         }
 
-        $this->controller->model_setting_setting->editSetting("payment_paytabs_{$this->controller->_code}", $values);
+        $this->controller->model_setting_setting->editSetting($this->settingsKey, $values);
 
         $this->controller->session->data['success'] = $this->controller->language->get('text_success');
 
-        $this->controller->response->redirect($this->controller->url->link('marketplace/extension', "user_token={$this->controller->userToken}&type=payment", true));
+        $this->controller->response->redirect($this->controller->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true));
     }
 
 
@@ -187,10 +161,10 @@ class PaytabsController
         $this->controller->load->model('setting/setting');
 
         $defaults = [
-            "payment_paytabs_{$this->controller->_code}_sort_order" => 80
+            PaytabsHelper::_key('sort_order', $this->controller->_code) => 80
         ];
 
-        $this->controller->model_setting_setting->editSetting("payment_paytabs_{$this->controller->_code}", $defaults);
+        $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
     }
 
     //
@@ -241,7 +215,7 @@ class PaytabsCatalogController
             $data['payment_url'] = $paypage->payment_url;
         } else {
             $data['paypage'] = false;
-            $data['paypage_msg'] = $paypage->result;
+            $data['paypage_msg'] = PaytabsHelper::getNonEmpty($paypage->details, $paypage->result);
         }
 
         return $this->controller->load->view("extension/payment/paytabs_view", $data);
@@ -268,7 +242,7 @@ class PaytabsCatalogController
             $this->controller->log->write("PayTabs {$this->controller->_code} checkout successed");
 
             $order_id = $result->reference_no;
-            $successStatus = $this->controller->config->get("payment_paytabs_{$this->controller->_code}_order_status_id");
+            $successStatus = $this->controller->config->get(PaytabsHelper::_key('order_status_id', $this->controller->_code));
 
             $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $result->result);
             $this->controller->response->redirect($this->controller->url->link('checkout/success'));
@@ -348,25 +322,25 @@ class PaytabsCatalogController
         $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback");
 
 
-        $products = $this->controller->cart->getProducts();
-
         $cost = $this->controller->session->data['shipping_method']['cost'];
         $subtotal = $this->controller->cart->getSubTotal();
         $discount = $subtotal + $cost - $order_info['total'];
         $price1 = $subtotal + $cost;
         $amount = $this->getPrice($price1, $order_info);
 
-        $products_str = implode(' || ', array_map(function ($p) {
-            return $p['name'];
-        }, $products));
+        //
 
-        $quantity = implode(' || ', array_map(function ($p) {
-            return $p['quantity'];
-        }, $products));
+        $products = $this->controller->cart->getProducts();
 
-        $unit_price = implode(' || ', array_map(function ($p) use ($order_info) {
-            return $this->getPrice($p['price'], $order_info);
-        }, $products));
+        $items_arr = array_map(function ($p) use ($order_info) {
+            return [
+                'name' => $p['name'],
+                'quantity' => $p['quantity'],
+                'price' => round($this->getPrice($p['price'], $order_info), 2)
+            ];
+        }, $products);
+
+        $products_arr = PaytabsHelper::prepare_products($items_arr);
 
 
         $cdetails = PaytabsHelper::getCountryDetails($order_info['payment_iso_code_2']);
@@ -376,49 +350,62 @@ class PaytabsCatalogController
         // Remove country_code from phone_number if it is same as the user's Country code
         $telephone = preg_replace("/^[\+|00]+{$phoneext}/", '', $telephone);
 
-        $postalCode = empty($order_info['payment_postcode']) ? 11111 : $order_info['payment_postcode'];
+        $postalCode = PaytabsHelper::getNonEmpty($order_info['payment_postcode'], 11111);
+        $postalCodeShipping = PaytabsHelper::getNonEmpty($order_info['shipping_postcode'], $postalCode);
+
+        $address_billing = trim($order_info['payment_address_1'] . ' ' . $order_info['payment_address_2']);
+        $address_shipping = PaytabsHelper::getNonEmpty(trim($order_info['shipping_address_1'] . ' ' . $order_info['shipping_address_2']), $address_billing);
+
+        $zone_billing = PaytabsHelper::getNonEmpty($order_info['payment_zone'], $order_info['payment_city']);
+        $zone_shipping = PaytabsHelper::getNonEmpty($order_info['shipping_zone'], $order_info['shipping_city'], $zone_billing);
 
         $lang_code = $this->controller->language->get('code');
         $lang = ($lang_code == 'ar') ? 'Arabic' : 'English';
 
         $params = [
             'payment_type'         => $this->controller->_code,
+
+            'title'                => $order_info['payment_firstname'] . ' ' . $order_info['payment_lastname'],
+
+            'currency'             => $order_info['currency_code'],
             'amount'               => $amount,
-            'quantity'             => $quantity,
-            'currency'             => $order_info['currency_code'], //$this->currency->getCode(),
-            "unit_price"           => $unit_price,
             'other_charges'        => $this->getPrice($cost, $order_info),
             'discount'             => $this->getPrice($discount, $order_info),
-            "products_per_title"   => $products_str,
+
+            'reference_no'         => $orderId,
 
             'cc_first_name'        => $order_info['payment_firstname'],
             'cc_last_name'         => $order_info['payment_lastname'],
             'cc_phone_number'      => $phoneext,
             'phone_number'         => $telephone,
-            'country'              => $order_info['payment_iso_code_3'],
-            'state'                => $order_info['payment_zone'] == '' ? $order_info['payment_city'] : $order_info['payment_zone'],
-            'city'                 => $order_info['payment_city'],
             'email'                => $order_info['email'],
+
+            'billing_address'      => $address_billing,
+            'state'                => $zone_billing,
+            'city'                 => $order_info['payment_city'],
             'postal_code'          => $postalCode,
-            'billing_address'      => $order_info['payment_address_1'] . ' ' . $order_info['payment_address_2'],
+            'country'              => $order_info['payment_iso_code_3'],
 
-            'shipping_firstname'   => $order_info['shipping_firstname'],
-            'shipping_lastname'    => $order_info['shipping_lastname'],
-            'country_shipping'     => $order_info['shipping_iso_code_3'],
-            'state_shipping'       => $order_info['shipping_zone'] == '' ? $order_info['shipping_city'] : $order_info['shipping_zone'],
-            'city_shipping'        => $order_info['shipping_city'],
-            'postal_code_shipping' => $postalCode,
-            'address_shipping'     => $order_info['shipping_address_1'] . ' ' . $order_info['shipping_address_2'],
+            'shipping_firstname'   => PaytabsHelper::getNonEmpty($order_info['shipping_firstname'], $order_info['payment_firstname']),
+            'shipping_lastname'    => PaytabsHelper::getNonEmpty($order_info['shipping_lastname'], $order_info['payment_lastname']),
+            'address_shipping'     => $address_shipping,
+            'city_shipping'        => PaytabsHelper::getNonEmpty($order_info['shipping_city'], $order_info['payment_city']),
+            'state_shipping'       => $zone_shipping,
+            'postal_code_shipping' => $postalCodeShipping,
+            'country_shipping'     => PaytabsHelper::getNonEmpty($order_info['shipping_iso_code_3'], $order_info['payment_iso_code_3']),
 
-            'title'                => $order_info['payment_firstname'] . ' ' . $order_info['payment_lastname'],
-            'reference_no'         => $orderId,
-            'cms_with_version'     => 'OpenCart ' . VERSION,
             'site_url'             => $siteUrl,
             'return_url'           => $return_url,
+
             'msg_lang'             => $lang,
+            'cms_with_version'     => 'OpenCart ' . VERSION,
+
+            'ip_customer'          => '',
         ];
 
-        return $params;
+        $post_arr = array_merge($params, $products_arr);
+
+        return $post_arr;
     }
 }
 
@@ -441,7 +428,7 @@ class PaytabsCatalogModel
         /** Read params */
 
         $currencyCode = $this->controller->session->data['currency'];
-        $ptTotal = (float) $this->controller->config->get("payment_paytabs_{$this->controller->_code}_total");
+        $ptTotal = (float) $this->controller->config->get(PaytabsHelper::_key('total', $this->controller->_code));
 
         $total1 = $this->controller->currency->format($total, $currencyCode, null, false);
 
@@ -467,7 +454,7 @@ class PaytabsCatalogModel
                 'code'       => "paytabs_{$this->controller->_code}",
                 'title'      => $this->controller->language->get("{$this->controller->_code}_text_title"),
                 'terms'      => '',
-                'sort_order' => $this->controller->config->get("payment_paytabs_{$this->controller->_code}_sort_order")
+                'sort_order' => $this->controller->config->get(PaytabsHelper::_key('sort_order', $this->controller->_code))
             );
         }
 
@@ -477,7 +464,7 @@ class PaytabsCatalogModel
 
     private function isAvailableForAddress($address)
     {
-        $geoZoneId = (int) $this->controller->config->get("payment_paytabs_{$this->controller->_code}_geo_zone_id");
+        $geoZoneId = (int) $this->controller->config->get(PaytabsHelper::_key('geo_zone_id', $this->controller->_code));
         $countryId = (int) $address['country_id'];
         $zoneId = (int) $address['zone_id'];
 
@@ -504,6 +491,58 @@ class PaytabsHelper
     private $config;
     private $paymentMethod;
 
+    /**
+     * Main keys foreach payment method
+     * key: used in HTML forms
+     * configKey: used for Database store, each payment method has different configKey value
+     * required: used in validate() function when saving the payment settings form
+     */
+    const KEYS = [
+        'status' => [
+            'key' => 'payment_paytabs_status',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_status',
+            'required' => false,
+        ],
+        'merchant_email' => [
+            'key' => 'payment_paytabs_merchant_email',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_merchant_email',
+            'required' => true,
+        ],
+        'merchant_secret_key' => [
+            'key' => 'payment_paytabs_merchant_secret_key',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_merchant_secret_key',
+            'required' => true,
+        ],
+        'total' => [
+            'key' => 'payment_paytabs_total',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_total',
+            'required' => false,
+        ],
+        'order_status_id' => [
+            'key' => 'payment_paytabs_order_status_id',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_order_status_id',
+            'required' => false,
+        ],
+        'geo_zone_id' => [
+            'key' => 'payment_paytabs_geo_zone_id',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_geo_zone_id',
+            'required' => false,
+        ],
+        'sort_order' => [
+            'key' => 'payment_paytabs_sort_order',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_sort_order',
+            'required' => false,
+        ],
+    ];
+    const KEY_PREFIX = 'payment_';
+    // const KEY_PREFIX = ''; // OpenCart 2.3
+
+    static function _key($key, $payment_code)
+    {
+        return self::KEY_PREFIX . str_replace('_{PAYMENTMETHOD}_', "_{$payment_code}_", self::KEYS[$key]['configKey']);
+    }
+
+
     public function __construct($config, $paymentMethod)
     {
         $this->config = $config;
@@ -512,8 +551,8 @@ class PaytabsHelper
 
     public function pt()
     {
-        $Email = $this->config->get("payment_paytabs_{$this->paymentMethod}_merchant_email");
-        $secretKey = $this->config->get("payment_paytabs_{$this->paymentMethod}_merchant_secret_key");
+        $Email = $this->config->get(PaytabsHelper::_key('merchant_email', $this->paymentMethod));
+        $secretKey = $this->config->get(PaytabsHelper::_key('merchant_secret_key', $this->paymentMethod));
 
         $pt = new PaytabsApi($Email, $secretKey);
 
@@ -719,6 +758,7 @@ class PaytabsHelper
             'PM' => array('name' => 'SAINT PIERRE AND MIQUELON', 'code' => '508'),
             'PN' => array('name' => 'PITCAIRN', 'code' => '870'),
             'PR' => array('name' => 'PUERTO RICO', 'code' => '1'),
+            'PS' => array('name' => 'PALESTINE', 'code' => '970'),
             'PT' => array('name' => 'PORTUGAL', 'code' => '351'),
             'PW' => array('name' => 'PALAU', 'code' => '680'),
             'PY' => array('name' => 'PARAGUAY', 'code' => '595'),
@@ -1061,6 +1101,44 @@ class PaytabsHelper
 
         return $iso_3;
     }
+
+
+    public static function getNonEmpty(...$vars)
+    {
+        foreach ($vars as $var) {
+            if (!empty($var)) return $var;
+        }
+        return false;
+    }
+
+    /**
+     * @param $items: array of the products, each product has the format ['name' => xx, 'quantity' => x, 'price' =>x]
+     * @return array to pass to paypage API in the format ['products_per_title' => 'xx || xx ', 'quantity' => 'xx || xx', 'unit_price' => 'xx || xx']
+     */
+    public static function prepare_products(array $items)
+    {
+        $glue = ' || ';
+
+        $products_str = implode($glue, array_map(function ($p) {
+            $name = str_replace('||', '/', $p['name']);
+            return $name;
+        }, $items));
+
+        $quantity = implode($glue, array_map(function ($p) {
+            return $p['quantity'];
+        }, $items));
+
+        $unit_price = implode($glue, array_map(function ($p) {
+            return $p['price'];
+        }, $items));
+
+
+        return [
+            'products_per_title' => $products_str,
+            'quantity'           => $quantity,
+            'unit_price'         => $unit_price,
+        ];
+    }
 }
 
 
@@ -1105,8 +1183,12 @@ class PaytabsApi
     {
         $values['merchant_email'] = $this->merchant_email;
         $values['secret_key'] = $this->secret_key;
-        $values['ip_customer'] = $_SERVER['REMOTE_ADDR'];
-        $values['ip_merchant'] = $_SERVER['SERVER_ADDR'];
+
+        $serverIP = getHostByName(getHostName());
+        $values['ip_merchant'] = PaytabsHelper::getNonEmpty($serverIP, $_SERVER['SERVER_ADDR'], 'NA');
+
+        $values['ip_customer'] = PaytabsHelper::getNonEmpty($values['ip_customer'], $_SERVER['REMOTE_ADDR'], 'NA');
+
         return json_decode($this->runPost(self::PAYPAGE_URL, $values));
     }
 
@@ -1122,7 +1204,7 @@ class PaytabsApi
     {
         $fields_string = "";
         foreach ($fields as $key => $value) {
-            $fields_string .= $key . '=' . $value . '&';
+            $fields_string .= $key . '=' . urlencode($value) . '&';
         }
         $fields_string = rtrim($fields_string, '&');
         $ch = curl_init();
