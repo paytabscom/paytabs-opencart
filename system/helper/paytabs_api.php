@@ -3,7 +3,7 @@
 define('PAYTABS_PAYPAGE_VERSION', '1.1.1');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
-require_once DIR_SYSTEM . '/helper/paytabs_core.php';
+require_once DIR_SYSTEM . '/helper/paytabs_core2.php';
 
 class PaytabsController
 {
@@ -61,8 +61,8 @@ class PaytabsController
 
         PaytabsController::paytabs_errorList($this->controller->error, [
             'warning',
-            'merchant_email',
-            'merchant_secret_key'
+            'profile_id',
+            'server_key'
         ], $data);
 
 
@@ -216,10 +216,10 @@ class PaytabsCatalogController
 
         if ($paypage->success) {
             $data['paypage'] = true;
-            $data['payment_url'] = $paypage->payment_url;
+            $data['payment_url'] = $paypage->redirect_url;
         } else {
             $data['paypage'] = false;
-            $data['paypage_msg'] = $paypage->result;
+            $data['paypage_msg'] = $paypage->message;
 
             $_logResult = (json_encode($paypage));
             $_logData = json_encode($values);
@@ -233,8 +233,8 @@ class PaytabsCatalogController
     public function callback()
     {
         $transactionId =
-            isset($this->controller->request->post['payment_reference'])
-            ? $this->controller->request->post['payment_reference']
+            isset($this->controller->request->post['tranRef'])
+            ? $this->controller->request->post['tranRef']
             : false;
         if (!$transactionId) {
             return $this->callbackFailure('Transaction ID is missing');
@@ -249,10 +249,10 @@ class PaytabsCatalogController
 
             PaytabsHelper::log("PayTabs {$this->controller->_code} checkout successed");
 
-            $order_id = $result->reference_no;
+            $order_id = $result->cart_id;
             $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
 
-            $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $result->result);
+            $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $result->message);
             $this->controller->response->redirect($this->controller->url->link('checkout/success'));
         } else {
             $_logVerify = (json_encode($result));
@@ -261,7 +261,7 @@ class PaytabsCatalogController
             //Redirect to failed method
             // $this->controller->response->redirect($this->controller->url->link('checkout/failure'));
 
-            $this->callbackFailure($result->result);
+            $this->callbackFailure($result->message);
         }
     }
 
@@ -328,13 +328,13 @@ class PaytabsCatalogController
         $orderId = $this->controller->session->data['order_id'];
         $order_info = $this->controller->model_checkout_order->getOrder($orderId);
 
-        $siteUrl = $this->controller->config->get('config_url');
+        // $siteUrl = $this->controller->config->get('config_url');
         $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback");
 
 
         $cost = $this->controller->session->data['shipping_method']['cost'];
         $subtotal = $this->controller->cart->getSubTotal();
-        $discount = $subtotal + $cost - $order_info['total'];
+        // $discount = $subtotal + $cost - $order_info['total'];
         $price1 = $subtotal + $cost;
         $amount = $this->getPrice($price1, $order_info);
 
@@ -351,66 +351,43 @@ class PaytabsCatalogController
         }, $products);
 
 
-        $cdetails = PaytabsHelper::getCountryDetails($order_info['payment_iso_code_2']);
-        $phoneext = $cdetails['phone'];
-        $telephone = $order_info['telephone'];
+        // $cdetails = PaytabsHelper::getCountryDetails($order_info['payment_iso_code_2']);
+        // $phoneext = $cdetails['phone'];
+        // $telephone = $order_info['telephone'];
 
         $address_billing = trim($order_info['payment_address_1'] . ' ' . $order_info['payment_address_2']);
-        $address_shipping = trim($order_info['shipping_address_1'] . ' ' . $order_info['shipping_address_2']);
+        // $address_shipping = trim($order_info['shipping_address_1'] . ' ' . $order_info['shipping_address_2']);
 
         $zone_billing = PaytabsHelper::getNonEmpty($order_info['payment_zone'], $order_info['payment_city']);
-        $zone_shipping = PaytabsHelper::getNonEmpty($order_info['shipping_zone'], $order_info['shipping_city'], $zone_billing);
+        // $zone_shipping = PaytabsHelper::getNonEmpty($order_info['shipping_zone'], $order_info['shipping_city'], $zone_billing);
 
-        $lang_code = $this->controller->language->get('code');
-        $lang = ($lang_code == 'ar') ? 'Arabic' : 'English';
+        // $lang_code = $this->controller->language->get('code');
+        // $lang = ($lang_code == 'ar') ? 'Arabic' : 'English';
 
 
-        $holder = new PaytabsHolder();
+        $holder = new PaytabsHolder2();
         $holder
             ->set01PaymentCode($this->controller->_code)
-            ->set02ReferenceNum($orderId)
-            ->set03InvoiceInfo(
-                $order_info['payment_firstname'] . ' ' . $order_info['payment_lastname'],
-                $lang
-            )
-            ->set04Payment(
+            ->set02Transaction('sale', 'ecom')
+            ->set03Cart(
+                $orderId,
                 $order_info['currency_code'],
                 $amount,
-                $this->getPrice($cost, $order_info),
-                $this->getPrice($discount, $order_info)
+                json_encode($items_arr)
             )
-            ->set05Products($items_arr)
-            ->set06CustomerInfo(
-                $order_info['payment_firstname'],
-                $order_info['payment_lastname'],
-                $phoneext,
-                $telephone,
-                $order_info['email']
-            )
-            ->set07Billing(
+            ->set04CustomerDetails(
+                $order_info['payment_firstname'] . ' ' . $order_info['payment_lastname'],
+                $order_info['email'],
                 $address_billing,
-                $zone_billing,
                 $order_info['payment_city'],
-                $order_info['payment_postcode'],
-                $order_info['payment_iso_code_3']
+                $zone_billing,
+                $order_info['payment_iso_code_3'],
+                null
             )
-            ->set08Shipping(
-                $order_info['shipping_firstname'],
-                $order_info['shipping_lastname'],
-                $address_shipping,
-                $zone_shipping,
-                $order_info['shipping_city'],
-                $order_info['shipping_postcode'],
-                $order_info['shipping_iso_code_3']
-            )
-            ->set09URLs(
-                $siteUrl,
-                $return_url
-            )
-            ->set10CMSVersion('OpenCart ' . VERSION)
-            ->set11IPCustomer('');
+            ->set05URLs($return_url, null)
+            ->set06HideShipping(false);
 
-        $post_arr = $holder->pt_build(true);
+        $post_arr = $holder->pt_build();
 
         return $post_arr;
     }
@@ -510,14 +487,14 @@ class PaytabsAdapter
             'configKey' => 'paytabs_{PAYMENTMETHOD}_status',
             'required' => false,
         ],
-        'merchant_email' => [
-            'key' => 'payment_paytabs_merchant_email',
-            'configKey' => 'paytabs_{PAYMENTMETHOD}_merchant_email',
+        'profile_id' => [
+            'key' => 'payment_paytabs_profile_id',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_profile_id',
             'required' => true,
         ],
-        'merchant_secret_key' => [
-            'key' => 'payment_paytabs_merchant_secret_key',
-            'configKey' => 'paytabs_{PAYMENTMETHOD}_merchant_secret_key',
+        'server_key' => [
+            'key' => 'payment_paytabs_server_key',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_server_key',
             'required' => true,
         ],
         'total' => [
@@ -558,10 +535,10 @@ class PaytabsAdapter
 
     public function pt()
     {
-        $merchant_email = $this->config->get(PaytabsAdapter::_key('merchant_email', $this->paymentMethod));
-        $secretKey = $this->config->get(PaytabsAdapter::_key('merchant_secret_key', $this->paymentMethod));
+        $profile_id = $this->config->get(PaytabsAdapter::_key('profile_id', $this->paymentMethod));
+        $serverKey = $this->config->get(PaytabsAdapter::_key('server_key', $this->paymentMethod));
 
-        $pt = PaytabsApi::getInstance($merchant_email, $secretKey);
+        $pt = PaytabsApi::getInstance($profile_id, $serverKey);
 
         return $pt;
     }

@@ -19,9 +19,9 @@ $_['text_live']                     = 'Live';
 $_['text_sandbox']                  = 'Sandbox';
 
 // Entry
-$_['entry_merchant_email']          = 'Merchant Email';
+$_['entry_profile_id']              = 'Profile ID';
 $_['entry_merchant_id']             = 'Merchant ID';
-$_['entry_secret_key']              = 'Secret Key';
+$_['entry_server_key']              = 'Server Key';
 $_['entry_secure_sign']             = 'Secure Sign';
 $_['entry_total']                   = 'Total';
 $_['entry_order_status']            = 'Completed Status';
@@ -36,6 +36,6 @@ $_['help_paytabs_account_setup']    = '<a target="_blank" href="http://www.payta
 // Error
 $_['error_permission']              = 'Warning: You do not have permission to modify payment PayTabs!';
 $_['error_merchant_id']             = 'Merchant ID required!';
-$_['error_merchant_secret_key']     = 'Merchant Secret Key required!';
+$_['error_server_key']              = 'Merchant Server Key required!';
 $_['error_secure_sign']             = 'Secure sign required!';
-$_['error_merchant_email']          = 'Merchant email required!';
+$_['error_profile_id']              = 'Profile ID required!';
