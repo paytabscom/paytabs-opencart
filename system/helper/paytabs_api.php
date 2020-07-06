@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '1.1.0');
+define('PAYTABS_PAYPAGE_VERSION', '1.1.1');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 require_once DIR_SYSTEM . '/helper/paytabs_core.php';
@@ -243,7 +243,7 @@ class PaytabsCatalogController
         $this->controller->load->model("extension/payment/paytabs_{$this->controller->_code}");
         $result = $this->ptApi->verify_payment($transactionId);
 
-        if (in_array($result->response_code, [100, 481, 482])) { //check successed
+        if ($result->success) {
             //TODO: Check here if the result is tempered
             $this->controller->load->model('checkout/order');
 
@@ -369,7 +369,10 @@ class PaytabsCatalogController
         $holder
             ->set01PaymentCode($this->controller->_code)
             ->set02ReferenceNum($orderId)
-            ->set03InvoiceInfo($order_info['payment_firstname'] . ' ' . $order_info['payment_lastname'], $lang)
+            ->set03InvoiceInfo(
+                $order_info['payment_firstname'] . ' ' . $order_info['payment_lastname'],
+                $lang
+            )
             ->set04Payment(
                 $order_info['currency_code'],
                 $amount,
