@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '1.1.1');
+define('PAYTABS_PAYPAGE_VERSION', '2.1.1.2');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 require_once DIR_SYSTEM . '/helper/paytabs_core2.php';
@@ -353,16 +353,15 @@ class PaytabsCatalogController
 
         // $cdetails = PaytabsHelper::getCountryDetails($order_info['payment_iso_code_2']);
         // $phoneext = $cdetails['phone'];
-        // $telephone = $order_info['telephone'];
+        $telephone = $order_info['telephone'];
 
         $address_billing = trim($order_info['payment_address_1'] . ' ' . $order_info['payment_address_2']);
-        // $address_shipping = trim($order_info['shipping_address_1'] . ' ' . $order_info['shipping_address_2']);
+        $address_shipping = trim($order_info['shipping_address_1'] . ' ' . $order_info['shipping_address_2']);
 
         $zone_billing = PaytabsHelper::getNonEmpty($order_info['payment_zone'], $order_info['payment_city']);
-        // $zone_shipping = PaytabsHelper::getNonEmpty($order_info['shipping_zone'], $order_info['shipping_city'], $zone_billing);
+        $zone_shipping = PaytabsHelper::getNonEmpty($order_info['shipping_zone'], $order_info['shipping_city'], $zone_billing);
 
-        // $lang_code = $this->controller->language->get('code');
-        // $lang = ($lang_code == 'ar') ? 'Arabic' : 'English';
+        $lang_code = $this->controller->language->get('code');
 
 
         $holder = new PaytabsHolder2();
@@ -378,14 +377,28 @@ class PaytabsCatalogController
             ->set04CustomerDetails(
                 $order_info['payment_firstname'] . ' ' . $order_info['payment_lastname'],
                 $order_info['email'],
+                $telephone,
                 $address_billing,
                 $order_info['payment_city'],
                 $zone_billing,
                 $order_info['payment_iso_code_3'],
+                $order_info['payment_postcode'],
                 null
             )
-            ->set05URLs($return_url, null)
-            ->set06HideShipping(false);
+            ->set05ShippingDetails(
+                $order_info['shipping_firstname'] . ' ' . $order_info['shipping_lastname'],
+                $order_info['email'],
+                null,
+                $address_shipping,
+                $order_info['shipping_city'],
+                $zone_shipping,
+                $order_info['shipping_iso_code_3'],
+                $order_info['shipping_postcode'],
+                null
+            )
+            ->set06HideShipping(false)
+            ->set07URLs($return_url, null)
+            ->set08Lang($lang_code);
 
         $post_arr = $holder->pt_build();
 
