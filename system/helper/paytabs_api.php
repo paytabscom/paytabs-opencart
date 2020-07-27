@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '1.1.1');
+define('PAYTABS_PAYPAGE_VERSION', '1.2.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 require_once DIR_SYSTEM . '/helper/paytabs_core.php';
@@ -340,6 +340,12 @@ class PaytabsCatalogController
 
         //
 
+        $hide_personal_info = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_personal_info', $this->controller->_code));
+        $hide_billing = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_billing', $this->controller->_code));
+        $hide_view_invoice = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_view_invoice', $this->controller->_code));
+
+        //
+
         $products = $this->controller->cart->getProducts();
 
         $items_arr = array_map(function ($p) use ($order_info) {
@@ -403,12 +409,17 @@ class PaytabsCatalogController
                 $order_info['shipping_postcode'],
                 $order_info['shipping_iso_code_3']
             )
-            ->set09URLs(
+            ->set09HideOptions(
+                $hide_personal_info,
+                $hide_billing,
+                $hide_view_invoice
+            )
+            ->set10URLs(
                 $siteUrl,
                 $return_url
             )
-            ->set10CMSVersion('OpenCart ' . VERSION)
-            ->set11IPCustomer('');
+            ->set11CMSVersion('OpenCart ' . VERSION)
+            ->set12IPCustomer('');
 
         $post_arr = $holder->pt_build(true);
 
@@ -528,6 +539,21 @@ class PaytabsAdapter
         'order_status_id' => [
             'key' => 'payment_paytabs_order_status_id',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_order_status_id',
+            'required' => false,
+        ],
+        'hide_personal_info' => [
+            'key' => 'payment_paytabs_hide_personal_info',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_hide_personal_info',
+            'required' => false,
+        ],
+        'hide_billing' => [
+            'key' => 'payment_paytabs_hide_billing',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_hide_billing',
+            'required' => false,
+        ],
+        'hide_view_invoice' => [
+            'key' => 'payment_paytabs_hide_view_invoice',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_hide_view_invoice',
             'required' => false,
         ],
         'geo_zone_id' => [

@@ -28,6 +28,9 @@ $_['entry_order_status']            = 'Completed Status';
 $_['entry_geo_zone']                = 'Geo Zone';
 $_['entry_status']                  = 'Status';
 $_['entry_sort_order']              = 'Sort Order';
+$_['entry_hide_personal_info']      = 'Hide Personal info';
+$_['entry_hide_billing']            = 'Hide Billing';
+$_['entry_hide_view_invoice']       = 'Hide View invoice';
 
 // Help
 $_['help_total']                    = 'The checkout total the order must reach before this payment method becomes active';

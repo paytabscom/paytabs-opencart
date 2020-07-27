@@ -2,7 +2,7 @@
 
 /**
  * PayTabs PHP SDK
- * Version: 1.0.0
+ * Version: 1.1.1
  */
 
 
@@ -732,6 +732,13 @@ class PaytabsHolder
     private $shipping;
 
     /**
+     * hide_personal_info
+     * hide_billing
+     * hide_view_invoice
+     */
+    private $hide_options;
+
+    /**
      * site_url
      * return_url
      */
@@ -826,6 +833,10 @@ class PaytabsHolder
             $this->cms_version,
             $this->ip_customer
         );
+
+        if ($this->hide_options) {
+            $all = array_merge($all, $this->hide_options);
+        }
 
         if ($this->preauth) {
             $all = array_merge($all, $this->preauth);
@@ -983,7 +994,21 @@ class PaytabsHolder
         return $this;
     }
 
-    public function set09URLs($site_url, $return_url)
+    /**
+     * Optional method
+     */
+    public function set09HideOptions($hide_personal_info, $hide_billing, $hide_view_invoice)
+    {
+        $this->hide_options = [
+            'hide_personal_info' => $hide_personal_info ? 'true' : '',
+            'hide_billing' => $hide_billing ? 'true' : '',
+            'hide_view_invoice' => $hide_view_invoice ? 'true' : '',
+        ];
+
+        return $this;
+    }
+
+    public function set10URLs($site_url, $return_url)
     {
         $this->urls = [
             'site_url'   => $site_url,
@@ -993,14 +1018,14 @@ class PaytabsHolder
         return $this;
     }
 
-    public function set10CMSVersion($cms_version)
+    public function set11CMSVersion($cms_version)
     {
         $this->cms_version = ['cms_with_version' => $cms_version];
 
         return $this;
     }
 
-    public function set11IPCustomer($ip_customer)
+    public function set12IPCustomer($ip_customer)
     {
         $this->ip_customer = ['ip_customer' => $ip_customer];
 
@@ -1011,7 +1036,7 @@ class PaytabsHolder
      * Optional method
      * https://dev.paytabs.com/docs/paypage.html#pre-authorization-using-api
      */
-    public function set12PreAuth($isPreAuth = false)
+    public function set13PreAuth($isPreAuth = false)
     {
         $this->preauth = [
             'is_preauth' => $isPreAuth ? 1 : 0,
@@ -1025,7 +1050,7 @@ class PaytabsHolder
      * Call it only in case you want to use Tokenization feature
      * https://dev.paytabs.com/docs/tokenization/
      */
-    public function set13Tokenization($isTokenization = false, $isExistingCustomer = false)
+    public function set14Tokenization($isTokenization = false, $isExistingCustomer = false)
     {
         $this->tokenization = [
             'is_tokenization' => $isTokenization ? 'TRUE' : 'FALSE',
@@ -1251,6 +1276,63 @@ class PaytabsTokenizeHolder
 
 
 /**
+ * Holder class that holds PayTabs's request's values
+ */
+class PaytabsRefundHolder
+{
+
+    /**
+     * refund_amount
+     * refund_reason
+     */
+    private $refundInfo;
+
+    /**
+     * transaction_id
+     * order_id *
+     */
+    private $transaction_id;
+
+
+    //
+
+    /**
+     * @return array
+     */
+    public function pt_build()
+    {
+        $all = array_merge(
+            $this->refundInfo,
+            $this->transaction_id
+        );
+
+        return $all;
+    }
+
+    //
+
+    public function set01RefundInfo($amount, $reason)
+    {
+        $this->refundInfo = [
+            'refund_amount' => $amount,
+            'refund_reason' => $reason,
+        ];
+
+        return $this;
+    }
+
+    public function set02Transaction($transaction_id)
+    {
+        $this->transaction_id = [
+            'transaction_id' => $transaction_id
+        ];
+
+        return $this;
+    }
+}
+
+
+/**
  * API class which contacts PayTabs server's API
  */
 class PaytabsApi
@@ -1268,10 +1350,13 @@ class PaytabsApi
         '10' => ['name' => 'amex', 'title' => 'PayTabs - Amex', 'currencies' => ['AED', 'SAR']],
         '11' => ['name' => 'valu', 'title' => 'PayTabs - valU', 'currencies' => ['EGP']],
     ];
-    const URL_AUTHENTICATION = 'https://www.paytabs.com/apiv2/validate_secret_key';
-    const PAYPAGE_URL = 'https://www.paytabs.com/apiv2/create_pay_page';
-    const VERIFY_URL = 'https://www.paytabs.com/apiv2/verify_payment';
-    const TOKENIZATION_URL = 'https://www.paytabs.com/apiv3/tokenized_transaction_prepare';
+    const BASE_URL = 'https://www.paytabs.com/';
+
+    const AUTHENTICATION_URL = PaytabsApi::BASE_URL . 'apiv2/validate_secret_key';
+    const PAYPAGE_URL        = PaytabsApi::BASE_URL . 'apiv2/create_pay_page';
+    const VERIFY_URL         = PaytabsApi::BASE_URL . 'apiv2/verify_payment';
+    const TOKENIZATION_URL   = PaytabsApi::BASE_URL . 'apiv3/tokenized_transaction_prepare';
+    const REFUND_URL         = PaytabsApi::BASE_URL . 'apiv2/refund_process';
 
     //
 
@@ -1306,11 +1391,20 @@ class PaytabsApi
         $this->secret_key = $secret_key;
     }
 
+    private function appendAuth(&$values)
+    {
+        $values['merchant_email'] = $this->merchant_email;
+        $values['secret_key'] = $this->secret_key;
+    }
+
     /** start: API calls */
 
     function authentication()
     {
-        $obj = json_decode($this->runPost(self::URL_AUTHENTICATION, array("merchant_email" => $this->merchant_email, "secret_key" =>  $this->secret_key)), TRUE);
+        $values = [];
+        $this->appendAuth($values);
+
+        $obj = json_decode($this->runPost(self::AUTHENTICATION_URL, $values), TRUE);
 
         if ($obj->response_code == "4000") {
             return TRUE;
@@ -1320,8 +1414,7 @@ class PaytabsApi
 
     function create_pay_page($values)
     {
-        $values['merchant_email'] = $this->merchant_email;
-        $values['secret_key'] = $this->secret_key;
+        $this->appendAuth($values);
 
         $serverIP = getHostByName(getHostName());
         $values['ip_merchant'] = PaytabsHelper::getNonEmpty($serverIP, $_SERVER['SERVER_ADDR'], 'NA');
@@ -1336,8 +1429,8 @@ class PaytabsApi
 
     function verify_payment($payment_reference)
     {
-        $values['merchant_email'] = $this->merchant_email;
-        $values['secret_key'] = $this->secret_key;
+        $this->appendAuth($values);
+
         $values['payment_reference'] = $payment_reference;
 
         $res = json_decode($this->runPost(self::VERIFY_URL, $values));
@@ -1348,13 +1441,22 @@ class PaytabsApi
 
     function tokenized_payment($values)
     {
-        $values['merchant_email'] = $this->merchant_email;
-        $values['secret_key'] = $this->secret_key;
+        $this->appendAuth($values);
 
         $res = json_decode($this->runPost(self::TOKENIZATION_URL, $values));
         $tokenized = $this->enhanceVerify($res);
 
         return $tokenized;
+    }
+
+    function refund($values)
+    {
+        $this->appendAuth($values);
+
+        $res = json_decode($this->runPost(self::REFUND_URL, $values));
+        $refund = $this->enhanceRefund($res);
+
+        return $refund;
     }
 
     /** end: API calls */
@@ -1401,6 +1503,26 @@ class PaytabsApi
         }
 
         return $_verify;
+    }
+
+    private function enhanceRefund($refund)
+    {
+        $_refund = $refund;
+
+        if (!$refund) {
+            $_refund = new stdClass();
+            $_refund->success = false;
+            $_refund->result = 'Verifying paytabs Refund failed';
+        } else {
+            if (isset($refund->response_code)) {
+                $_refund->success = $refund->response_code == 814;
+                $_refund->pending_success = $refund->response_code == 812;
+            } else {
+                $_refund->success = false;
+            }
+        }
+
+        return $_refund;
     }
 
     /** end: Local calls */
