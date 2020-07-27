@@ -9,6 +9,7 @@ $_['knpay_heading_title']           = 'PayTabs - KnPay';
 $_['omannet_heading_title']         = 'PayTabs - OmanNet';
 $_['sadad_heading_title']           = 'PayTabs - Sadad';
 $_['stcpay_heading_title']          = 'PayTabs - StcPay';
+$_['valu_heading_title']            = 'PayTabs - valU';
 
 // Text
 $_['text_extension']                = 'Extensions';

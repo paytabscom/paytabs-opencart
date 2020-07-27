@@ -9,3 +9,4 @@ $_['applepay_text_title'] = 'PayTabs - ApplePay';
 $_['atfawry_text_title'] = 'PayTabs - @Fawry';
 $_['sadad_text_title'] = 'PayTabs - Sadad';
 $_['stcpay_text_title'] = 'PayTabs - StcPay';
+$_['valu_text_title'] = 'PayTabs - valU';

@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '1.2.0');
+define('PAYTABS_PAYPAGE_VERSION', '1.3.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 require_once DIR_SYSTEM . '/helper/paytabs_core.php';
