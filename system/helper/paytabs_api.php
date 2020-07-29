@@ -452,7 +452,7 @@ class PaytabsCatalogController
 
         if ($this->controller->_code === 'valu') {
             $valu_product_id = $this->controller->config->get(PaytabsAdapter::_key('valu_product_id', $this->controller->_code));
-            $holder->set20ValuParams($valu_product_id, $amount);
+            $holder->set20ValuParams($valu_product_id, 0);
         }
 
         $post_arr = $holder->pt_build(true);
