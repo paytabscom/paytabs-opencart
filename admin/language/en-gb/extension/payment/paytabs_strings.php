@@ -32,6 +32,7 @@ $_['entry_sort_order']              = 'Sort Order';
 $_['entry_hide_personal_info']      = 'Hide Personal info';
 $_['entry_hide_billing']            = 'Hide Billing';
 $_['entry_hide_view_invoice']       = 'Hide View invoice';
+$_['entry_valu_product_id']         = 'valU product ID';
 
 // Help
 $_['help_total']                    = 'The checkout total the order must reach before this payment method becomes active';
@@ -43,3 +44,4 @@ $_['error_merchant_id']             = 'Merchant ID required!';
 $_['error_merchant_secret_key']     = 'Merchant Secret Key required!';
 $_['error_secure_sign']             = 'Secure sign required!';
 $_['error_merchant_email']          = 'Merchant email required!';
+$_['error_valu_product_id']         = 'valU product ID required!';

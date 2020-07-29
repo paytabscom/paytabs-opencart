@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '1.3.0');
+define('PAYTABS_PAYPAGE_VERSION', '1.3.1');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 require_once DIR_SYSTEM . '/helper/paytabs_core.php';
@@ -35,6 +35,10 @@ class PaytabsController
 
         $this->controller->document->setTitle($this->controller->language->get("{$this->controller->_code}_heading_title"));
 
+        $this->keys = array_filter($this->keys, function ($values) {
+            if (key_exists('methods', $values) && !in_array($this->controller->_code, $values['methods'])) return false;
+            return true;
+        });
 
         foreach ($this->keys as $key => &$value) {
             $value['configKey'] = PaytabsAdapter::KEY_PREFIX . str_replace('_{PAYMENTMETHOD}_', "_{$this->controller->_code}_", $value['configKey']);
@@ -62,7 +66,8 @@ class PaytabsController
         PaytabsController::paytabs_errorList($this->controller->error, [
             'warning',
             'merchant_email',
-            'merchant_secret_key'
+            'merchant_secret_key',
+            'valu_product_id'
         ], $data);
 
 
@@ -421,6 +426,11 @@ class PaytabsCatalogController
             ->set11CMSVersion('OpenCart ' . VERSION)
             ->set12IPCustomer('');
 
+        if ($this->controller->_code === 'valu') {
+            $valu_product_id = $this->controller->config->get(PaytabsAdapter::_key('valu_product_id', $this->controller->_code));
+            $holder->set20ValuParams($valu_product_id, $amount);
+        }
+
         $post_arr = $holder->pt_build(true);
 
         return $post_arr;
@@ -530,6 +540,12 @@ class PaytabsAdapter
             'key' => 'payment_paytabs_merchant_secret_key',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_merchant_secret_key',
             'required' => true,
+        ],
+        'valu_product_id' => [
+            'key' => 'payment_paytabs_valu_product_id',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_valu_product_id',
+            'required' => true,
+            'methods' => ['valu']
         ],
         'total' => [
             'key' => 'payment_paytabs_total',
