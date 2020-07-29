@@ -1,7 +1,9 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '1.3.1');
+define('PAYTABS_PAYPAGE_VERSION', '1.4.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
+
+define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
 require_once DIR_SYSTEM . '/helper/paytabs_core.php';
 
@@ -13,8 +15,7 @@ class PaytabsController
 
     private $userToken_str = '';
 
-    private $urlExtensions = 'marketplace/extension';
-    // private $urlExtensions = 'extension/extension'; // OpenCart 2.3
+    private $urlExtensions = '';
 
     private $settingsKey = '';
 
@@ -29,10 +30,6 @@ class PaytabsController
         $this->controller->load->language("extension/payment/paytabs_strings");
         $this->controller->load->model('setting/setting');
 
-        $token_str = 'user_token';
-        // $token_str = 'token'; // OpenCart 2.3
-        $this->controller->userToken = $this->controller->session->data[$token_str];
-
         $this->controller->document->setTitle($this->controller->language->get("{$this->controller->_code}_heading_title"));
 
         $this->keys = array_filter($this->keys, function ($values) {
@@ -44,11 +41,26 @@ class PaytabsController
             $value['configKey'] = PaytabsAdapter::KEY_PREFIX . str_replace('_{PAYMENTMETHOD}_', "_{$this->controller->_code}_", $value['configKey']);
         }
 
-        $this->userToken_str = "user_token={$this->controller->userToken}";
-        // $this->userToken_str = "token={$this->controller->userToken}"; // OpenCart 2.3
+        if (PAYTABS_OPENCART_2_3) {
+            $this->urlExtensions = 'extension/extension'; // OpenCart 2.3
 
-        $this->settingsKey = "payment_paytabs_{$this->controller->_code}";
-        // $this->settingsKey = "paytabs_{$this->controller->_code}"; // OpenCart 2.3
+            $token_str = 'token'; // OpenCart 2.3
+
+            $this->controller->userToken = $this->controller->session->data[$token_str];
+            $this->userToken_str = "token={$this->controller->userToken}"; // OpenCart 2.3
+
+            $this->settingsKey = "paytabs_{$this->controller->_code}"; // OpenCart 2.3
+
+        } else {
+            $this->urlExtensions = 'marketplace/extension'; // OpenCart 3.x
+
+            $token_str = 'user_token'; // OpenCart 3.x
+
+            $this->controller->userToken = $this->controller->session->data[$token_str];
+            $this->userToken_str = "user_token={$this->controller->userToken}"; // OpenCart 3.x
+
+            $this->settingsKey = "payment_paytabs_{$this->controller->_code}"; // OpenCart 3.x
+        }
     }
 
 
@@ -116,6 +128,18 @@ class PaytabsController
         $data['header'] = $this->controller->load->controller('common/header');
         $data['column_left'] = $this->controller->load->controller('common/column_left');
         $data['footer'] = $this->controller->load->controller('common/footer');
+
+
+        if (PAYTABS_OPENCART_2_3) {
+            /** Strings */ // OpenCart 2.3
+
+            $this->controller->load->language("extension/payment/paytabs_strings");
+            $strings = $this->controller->language->all();
+            foreach ($strings as $key => $value) {
+                if (substr($key, 0, 5) === "error") continue;
+                $data[$key] = $value;
+            }
+        }
 
 
         /** Response */
@@ -583,8 +607,8 @@ class PaytabsAdapter
             'required' => false,
         ],
     ];
-    const KEY_PREFIX = 'payment_';
-    // const KEY_PREFIX = ''; // OpenCart 2.3
+
+    const KEY_PREFIX = PAYTABS_OPENCART_2_3 ? '' : 'payment_'; // OpenCart 2.3
 
     static function _key($key, $payment_code)
     {
