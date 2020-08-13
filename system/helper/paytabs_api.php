@@ -1,7 +1,9 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '2.1.1.2');
+define('PAYTABS_PAYPAGE_VERSION', '2.1.4.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
+
+define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
 require_once DIR_SYSTEM . '/helper/paytabs_core2.php';
 
@@ -13,8 +15,7 @@ class PaytabsController
 
     private $userToken_str = '';
 
-    private $urlExtensions = 'marketplace/extension';
-    // private $urlExtensions = 'extension/extension'; // OpenCart 2.3
+    private $urlExtensions = '';
 
     private $settingsKey = '';
 
@@ -29,22 +30,37 @@ class PaytabsController
         $this->controller->load->language("extension/payment/paytabs_strings");
         $this->controller->load->model('setting/setting');
 
-        $token_str = 'user_token';
-        // $token_str = 'token'; // OpenCart 2.3
-        $this->controller->userToken = $this->controller->session->data[$token_str];
-
         $this->controller->document->setTitle($this->controller->language->get("{$this->controller->_code}_heading_title"));
 
+        $this->keys = array_filter($this->keys, function ($values) {
+            if (key_exists('methods', $values) && !in_array($this->controller->_code, $values['methods'])) return false;
+            return true;
+        });
 
         foreach ($this->keys as $key => &$value) {
             $value['configKey'] = PaytabsAdapter::KEY_PREFIX . str_replace('_{PAYMENTMETHOD}_', "_{$this->controller->_code}_", $value['configKey']);
         }
 
-        $this->userToken_str = "user_token={$this->controller->userToken}";
-        // $this->userToken_str = "token={$this->controller->userToken}"; // OpenCart 2.3
+        if (PAYTABS_OPENCART_2_3) {
+            $this->urlExtensions = 'extension/extension'; // OpenCart 2.3
 
-        $this->settingsKey = "payment_paytabs_{$this->controller->_code}";
-        // $this->settingsKey = "paytabs_{$this->controller->_code}"; // OpenCart 2.3
+            $token_str = 'token'; // OpenCart 2.3
+
+            $this->controller->userToken = $this->controller->session->data[$token_str];
+            $this->userToken_str = "token={$this->controller->userToken}"; // OpenCart 2.3
+
+            $this->settingsKey = "paytabs_{$this->controller->_code}"; // OpenCart 2.3
+
+        } else {
+            $this->urlExtensions = 'marketplace/extension'; // OpenCart 3.x
+
+            $token_str = 'user_token'; // OpenCart 3.x
+
+            $this->controller->userToken = $this->controller->session->data[$token_str];
+            $this->userToken_str = "user_token={$this->controller->userToken}"; // OpenCart 3.x
+
+            $this->settingsKey = "payment_paytabs_{$this->controller->_code}"; // OpenCart 3.x
+        }
     }
 
 
@@ -62,7 +78,8 @@ class PaytabsController
         PaytabsController::paytabs_errorList($this->controller->error, [
             'warning',
             'profile_id',
-            'server_key'
+            'server_key',
+            'valu_product_id'
         ], $data);
 
 
@@ -111,6 +128,18 @@ class PaytabsController
         $data['header'] = $this->controller->load->controller('common/header');
         $data['column_left'] = $this->controller->load->controller('common/column_left');
         $data['footer'] = $this->controller->load->controller('common/footer');
+
+
+        if (PAYTABS_OPENCART_2_3) {
+            /** Strings */ // OpenCart 2.3
+
+            $this->controller->load->language("extension/payment/paytabs_strings");
+            $strings = $this->controller->language->all();
+            foreach ($strings as $key => $value) {
+                if (substr($key, 0, 5) === "error") continue;
+                $data[$key] = $value;
+            }
+        }
 
 
         /** Response */
@@ -216,7 +245,7 @@ class PaytabsCatalogController
 
         if ($paypage->success) {
             $data['paypage'] = true;
-            $data['payment_url'] = $paypage->redirect_url;
+            $data['payment_url'] = $paypage->payment_url;
         } else {
             $data['paypage'] = false;
             $data['paypage_msg'] = $paypage->message;
@@ -249,7 +278,7 @@ class PaytabsCatalogController
 
             PaytabsHelper::log("PayTabs {$this->controller->_code} checkout successed");
 
-            $order_id = $result->cart_id;
+            $order_id = $result->reference_no;
             $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
 
             $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $result->message);
@@ -329,14 +358,19 @@ class PaytabsCatalogController
         $order_info = $this->controller->model_checkout_order->getOrder($orderId);
 
         // $siteUrl = $this->controller->config->get('config_url');
-        $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback");
+        $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback", '', true);
 
 
-        $cost = $this->controller->session->data['shipping_method']['cost'];
-        $subtotal = $this->controller->cart->getSubTotal();
+        // $cost = $this->controller->session->data['shipping_method']['cost'];
+        // $subtotal = $this->controller->cart->getSubTotal();
         // $discount = $subtotal + $cost - $order_info['total'];
-        $price1 = $subtotal + $cost;
+        // $price1 = $subtotal + $cost;
+        $price1 = $order_info['total'];
         $amount = $this->getPrice($price1, $order_info);
+
+        //
+
+        $hide_shipping = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_shipping', $this->controller->_code));
 
         //
 
@@ -362,6 +396,7 @@ class PaytabsCatalogController
         $zone_shipping = PaytabsHelper::getNonEmpty($order_info['shipping_zone'], $order_info['shipping_city'], $zone_billing);
 
         $lang_code = $this->controller->language->get('code');
+        // $lang = ($lang_code == 'ar') ? 'Arabic' : 'English';
 
 
         $holder = new PaytabsHolder2();
@@ -396,9 +431,14 @@ class PaytabsCatalogController
                 $order_info['shipping_postcode'],
                 null
             )
-            ->set06HideShipping(false)
+            ->set06HideShipping($hide_shipping)
             ->set07URLs($return_url, null)
             ->set08Lang($lang_code);
+
+        if ($this->controller->_code === 'valu') {
+            $valu_product_id = $this->controller->config->get(PaytabsAdapter::_key('valu_product_id', $this->controller->_code));
+            // $holder->set20ValuParams($valu_product_id, 0);
+        }
 
         $post_arr = $holder->pt_build();
 
@@ -510,6 +550,12 @@ class PaytabsAdapter
             'configKey' => 'paytabs_{PAYMENTMETHOD}_server_key',
             'required' => true,
         ],
+        'valu_product_id' => [
+            'key' => 'payment_paytabs_valu_product_id',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_valu_product_id',
+            'required' => true,
+            'methods' => ['valu']
+        ],
         'total' => [
             'key' => 'payment_paytabs_total',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_total',
@@ -518,6 +564,11 @@ class PaytabsAdapter
         'order_status_id' => [
             'key' => 'payment_paytabs_order_status_id',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_order_status_id',
+            'required' => false,
+        ],
+        'hide_shipping' => [
+            'key' => 'payment_paytabs_hide_shipping',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_hide_shipping',
             'required' => false,
         ],
         'geo_zone_id' => [
@@ -531,8 +582,8 @@ class PaytabsAdapter
             'required' => false,
         ],
     ];
-    const KEY_PREFIX = 'payment_';
-    // const KEY_PREFIX = ''; // OpenCart 2.3
+
+    const KEY_PREFIX = PAYTABS_OPENCART_2_3 ? '' : 'payment_'; // OpenCart 2.3
 
     static function _key($key, $payment_code)
     {
@@ -548,10 +599,10 @@ class PaytabsAdapter
 
     public function pt()
     {
-        $profile_id = $this->config->get(PaytabsAdapter::_key('profile_id', $this->paymentMethod));
-        $serverKey = $this->config->get(PaytabsAdapter::_key('server_key', $this->paymentMethod));
+        $merchant_id = $this->config->get(PaytabsAdapter::_key('profile_id', $this->paymentMethod));
+        $merchant_key = $this->config->get(PaytabsAdapter::_key('server_key', $this->paymentMethod));
 
-        $pt = PaytabsApi::getInstance($profile_id, $serverKey);
+        $pt = PaytabsApi::getInstance($merchant_id, $merchant_key);
 
         return $pt;
     }

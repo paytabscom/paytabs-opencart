@@ -9,6 +9,7 @@ $_['knpay_heading_title']           = 'PayTabs - KnPay';
 $_['omannet_heading_title']         = 'PayTabs - OmanNet';
 $_['sadad_heading_title']           = 'PayTabs - Sadad';
 $_['stcpay_heading_title']          = 'PayTabs - StcPay';
+$_['valu_heading_title']            = 'PayTabs - valU';
 
 // Text
 $_['text_extension']                = 'Extensions';
@@ -28,6 +29,7 @@ $_['entry_order_status']            = 'Completed Status';
 $_['entry_geo_zone']                = 'Geo Zone';
 $_['entry_status']                  = 'Status';
 $_['entry_sort_order']              = 'Sort Order';
+$_['entry_hide_shipping']           = 'Hide Shipping';
 
 // Help
 $_['help_total']                    = 'The checkout total the order must reach before this payment method becomes active';
@@ -39,3 +41,4 @@ $_['error_merchant_id']             = 'Merchant ID required!';
 $_['error_server_key']              = 'Merchant Server Key required!';
 $_['error_secure_sign']             = 'Secure sign required!';
 $_['error_profile_id']              = 'Profile ID required!';
+$_['error_valu_product_id']         = 'valU product ID required!';
