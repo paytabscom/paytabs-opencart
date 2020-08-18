@@ -58,21 +58,21 @@
 						</div>
 
 						<div class="form-group required">
-							<label class="col-sm-2 control-label" for="entry-app-id"><?= $entry_merchant_email ?></label>
+							<label class="col-sm-2 control-label" for="entry-profile-id"><?= $entry_profile_id ?></label>
 							<div class="col-sm-10">
-								<input type="text" name="payment_paytabs_merchant_email" value="<?= $payment_paytabs_merchant_email ?>" placeholder="<?= $entry_merchant_email ?>" id="entry-merchant-id" class="form-control" />
-								<?php if ($error_merchant_email) { ?>
-									<div class="text-danger"><?= $error_merchant_email ?></div>
+								<input type="text" name="payment_paytabs_profile_id" value="<?= $payment_paytabs_profile_id ?>" placeholder="<?= $entry_profile_id ?>" id="entry-merchant-id" class="form-control" />
+								<?php if ($error_profile_id) { ?>
+									<div class="text-danger"><?= $error_profile_id ?></div>
 								<?php } ?>
 							</div>
 						</div>
 
 						<div class="form-group required">
-							<label class="col-sm-2 control-label" for="entry-merchant-private-key"><?= $entry_secret_key ?></label>
+							<label class="col-sm-2 control-label" for="entry-server-key"><?= $entry_secret_key ?></label>
 							<div class="col-sm-10">
-								<input type="text" name="payment_paytabs_merchant_secret_key" value="<?= $payment_paytabs_merchant_secret_key ?>" placeholder="<?= $entry_secret_key ?>" id="entry-merchant-private-key" class="form-control" />
-								<?php if ($error_merchant_secret_key) { ?>
-									<div class="text-danger"><?= $error_merchant_secret_key ?></div>
+								<input type="text" name="payment_paytabs_server_key" value="<?= $payment_paytabs_server_key ?>" placeholder="<?= $entry_secret_key ?>" id="entry-server-key" class="form-control" />
+								<?php if ($error_server_key) { ?>
+									<div class="text-danger"><?= $error_server_key ?></div>
 								<?php } ?>
 							</div>
 						</div>
@@ -137,40 +137,10 @@
 						</div>
 
 						<div class="form-group">
-							<label class="col-sm-2 control-label" for="input-hide_personal_info"><?= $entry_hide_personal_info ?></label>
+							<label class="col-sm-2 control-label" for="input-hide_shipping"><?= $entry_hide_shipping ?></label>
 							<div class="col-sm-10">
-								<select name="payment_paytabs_hide_personal_info" id="input-hide_personal_info" class="form-control">
-									<?php if ($payment_paytabs_hide_personal_info) { ?>
-										<option value="1" selected="selected"><?= $text_yes ?></option>
-										<option value="0"><?= $text_no ?></option>
-									<?php } else { ?>
-										<option value="1"><?= $text_yes ?></option>
-										<option value="0" selected="selected"><?= $text_no ?></option>
-									<?php } ?>
-								</select>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label class="col-sm-2 control-label" for="input-hide_billing"><?= $entry_hide_billing ?></label>
-							<div class="col-sm-10">
-								<select name="payment_paytabs_hide_billing" id="input-hide_billing" class="form-control">
-									<?php if ($payment_paytabs_hide_billing) { ?>
-										<option value="1" selected="selected"><?= $text_yes ?></option>
-										<option value="0"><?= $text_no ?></option>
-									<?php } else { ?>
-										<option value="1"><?= $text_yes ?></option>
-										<option value="0" selected="selected"><?= $text_no ?></option>
-									<?php } ?>
-								</select>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label class="col-sm-2 control-label" for="input-hide_view_invoice"><?= $entry_hide_view_invoice ?></label>
-							<div class="col-sm-10">
-								<select name="payment_paytabs_hide_view_invoice" id="input-hide_view_invoice" class="form-control">
-									<?php if ($payment_paytabs_hide_view_invoice) { ?>
+								<select name="payment_paytabs_hide_shipping" id="input-hide_shipping" class="form-control">
+									<?php if ($payment_paytabs_hide_shipping) { ?>
 										<option value="1" selected="selected"><?= $text_yes ?></option>
 										<option value="0"><?= $text_no ?></option>
 									<?php } else { ?>
