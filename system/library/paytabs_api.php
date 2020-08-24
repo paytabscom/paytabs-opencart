@@ -1,11 +1,16 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '1.4.1');
+define('PAYTABS_PAYPAGE_VERSION', '1.5.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
-require_once DIR_SYSTEM . '/helper/paytabs_core.php';
+require_once DIR_SYSTEM . '/library/paytabs_core.php';
+
+
+class paytabs_api
+{
+}
 
 class PaytabsController
 {
@@ -25,7 +30,7 @@ class PaytabsController
     {
         $this->controller = $controller;
 
-        $this->controller->load->helper('paytabs_api');
+        $this->controller->load->library('paytabs_api');
 
         $this->controller->load->language("extension/payment/paytabs_strings");
         $this->controller->load->model('setting/setting');
@@ -248,7 +253,7 @@ class PaytabsCatalogController
             $data['payment_url'] = $paypage->payment_url;
         } else {
             $data['paypage'] = false;
-            $data['paypage_msg'] = $paypage->result;
+            $data['paypage_msg'] = $paypage->message;
 
             $_logResult = (json_encode($paypage));
             $_logData = json_encode($values);
@@ -281,7 +286,7 @@ class PaytabsCatalogController
             $order_id = $result->reference_no;
             $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
 
-            $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $result->result);
+            $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $result->message);
             $this->controller->response->redirect($this->controller->url->link('checkout/success'));
         } else {
             $_logVerify = (json_encode($result));
@@ -290,7 +295,7 @@ class PaytabsCatalogController
             //Redirect to failed method
             // $this->controller->response->redirect($this->controller->url->link('checkout/failure'));
 
-            $this->callbackFailure($result->result);
+            $this->callbackFailure($result->message);
         }
     }
 
