@@ -1,11 +1,15 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '2.1.4.1');
+define('PAYTABS_PAYPAGE_VERSION', '2.1.5.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
-require_once DIR_SYSTEM . '/helper/paytabs_core2.php';
+require_once DIR_SYSTEM . '/library/paytabs_core2.php';
+
+class paytabs_api
+{
+}
 
 class PaytabsController
 {
@@ -25,7 +29,7 @@ class PaytabsController
     {
         $this->controller = $controller;
 
-        $this->controller->load->helper('paytabs_api');
+        $this->controller->load->library('paytabs_api');
 
         $this->controller->load->language("extension/payment/paytabs_strings");
         $this->controller->load->model('setting/setting');

@@ -9,7 +9,7 @@ class ControllerExtensionPaymentPaytabsStcpay extends Controller
 
 	public function init()
 	{
-		$this->load->helper('paytabs_api');
+		$this->load->library('paytabs_api');
 
 		$this->paytabsController = new PaytabsCatalogController($this);
 	}
