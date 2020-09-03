@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '2.1.5.0');
+define('PAYTABS_PAYPAGE_VERSION', '2.1.5.1');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
@@ -286,7 +286,7 @@ class PaytabsCatalogController
             $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
 
             $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $result->message);
-            $this->controller->response->redirect($this->controller->url->link('checkout/success'));
+            $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
         } else {
             $_logVerify = (json_encode($result));
             PaytabsHelper::log("callback failed, response [{$_logVerify}]", 3);
@@ -308,7 +308,7 @@ class PaytabsCatalogController
         $data['breadcrumbs'] = [
             [
                 'text' => $this->controller->language->get('text_home'),
-                'href' => $this->controller->url->link('common/home')
+                'href' => $this->controller->url->link('common/home', '', true)
             ],
             [
                 'text' => $this->controller->language->get('text_basket'),
@@ -320,13 +320,13 @@ class PaytabsCatalogController
             ],
             [
                 'text' => $this->controller->language->get('text_failure'),
-                'href' => $this->controller->url->link('checkout/failure')
+                'href' => $this->controller->url->link('checkout/failure', '', true)
             ]
         ];
 
-        $data['text_message'] = sprintf($this->controller->language->get('text_message'), $this->controller->url->link('information/contact'));
+        $data['text_message'] = sprintf($this->controller->language->get('text_message'), $this->controller->url->link('information/contact', '', true));
 
-        $data['continue'] = $this->controller->url->link('common/home');
+        $data['continue'] = $this->controller->url->link('common/home', '', true);
 
         $data['column_left'] = $this->controller->load->controller('common/column_left');
         $data['column_right'] = $this->controller->load->controller('common/column_right');
