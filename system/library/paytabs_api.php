@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '1.5.1');
+define('PAYTABS_PAYPAGE_VERSION', '1.5.2');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
@@ -361,26 +361,46 @@ class PaytabsCatalogController
 
         $orderId = $this->controller->session->data['order_id'];
         $order_info = $this->controller->model_checkout_order->getOrder($orderId);
+        $cart = $this->controller->cart;
 
-        $siteUrl = $this->controller->config->get('config_url');
+        $siteUrl = $this->controller->config->get('site_ssl');
         $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback", '', true);
 
+        //
 
-        $cost = $this->controller->session->data['shipping_method']['cost'];
-        $subtotal = $this->controller->cart->getSubTotal();
-        $discount = $subtotal + $cost - $order_info['total'];
-        $price1 = $subtotal + $cost;
-        $amount = $this->getPrice($price1, $order_info);
+        // Shipping cost
+
+        $shipping_cost = 0;
+        if ($cart->hasShipping()) {
+            $shipping_cost = (float)$this->controller->session->data['shipping_method']['cost'];
+        }
+
+        // Vouchers cost
+
+        $vouchers_amount = 0;
+        $vouchers_arr = [];
+        if (isset($this->controller->session->data["vouchers"])) {
+            $vouchers = $this->controller->session->data["vouchers"];
+
+            $vouchers_arr = array_map(function ($p) use ($order_info, &$vouchers_amount) {
+                $vouchers_amount += $p['amount'];
+                return [
+                    'name' => $p['description'],
+                    'quantity' => 1,
+                    'price' => round($this->getPrice($p['amount'], $order_info), 2)
+                ];
+            }, $vouchers);
+        }
+
+        $subtotal = $cart->getSubTotal();
+        $total = $subtotal + $shipping_cost + $vouchers_amount;
+        $discount = $total - $order_info['total'];
+
+        $amount = $this->getPrice($total, $order_info);
 
         //
 
-        $hide_personal_info = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_personal_info', $this->controller->_code));
-        $hide_billing = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_billing', $this->controller->_code));
-        $hide_view_invoice = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_view_invoice', $this->controller->_code));
-
-        //
-
-        $products = $this->controller->cart->getProducts();
+        $products = $cart->getProducts();
 
         $items_arr = array_map(function ($p) use ($order_info) {
             return [
@@ -390,6 +410,9 @@ class PaytabsCatalogController
             ];
         }, $products);
 
+        $items_arr = array_merge($items_arr, $vouchers_arr);
+
+        //
 
         $cdetails = PaytabsHelper::getCountryDetails($order_info['payment_iso_code_2']);
         $phoneext = $cdetails['phone'];
@@ -404,6 +427,13 @@ class PaytabsCatalogController
         $lang_code = $this->controller->language->get('code');
         $lang = ($lang_code == 'ar') ? 'Arabic' : 'English';
 
+        //
+
+        $hide_personal_info = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_personal_info', $this->controller->_code));
+        $hide_billing = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_billing', $this->controller->_code));
+        $hide_view_invoice = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_view_invoice', $this->controller->_code));
+
+        //
 
         $holder = new PaytabsHolder();
         $holder
@@ -416,7 +446,7 @@ class PaytabsCatalogController
             ->set04Payment(
                 $order_info['currency_code'],
                 $amount,
-                $this->getPrice($cost, $order_info),
+                $this->getPrice($shipping_cost, $order_info),
                 $this->getPrice($discount, $order_info)
             )
             ->set05Products($items_arr)

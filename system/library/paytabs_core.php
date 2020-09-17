@@ -2,7 +2,7 @@
 
 /**
  * PayTabs PHP SDK
- * Version: 1.2.2
+ * Version: 1.2.4
  */
 
 
@@ -895,9 +895,9 @@ class PaytabsHolder
     {
         $this->payment = [
             'currency'      => $currency,
-            'amount'        => $amount,
-            'other_charges' => $other_charges,
-            'discount'      => $discount,
+            'amount'        => round($amount, 3),
+            'other_charges' => round($other_charges, 3),
+            'discount'      => round($discount, 3),
         ];
 
         return $this;
@@ -941,6 +941,9 @@ class PaytabsHolder
         PaytabsHelper::pt_fillIfEmpty($firstname);
         PaytabsHelper::pt_fillIfEmpty($lastname);
 
+        PaytabsHelper::pt_fillIfEmpty($phone_prefix);
+        PaytabsHelper::pt_fillIfEmpty($phone_number);
+
         //
 
         $this->customer_info = [
@@ -964,6 +967,8 @@ class PaytabsHolder
 
         $this->_fill($postal_code, '11111');
         $postal_code = PaytabsHelper::convertAr2En($postal_code);
+
+        $this->_fill($country, 'SAU');
 
         //
 
