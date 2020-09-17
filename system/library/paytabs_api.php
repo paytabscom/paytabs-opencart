@@ -673,5 +673,5 @@ function paytabs_error_log($message, $severity = 1)
     $log = new Log(PAYTABS_DEBUG_FILE);
 
     $_prefix = "[{$severity}] ";
-    $log->write($_prefix . $message . PHP_EOL);
+    $log->write($_prefix . $message);
 }

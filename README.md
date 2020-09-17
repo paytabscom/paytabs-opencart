@@ -52,4 +52,16 @@ Supports OpenCart **2.3** & **3.x**
 
 - - -
 
+## Log Access
+
+### PayTabs custome log
+
+1. Access `debug_paytabs.log` file found at: `/system/storage/logs/debug_paytabs.log`
+
+### OpenCart error log
+
+1. Navigate to: `"OpenCart admin panel" >> System >> Maintenance >> Error Logs`
+
+- - -
+
 Done
