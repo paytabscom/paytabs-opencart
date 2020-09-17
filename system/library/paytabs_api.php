@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '2.1.5.1');
+define('PAYTABS_PAYPAGE_VERSION', '2.1.5.2');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
@@ -360,25 +360,36 @@ class PaytabsCatalogController
 
         $orderId = $this->controller->session->data['order_id'];
         $order_info = $this->controller->model_checkout_order->getOrder($orderId);
+        $cart = $this->controller->cart;
 
         // $siteUrl = $this->controller->config->get('config_url');
         $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback", '', true);
 
+        //
+
+        $vouchers_arr = [];
+        if (isset($this->controller->session->data["vouchers"])) {
+            $vouchers = $this->controller->session->data["vouchers"];
+
+            $vouchers_arr = array_map(function ($p) use ($order_info) {
+                return [
+                    'name' => $p['description'],
+                    'quantity' => 1,
+                    'price' => round($this->getPrice($p['amount'], $order_info), 2)
+                ];
+            }, $vouchers);
+        }
 
         // $cost = $this->controller->session->data['shipping_method']['cost'];
         // $subtotal = $this->controller->cart->getSubTotal();
         // $discount = $subtotal + $cost - $order_info['total'];
-        // $price1 = $subtotal + $cost;
-        $price1 = $order_info['total'];
-        $amount = $this->getPrice($price1, $order_info);
+        // $total = $subtotal + $cost;
+        $total = $order_info['total'];
+        $amount = $this->getPrice($total, $order_info);
 
         //
 
-        $hide_shipping = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_shipping', $this->controller->_code));
-
-        //
-
-        $products = $this->controller->cart->getProducts();
+        $products = $cart->getProducts();
 
         $items_arr = array_map(function ($p) use ($order_info) {
             return [
@@ -388,6 +399,9 @@ class PaytabsCatalogController
             ];
         }, $products);
 
+        $items_arr = array_merge($items_arr, $vouchers_arr);
+
+        //
 
         // $cdetails = PaytabsHelper::getCountryDetails($order_info['payment_iso_code_2']);
         // $phoneext = $cdetails['phone'];
@@ -402,6 +416,11 @@ class PaytabsCatalogController
         $lang_code = $this->controller->language->get('code');
         // $lang = ($lang_code == 'ar') ? 'Arabic' : 'English';
 
+        //
+
+        $hide_shipping = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_shipping', $this->controller->_code));
+
+        //
 
         $holder = new PaytabsHolder2();
         $holder
@@ -617,5 +636,5 @@ function paytabs_error_log($message, $severity = 1)
     $log = new Log(PAYTABS_DEBUG_FILE);
 
     $_prefix = "[{$severity}] ";
-    $log->write($_prefix . $message . PHP_EOL);
+    $log->write($_prefix . $message);
 }

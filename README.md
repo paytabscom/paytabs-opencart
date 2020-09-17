@@ -10,7 +10,7 @@ Supports OpenCart **2.3** & **3.x**
 
 ### Install using OpenCart Admin panel
 
-1. Download the latest release of the plugin [1.5.1](<https://github.com/paytabscom/paytabs-opencart3.x/releases/download/1.5.1/paytabs-opencart-pt2.ocmod.zip>)
+1. Download the latest release of the plugin [1.5.2](<https://github.com/paytabscom/paytabs-opencart3.x/releases/download/1.5.2/paytabs-opencart-pt2.ocmod.zip>)
 2. Go to `"OpenCart admin panel" >> Extensions >> Installer`
 3. Click `Upload`
 4. Select the downloaded zip file (`paytabs-opencart-pt2.zip`)
@@ -49,5 +49,19 @@ Supports OpenCart **2.3** & **3.x**
    - **Server Key**: `Merchant’s Dashboard >> Developers >> Key management >> Server Key`
 7. Configure other options as your need
 8. Click the `Save` button *(The blue button on top-right of the page)* button
+
+- - -
+
+## Log Access
+
+### PayTabs custome log
+
+1. Access `debug_paytabs.log` file found at: `/system/storage/logs/debug_paytabs.log`
+
+### OpenCart error log
+
+1. Navigate to: `"OpenCart admin panel" >> System >> Maintenance >> Error Logs`
+
+- - -
 
 Done
