@@ -1,5 +1,5 @@
 {% if paypage %}
-	<form action="{{ payment_url }}" method="post" class="pull-right">
+	<form action="{{ payment_url }}" method="get" class="pull-right">
 		<button type="submit" class="btn btn-primary">{{ button_confirm }}</button>
 	</form>
 {% else %}

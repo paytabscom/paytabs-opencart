@@ -2,7 +2,7 @@
 
 /**
  * PayTabs PHP SDK
- * Version: 1.2.4
+ * Version: 1.2.5
  */
 
 
@@ -51,7 +51,7 @@ class PaytabsHelper
     public static function getNonEmpty(...$vars)
     {
         foreach ($vars as $var) {
-            if (!empty($var)) return $var;
+            if (!empty(trim($var))) return $var;
         }
         return false;
     }
@@ -1445,9 +1445,9 @@ class PaytabsApi
         $this->appendAuth($values);
 
         $serverIP = getHostByName(getHostName());
-        $values['ip_merchant'] = PaytabsHelper::getNonEmpty($serverIP, $_SERVER['SERVER_ADDR'], 'NA');
+        $values['ip_merchant'] = '86.96.9.87'; // PaytabsHelper::getNonEmpty($serverIP, $_SERVER['SERVER_ADDR'], 'NA');
 
-        $values['ip_customer'] = PaytabsHelper::getNonEmpty($values['ip_customer'], $_SERVER['REMOTE_ADDR'], 'NA');
+        $values['ip_customer'] = '86.96.9.87'; // PaytabsHelper::getNonEmpty($values['ip_customer'], $_SERVER['REMOTE_ADDR'], 'NA');
 
         $res = json_decode($this->runPost(self::PAYPAGE_URL, $values));
         $paypage = $this->enhance($res);
