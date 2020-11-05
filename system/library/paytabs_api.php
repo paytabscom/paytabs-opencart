@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '2.1.5.3');
+define('PAYTABS_PAYPAGE_VERSION', '2.1.6.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
@@ -82,12 +82,15 @@ class PaytabsController
         PaytabsController::paytabs_errorList($this->controller->error, [
             'warning',
             'profile_id',
+            'endpoint',
             'server_key',
             'valu_product_id'
         ], $data);
 
 
         /** Fill values */
+
+        $data['endpoints'] = PaytabsApi::getEndpoints();
 
         $this->controller->load->model('localisation/order_status');
         $data['order_statuses'] = $this->controller->model_localisation_order_status->getOrderStatuses();
@@ -563,6 +566,11 @@ class PaytabsAdapter
             'configKey' => 'paytabs_{PAYMENTMETHOD}_status',
             'required' => false,
         ],
+        'endpoint' => [
+            'key' => 'payment_paytabs_endpoint',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_endpoint',
+            'required' => true,
+        ],
         'profile_id' => [
             'key' => 'payment_paytabs_profile_id',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_profile_id',
@@ -622,10 +630,12 @@ class PaytabsAdapter
 
     public function pt()
     {
+        $endpoint = $this->config->get(PaytabsAdapter::_key('endpoint', $this->paymentMethod));
+
         $merchant_id = $this->config->get(PaytabsAdapter::_key('profile_id', $this->paymentMethod));
         $merchant_key = $this->config->get(PaytabsAdapter::_key('server_key', $this->paymentMethod));
 
-        $pt = PaytabsApi::getInstance($merchant_id, $merchant_key);
+        $pt = PaytabsApi::getInstance($endpoint, $merchant_id, $merchant_key);
 
         return $pt;
     }
