@@ -86,9 +86,9 @@
 						</div>
 
 						<div class="form-group required">
-							<label class="col-sm-2 control-label" for="entry-server-key"><?= $entry_secret_key ?></label>
+							<label class="col-sm-2 control-label" for="entry-server-key"><?= $entry_server_key ?></label>
 							<div class="col-sm-10">
-								<input type="text" name="payment_paytabs_server_key" value="<?= $payment_paytabs_server_key ?>" placeholder="<?= $entry_secret_key ?>" id="entry-server-key" class="form-control" />
+								<input type="text" name="payment_paytabs_server_key" value="<?= $payment_paytabs_server_key ?>" placeholder="<?= $entry_server_key ?>" id="entry-server-key" class="form-control" />
 								<?php if ($error_server_key) { ?>
 									<div class="text-danger"><?= $error_server_key ?></div>
 								<?php } ?>
