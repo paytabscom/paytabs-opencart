@@ -57,6 +57,24 @@
 							</div>
 						</div>
 
+						<div class="form-group">
+							<label class="col-sm-2 control-label" for="input-endpoint"><?= $entry_endpoint ?></label>
+							<div class="col-sm-10">
+								<select name="payment_paytabs_endpoint" id="input-endpoint" class="form-control">
+									<?php foreach ($endpoints as $key => $title) { ?>
+										<?php if ($key == $payment_paytabs_endpoint) { ?>
+											<option value="<?= $key ?>" selected="selected"><?= $title ?></option>
+										<?php } else { ?>
+											<option value="<?= $key ?>"><?= $title ?></option>
+										<?php } ?>
+									<?php } ?>
+								</select>
+								<?php if ($error_endpoint) { ?>
+									<div class="text-danger"><?= $error_endpoint ?></div>
+								<?php } ?>
+							</div>
+						</div>
+
 						<div class="form-group required">
 							<label class="col-sm-2 control-label" for="entry-profile-id"><?= $entry_profile_id ?></label>
 							<div class="col-sm-10">
@@ -68,9 +86,9 @@
 						</div>
 
 						<div class="form-group required">
-							<label class="col-sm-2 control-label" for="entry-server-key"><?= $entry_secret_key ?></label>
+							<label class="col-sm-2 control-label" for="entry-server-key"><?= $entry_server_key ?></label>
 							<div class="col-sm-10">
-								<input type="text" name="payment_paytabs_server_key" value="<?= $payment_paytabs_server_key ?>" placeholder="<?= $entry_secret_key ?>" id="entry-server-key" class="form-control" />
+								<input type="text" name="payment_paytabs_server_key" value="<?= $payment_paytabs_server_key ?>" placeholder="<?= $entry_server_key ?>" id="entry-server-key" class="form-control" />
 								<?php if ($error_server_key) { ?>
 									<div class="text-danger"><?= $error_server_key ?></div>
 								<?php } ?>

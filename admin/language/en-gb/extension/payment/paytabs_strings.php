@@ -20,6 +20,7 @@ $_['text_live']                     = 'Live';
 $_['text_sandbox']                  = 'Sandbox';
 
 // Entry
+$_['entry_endpoint']                = 'Endpoint';
 $_['entry_profile_id']              = 'Profile ID';
 $_['entry_merchant_id']             = 'Merchant ID';
 $_['entry_server_key']              = 'Server Key';
@@ -40,5 +41,6 @@ $_['error_permission']              = 'Warning: You do not have permission to mo
 $_['error_merchant_id']             = 'Merchant ID required!';
 $_['error_server_key']              = 'Merchant Server Key required!';
 $_['error_secure_sign']             = 'Secure sign required!';
+$_['error_endpoint']                = 'Endpoint required!';
 $_['error_profile_id']              = 'Profile ID required!';
 $_['error_valu_product_id']         = 'valU product ID required!';
