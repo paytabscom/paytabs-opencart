@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '2.1.6.0');
+define('PAYTABS_PAYPAGE_VERSION', '3.0.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
@@ -447,6 +447,7 @@ class PaytabsCatalogController
                 null
             )
             ->set05ShippingDetails(
+                false,
                 $order_info['shipping_firstname'] . ' ' . $order_info['shipping_lastname'],
                 $order_info['email'],
                 null,

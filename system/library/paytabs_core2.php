@@ -2,7 +2,7 @@
 
 /**
  * PayTabs 2 PHP SDK
- * Version: 1.3.0
+ * Version: 1.4.0
  */
 
 
@@ -750,6 +750,11 @@ class PaytabsHolder2
      */
     private $framed;
 
+    /**
+     * tokenise
+     * show_save_card
+     */
+    private $tokenise;
 
     //
 
@@ -759,18 +764,20 @@ class PaytabsHolder2
     public function pt_build()
     {
         $all = array_merge(
-            $this->payment_code,
             $this->transaction,
-            $this->cart,
-            $this->urls
+            $this->cart
         );
 
         $this->pt_merges(
             $all,
+            $this->payment_code,
+            $this->urls,
             $this->customer_details,
             $this->shipping_details,
             $this->hide_shipping,
-            $this->lang
+            $this->lang,
+            $this->framed,
+            $this->tokenise
         );
 
         return $all;
@@ -869,9 +876,11 @@ class PaytabsHolder2
         return $this;
     }
 
-    public function set05ShippingDetails($name, $email, $phone, $address, $city, $state, $country, $zip, $ip)
+    public function set05ShippingDetails($same_as_billing, $name = null, $email = null, $phone = null, $address = null, $city = null, $state = null, $country = null, $zip = null, $ip = null)
     {
-        $infos = $this->setCustomerDetails($name, $email, $phone, $address, $city, $state, $country, $zip, $ip);
+        $infos = $same_as_billing
+            ? $this->customer_details['customer_details']
+            : $this->setCustomerDetails($name, $email, $phone, $address, $city, $state, $country, $zip, $ip);
 
         //
 
@@ -910,11 +919,32 @@ class PaytabsHolder2
         return $this;
     }
 
-    public function set09Framed($on = false)
+    /**
+     * @param string $redirect_target "parent" or "top" or "iframe"
+     */
+    public function set09Framed($on = false, $redirect_target = 'iframe')
     {
         $this->framed = [
             'framed' => $on,
+            'framed_return_parent' => $redirect_target == 'parent',
+            'framed_return_top' => $redirect_target == 'top'
         ];
+
+        return $this;
+    }
+
+    /**
+     * @param int $token_format integer between 2 and 6, Set the Token format
+     * @param bool $optional Display the save card option on the payment page
+     */
+    public function set10Tokenise($on = false, $token_format = 2, $optional = false)
+    {
+        if ($on) {
+            $this->tokenise = [
+                'tokenise' => $token_format,
+                'show_save_card' => $optional
+            ];
+        }
 
         return $this;
     }
@@ -924,15 +954,17 @@ class PaytabsHolder2
 class PaytabsTokenHolder extends PaytabsHolder2
 {
     /**
-     * payment_token
+     * token
+     * tran_ref
      */
-    private $payment_token;
+    private $token_info;
 
 
-    public function set20Token($payment_token)
+    public function set20Token($token, $tran_ref)
     {
-        $this->payment_token = [
-            'payment_token' => $payment_token
+        $this->token_info = [
+            'token'    => $token,
+            'tran_ref' => $tran_ref
         ];
 
         return $this;
@@ -942,7 +974,7 @@ class PaytabsTokenHolder extends PaytabsHolder2
     {
         $all = parent::pt_build();
 
-        $all = array_merge($all, $this->payment_token);
+        $all = array_merge($all, $this->token_info);
 
         return $all;
     }
@@ -1008,6 +1040,131 @@ class PaytabsRefundHolder
         return $this;
     }
 }
+
+
+/**
+ * Holder class that holds PayTabs's request's values
+ */
+class PaytabsCaptureHolder
+{
+
+    /**
+     * cart_amount
+     * cart_currency
+     */
+    private $captureInfo;
+
+    /**
+     * transaction_id
+     */
+    private $transaction_id;
+
+
+    //
+
+    /**
+     * @return array
+     */
+    public function pt_build()
+    {
+        $all = array_merge(
+            [
+                'tran_type' => 'capture',
+                'tran_class' => 'ecom'
+            ],
+            $this->captureInfo,
+            $this->transaction_id
+        );
+
+        return $all;
+    }
+
+    //
+
+    public function set01CaptureInfo($amount, $cart_currency)
+    {
+        $this->captureInfo = [
+            'cart_amount' => (float) $amount,
+            'cart_currency' => $cart_currency,
+        ];
+
+        return $this;
+    }
+
+    public function set02Transaction($cart_id, $transaction_id, $reason)
+    {
+        $this->transaction_id = [
+            'tran_ref' => $transaction_id,
+            'cart_id'  => "{$cart_id}",
+            'cart_description' => $reason,
+        ];
+
+        return $this;
+    }
+}
+
+
+/**
+ * Holder class that holds PayTabs's request's values
+ */
+class PaytabsVoidHolder
+{
+
+    /**
+     * cart_amount
+     * cart_currency
+     */
+    private $voidInfo;
+
+    /**
+     * transaction_id
+     */
+    private $transaction_id;
+
+
+    //
+
+    /**
+     * @return array
+     */
+    public function pt_build()
+    {
+        $all = array_merge(
+            [
+                'tran_type' => 'void',
+                'tran_class' => 'ecom'
+            ],
+            $this->voidInfo,
+            $this->transaction_id
+        );
+
+        return $all;
+    }
+
+    //
+
+    public function set01VoidInfo($amount, $cart_currency)
+    {
+        $this->voidInfo = [
+            'cart_amount' => (float) $amount,
+            'cart_currency' => $cart_currency,
+        ];
+
+        return $this;
+    }
+
+    public function set02Transaction($cart_id, $transaction_id, $reason)
+    {
+        $this->transaction_id = [
+            'tran_ref' => $transaction_id,
+            'cart_id'  => "{$cart_id}",
+            'cart_description' => $reason,
+        ];
+
+        return $this;
+    }
+}
+
 
 /**
  * API class which contacts PayTabs server's API
@@ -1118,7 +1275,7 @@ class PaytabsApi
         // $serverIP = getHostByName(getHostName());
         // $values['ip_merchant'] = PaytabsHelper::getNonEmpty($serverIP, $_SERVER['SERVER_ADDR'], 'NA');
 
-        $isTokenize = array_key_exists('payment_token', $values);
+        $isTokenize = array_key_exists('token', $values);
 
         $response = $this->sendRequest(self::URL_REQUEST, $values);
 
@@ -1138,7 +1295,7 @@ class PaytabsApi
         return $verify;
     }
 
-    function refund($values)
+    function request_followup($values)
     {
         $res = json_decode($this->sendRequest(self::URL_REQUEST, $values));
         $refund = $this->enhanceRefund($res);
