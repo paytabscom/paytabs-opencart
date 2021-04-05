@@ -1,4 +1,4 @@
-# paytabs-opencart3.x
+# paytabs-opencart
 
 The official **OpenCart** Plugin for PayTabs (PT-2).
 
