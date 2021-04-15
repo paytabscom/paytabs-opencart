@@ -1,5 +1,6 @@
 <?php
 // Text
+$_['all_text_title']        = 'Online payments powered by PayTabs';
 $_['creditcard_text_title'] = 'PayTabs - CreditCard';
 $_['mada_text_title']       = 'PayTabs - Mada';
 $_['omannet_text_title']    = 'PayTabs - OmanNet';

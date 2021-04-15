@@ -1,5 +1,6 @@
 <?php
 // Heading
+$_['all_heading_title']             = 'PayTabs - All';
 $_['creditcard_heading_title']      = 'PayTabs - CreditCard';
 $_['mada_heading_title']            = 'PayTabs - Mada';
 $_['amex_heading_title']            = 'PayTabs - Amex';
