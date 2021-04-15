@@ -457,7 +457,8 @@ class PaytabsCatalogController
             )
             ->set06HideShipping($hide_shipping)
             ->set07URLs($return_url, null)
-            ->set08Lang($lang_code);
+            ->set08Lang($lang_code)
+            ->set99PluginInfo('OpenCart', VERSION, PAYTABS_PAYPAGE_VERSION);
 
         if ($this->controller->_code === 'valu') {
             $valu_product_id = $this->controller->config->get(PaytabsAdapter::_key('valu_product_id', $this->controller->_code));
