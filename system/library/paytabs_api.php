@@ -376,8 +376,8 @@ class PaytabsCatalogController
 
             $vouchers_arr = array_map(function ($p) use ($order_info) {
                 $name = $p['description'];
-                $price = $this->getPrice($p['amount'], $order_info);
-                return "$name (-$price)";
+                // $price = $this->getPrice($p['amount'], $order_info);
+                return "$name";
             }, $vouchers);
         }
 
@@ -395,7 +395,8 @@ class PaytabsCatalogController
         $items_arr = array_map(function ($p) {
             $name = $p['name'];
             $qty = $p['quantity'];
-            return "{$name} ({$qty})";
+            $qty_str = $qty > 1 ? "({$qty})" : '';
+            return "{$name} $qty_str";
         }, $products);
 
         $items_arr = array_merge($items_arr, $vouchers_arr);
