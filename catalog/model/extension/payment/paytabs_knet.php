@@ -1,8 +1,8 @@
 <?php
 
-class ModelExtensionPaymentPaytabsKnpay extends Model
+class ModelExtensionPaymentPaytabsKnet extends Model
 {
-	public $_code = 'knpay';
+	public $_code = 'knet';
 
 	private $paytabsController;
 

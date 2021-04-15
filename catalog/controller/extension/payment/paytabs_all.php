@@ -1,8 +1,8 @@
 <?php
 
-class ControllerExtensionPaymentPaytabsKnpay extends Controller
+class ControllerExtensionPaymentPaytabsAll extends Controller
 {
-	public $_code = 'knpay';
+	public $_code = 'all';
 
 	private $paytabsController;
 

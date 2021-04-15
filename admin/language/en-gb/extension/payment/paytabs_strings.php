@@ -1,11 +1,12 @@
 <?php
 // Heading
+$_['all_heading_title']             = 'PayTabs - All';
 $_['creditcard_heading_title']      = 'PayTabs - CreditCard';
 $_['mada_heading_title']            = 'PayTabs - Mada';
 $_['amex_heading_title']            = 'PayTabs - Amex';
 $_['applepay_heading_title']        = 'PayTabs - ApplePay';
 $_['atfawry_heading_title']         = 'PayTabs - @Fawry';
-$_['knpay_heading_title']           = 'PayTabs - KnPay';
+$_['knet_heading_title']            = 'PayTabs - KnPay';
 $_['omannet_heading_title']         = 'PayTabs - OmanNet';
 $_['sadad_heading_title']           = 'PayTabs - Sadad';
 $_['stcpay_heading_title']          = 'PayTabs - StcPay';
