@@ -1,11 +1,11 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '3.0.0');
+define('PAYTABS_PAYPAGE_VERSION', '3.1.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
-require_once DIR_SYSTEM . '/library/paytabs_core2.php';
+require_once DIR_SYSTEM . '/library/paytabs_core.php';
 
 class paytabs_api
 {
@@ -375,11 +375,9 @@ class PaytabsCatalogController
             $vouchers = $this->controller->session->data["vouchers"];
 
             $vouchers_arr = array_map(function ($p) use ($order_info) {
-                return [
-                    'name' => $p['description'],
-                    'quantity' => 1,
-                    'price' => round($this->getPrice($p['amount'], $order_info), 2)
-                ];
+                $name = $p['description'];
+                $price = $this->getPrice($p['amount'], $order_info);
+                return "$name (-$price)";
             }, $vouchers);
         }
 
@@ -394,15 +392,14 @@ class PaytabsCatalogController
 
         $products = $cart->getProducts();
 
-        $items_arr = array_map(function ($p) use ($order_info) {
-            return [
-                'name' => $p['name'],
-                'quantity' => $p['quantity'],
-                'price' => round($this->getPrice($p['price'], $order_info), 2)
-            ];
+        $items_arr = array_map(function ($p) {
+            $name = $p['name'];
+            $qty = $p['quantity'];
+            return "{$name} ({$qty})";
         }, $products);
 
         $items_arr = array_merge($items_arr, $vouchers_arr);
+        $cart_desc = implode(', ', $items_arr);
 
         //
 
@@ -425,15 +422,15 @@ class PaytabsCatalogController
 
         //
 
-        $holder = new PaytabsHolder2();
+        $holder = new PaytabsRequestHolder();
         $holder
             ->set01PaymentCode($this->controller->_code)
-            ->set02Transaction('sale', 'ecom')
+            ->set02Transaction(PaytabsEnum::TRAN_TYPE_SALE, PaytabsEnum::TRAN_CLASS_ECOM)
             ->set03Cart(
                 $orderId,
                 $order_info['currency_code'],
                 $amount,
-                json_encode($items_arr)
+                $cart_desc
             )
             ->set04CustomerDetails(
                 $order_info['payment_firstname'] . ' ' . $order_info['payment_lastname'],
