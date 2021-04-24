@@ -245,24 +245,47 @@ class PaytabsCatalogController
     {
         $data['button_confirm'] = $this->controller->language->get('button_confirm');
 
+        $orderId = $this->controller->session->data['order_id'];
+
+        $data['order_id'] = $orderId;
+        $data['url_confirm'] = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/confirm", '', true);
+
+        return $this->controller->load->view("extension/payment/paytabs_view", $data);
+    }
+
+    public function confirm()
+    {
+        $order_id = $this->controller->request->post['order'];
+        $order_session_id = $this->controller->session->data['order_id'];
+        if ($order_id != $order_session_id) {
+            $this->_re_checkout('The Order has been changed');
+            return;
+        }
 
         $values = $this->prepareOrder();
 
         $paypage = $this->ptApi->create_pay_page($values);
 
         if ($paypage->success) {
-            $data['paypage'] = true;
-            $data['payment_url'] = $paypage->payment_url;
-        } else {
-            $data['paypage'] = false;
-            $data['paypage_msg'] = $paypage->message;
+            $payment_url = $paypage->payment_url;
 
-            $_logResult = (json_encode($paypage));
+            $this->controller->response->redirect($payment_url);
+        } else {
+            $paypage_msg = $paypage->message;
+
+            $_logResult = json_encode($paypage);
             $_logData = json_encode($values);
             PaytabsHelper::log("callback failed, Data [{$_logData}], response [{$_logResult}]", 3);
-        }
 
-        return $this->controller->load->view("extension/payment/paytabs_view", $data);
+            $this->_re_checkout($paypage_msg);
+        }
+    }
+
+
+    private function _re_checkout($msg)
+    {
+        $this->controller->session->data['error'] = $msg;
+        $this->controller->response->redirect($this->controller->url->link('checkout/checkout', '', true));
     }
 
 
