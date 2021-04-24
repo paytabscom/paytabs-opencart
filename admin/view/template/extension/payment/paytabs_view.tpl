@@ -132,6 +132,21 @@
 						</div>
 
 						<div class="form-group">
+							<label class="col-sm-2 control-label" for="input-order-fraud-status"><?= $entry_order_fraud_status ?></label>
+							<div class="col-sm-10">
+								<select name="payment_paytabs_order_fraud_status_id" id="input-order-fraud-status" class="form-control">
+									<?php foreach ($order_statuses as $order_status) { ?>
+										<?php if ($order_status['order_fraud_status_id'] == $payment_paytabs_order_fraud_status_id) { ?>
+											<option value="<?= $order_status['order_fraud_status_id'] ?>" selected="selected"><?= $order_status['name'] ?></option>
+										<?php } else { ?>
+											<option value="<?= $order_status['order_fraud_status_id'] ?>"><?= $order_status['name'] ?></option>
+										<?php } ?>
+									<?php } ?>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group">
 							<label class="col-sm-2 control-label" for="input-geo-zone"><?= $entry_geo_zone ?></label>
 							<div class="col-sm-10">
 								<select name="payment_paytabs_geo_zone_id" id="input-geo-zone" class="form-control">

@@ -347,6 +347,9 @@ class PaytabsCatalogController
             // Redirect to failed method
             // $this->controller->response->redirect($this->controller->url->link('checkout/failure'));
 
+            $fraudStatus = $this->controller->config->get(PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code));
+            $this->controller->model_checkout_order->addOrderHistory($order_id, $fraudStatus, $res_msg);
+
             $this->callbackFailure($res_msg);
         }
     }
@@ -663,6 +666,11 @@ class PaytabsAdapter
         'order_status_id' => [
             'key' => 'payment_paytabs_order_status_id',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_order_status_id',
+            'required' => false,
+        ],
+        'order_fraud_status_id' => [
+            'key' => 'payment_paytabs_order_fraud_status_id',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_order_fraud_status_id',
             'required' => false,
         ],
         'hide_shipping' => [
