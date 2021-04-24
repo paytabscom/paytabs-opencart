@@ -201,7 +201,9 @@ class PaytabsController
         $this->controller->load->model('setting/setting');
 
         $defaults = [
-            PaytabsAdapter::_key('sort_order', $this->controller->_code) => 80
+            PaytabsAdapter::_key('sort_order', $this->controller->_code) => 80,
+            PaytabsAdapter::_key('order_status_id',       $this->controller->_code) => 2, // Processing
+            PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code) => 8, // Denied
         ];
 
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
