@@ -354,6 +354,11 @@ class PaytabsCatalogController
             if ($fraud) {
                 $fraudStatus = $this->controller->config->get(PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code));
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $fraudStatus, $res_msg);
+            } else {
+                $failedStatus = $this->controller->config->get(PaytabsAdapter::_key('order_failed_status_id', $this->controller->_code));
+                if ($failedStatus) {
+                    $this->controller->model_checkout_order->addOrderHistory($order_id, $failedStatus, $res_msg);
+                }
             }
 
             $this->callbackFailure($res_msg);
@@ -672,6 +677,11 @@ class PaytabsAdapter
         'order_status_id' => [
             'key' => 'payment_paytabs_order_status_id',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_order_status_id',
+            'required' => false,
+        ],
+        'order_failed_status_id' => [
+            'key' => 'payment_paytabs_order_failed_status_id',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_order_failed_status_id',
             'required' => false,
         ],
         'order_fraud_status_id' => [
