@@ -2,7 +2,7 @@
 
 /**
  * PayTabs v2 PHP SDK
- * Version: 2.0.6
+ * Version: 2.0.7
  */
 
 
@@ -760,7 +760,22 @@ class PaytabsApi
         // Generate URL-encoded query string of Post fields except signature field.
         $query = http_build_query($fields);
 
-        $signature = hash_hmac('sha256', $query, $serverKey);
+        return $this->is_genuine($query, $requestSignature, $serverKey);
+    }
+
+
+    function is_valid_ipn($data, $signature, $serverkey = false)
+    {
+        $server_key = $serverKey ?? $this->server_key;
+
+        return $this->is_genuine($data, $signature, $server_key);
+    }
+
+
+    private function is_genuine($data, $requestSignature, $serverKey)
+    {
+        $signature = hash_hmac('sha256', $data, $serverKey);
+
         if (hash_equals($signature, $requestSignature) === TRUE) {
             // VALID Redirect
             return true;

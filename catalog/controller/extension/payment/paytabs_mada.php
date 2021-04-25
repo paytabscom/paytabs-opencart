@@ -22,6 +22,13 @@ class ControllerExtensionPaymentPaytabsMada extends Controller
 	}
 
 
+	public function confirm()
+	{
+		$this->init();
+		return $this->paytabsController->confirm($data);
+	}
+
+
 	public function callback()
 	{
 		$this->init();
