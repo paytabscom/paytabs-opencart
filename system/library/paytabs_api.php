@@ -255,7 +255,7 @@ class PaytabsCatalogController
         return $this->controller->load->view("extension/payment/paytabs_view", $data);
     }
 
-    public function confirm()
+    public function confirm(&$data)
     {
         $order_id = $this->controller->request->post['order'];
         $order_session_id = $this->controller->session->data['order_id'];
