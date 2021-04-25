@@ -314,6 +314,7 @@ class PaytabsCatalogController
         $verify_response = $this->ptApi->verify_payment($transactionId);
 
         $success = $verify_response->success;
+        $fraud = false;
         $res_msg = $verify_response->message;
         $order_id = @$verify_response->reference_no;
         $cart_amount = @$verify_response->cart_amount;
@@ -332,6 +333,7 @@ class PaytabsCatalogController
             if (!$this->_confirmAmountPaid($order_info, $cart_amount, $cart_currency)) {
                 $res_msg = 'The Order has been altered';
                 $success = false;
+                $fraud = true;
             } else {
                 PaytabsHelper::log("PayTabs {$this->controller->_code} checkout successed");
 
@@ -349,8 +351,10 @@ class PaytabsCatalogController
             // Redirect to failed method
             // $this->controller->response->redirect($this->controller->url->link('checkout/failure'));
 
-            $fraudStatus = $this->controller->config->get(PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code));
-            $this->controller->model_checkout_order->addOrderHistory($order_id, $fraudStatus, $res_msg);
+            if ($fraud) {
+                $fraudStatus = $this->controller->config->get(PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code));
+                $this->controller->model_checkout_order->addOrderHistory($order_id, $fraudStatus, $res_msg);
+            }
 
             $this->callbackFailure($res_msg);
         }
