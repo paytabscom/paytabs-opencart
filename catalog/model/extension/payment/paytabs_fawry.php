@@ -1,8 +1,8 @@
 <?php
 
-class ModelExtensionPaymentPaytabsAtfawry extends Model
+class ModelExtensionPaymentPaytabsFawry extends Model
 {
-	public $_code = 'atfawry';
+	public $_code = 'fawry';
 
 	private $paytabsController;
 

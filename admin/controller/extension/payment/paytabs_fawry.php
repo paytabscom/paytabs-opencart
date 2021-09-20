@@ -1,8 +1,8 @@
 <?php
 
-class ControllerExtensionPaymentPaytabsAtfawry extends Controller
+class ControllerExtensionPaymentPaytabsFawry extends Controller
 {
-	public $_code = 'atfawry';
+	public $_code = 'fawry';
 	public $error = array();
 	public $userToken;
 
