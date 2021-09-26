@@ -11,6 +11,9 @@ $_['omannet_heading_title']         = 'PayTabs - OmanNet';
 $_['sadad_heading_title']           = 'PayTabs - Sadad';
 $_['stcpay_heading_title']          = 'PayTabs - StcPay';
 $_['valu_heading_title']            = 'PayTabs - valU';
+$_['meeza_heading_title']           = 'PayTabs - Meeza';
+$_['meezaqr_heading_title']         = 'PayTabs - Meeza QR';
+$_['unionpay_heading_title']        = 'PayTabs - UnionPay';
 
 // Text
 $_['text_extension']                = 'Extensions';
@@ -34,6 +37,7 @@ $_['entry_geo_zone']                = 'Geo Zone';
 $_['entry_status']                  = 'Status';
 $_['entry_sort_order']              = 'Sort Order';
 $_['entry_hide_shipping']           = 'Hide Shipping';
+$_['entry_allow_associated_methods'] = 'Allow associated methods';
 
 // Help
 $_['help_total']                    = 'The checkout total the order must reach before this payment method becomes active';

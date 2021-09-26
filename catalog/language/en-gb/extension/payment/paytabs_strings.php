@@ -11,3 +11,6 @@ $_['fawry_text_title']      = 'PayTabs - @Fawry';
 $_['sadad_text_title']      = 'PayTabs - Sadad';
 $_['stcpay_text_title']     = 'PayTabs - StcPay';
 $_['valu_text_title']       = 'PayTabs - valU';
+$_['meeza_text_title']      = 'PayTabs - Meeza';
+$_['meezaqr_text_title']    = 'PayTabs - Meeza QR';
+$_['unionpay_text_title']   = 'PayTabs - UnionPay';

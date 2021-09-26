@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '3.2.1');
+define('PAYTABS_PAYPAGE_VERSION', '3.3.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
@@ -91,6 +91,7 @@ class PaytabsController
         /** Fill values */
 
         $data['endpoints'] = PaytabsApi::getEndpoints();
+        $data['is_card_payment'] = PaytabsHelper::isCardPayment($this->controller->_code);
 
         $this->controller->load->model('localisation/order_status');
         $data['order_statuses'] = $this->controller->model_localisation_order_status->getOrderStatuses();
@@ -205,6 +206,14 @@ class PaytabsController
             PaytabsAdapter::_key('order_status_id',       $this->controller->_code) => 2, // Processing
             PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code) => 8, // Denied
         ];
+
+        if (PaytabsHelper::isCardPayment($this->controller->_code)) {
+            $allow_associated_methods = true;
+            if ($this->controller->_code == 'knet') {
+                $allow_associated_methods = false;
+            }
+            $defaults[PaytabsAdapter::_key('allow_associated_methods', $this->controller->_code)] = $allow_associated_methods;
+        }
 
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
     }
@@ -502,12 +511,13 @@ class PaytabsCatalogController
         //
 
         $hide_shipping = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_shipping', $this->controller->_code));
+        $allow_associated_methods = (bool) $this->controller->config->get(PaytabsAdapter::_key('allow_associated_methods', $this->controller->_code));
 
         //
 
         $holder = new PaytabsRequestHolder();
         $holder
-            ->set01PaymentCode($this->controller->_code)
+            ->set01PaymentCode($this->controller->_code, $allow_associated_methods, $order_info['currency_code'])
             ->set02Transaction(PaytabsEnum::TRAN_TYPE_SALE, PaytabsEnum::TRAN_CLASS_ECOM)
             ->set03Cart(
                 $orderId,
@@ -702,6 +712,11 @@ class PaytabsAdapter
         'sort_order' => [
             'key' => 'payment_paytabs_sort_order',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_sort_order',
+            'required' => false,
+        ],
+        'allow_associated_methods' => [
+            'key' => 'payment_paytabs_allow_associated_methods',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_allow_associated_methods',
             'required' => false,
         ],
     ];
