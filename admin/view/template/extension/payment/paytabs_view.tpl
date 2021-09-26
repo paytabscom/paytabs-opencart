@@ -200,6 +200,23 @@
 							</div>
 						</div>
 
+						<?php if ($is_card_payment) { ?>
+							<div class="form-group">
+								<label class="col-sm-2 control-label" for="input-allow_associated_methods"><?= $entry_allow_associated_methods ?></label>
+								<div class="col-sm-10">
+									<select name="payment_paytabs_allow_associated_methods" id="input-allow_associated_methods" class="form-control">
+										<?php if ($payment_paytabs_allow_associated_methods) { ?>
+											<option value="1" selected="selected"><?= $text_yes ?></option>
+											<option value="0"><?= $text_no ?></option>
+										<?php } else { ?>
+											<option value="1"><?= $text_yes ?></option>
+											<option value="0" selected="selected"><?= $text_no ?></option>
+										<?php } ?>
+									</select>
+								</div>
+							</div>
+						<?php } ?>
+
 					</div>
 
 				</form>
