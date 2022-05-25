@@ -35,4 +35,11 @@ class ControllerExtensionPaymentPaytabsStcpay extends Controller
 
 		$this->paytabsController->callback();
 	}
+
+	public function redirectAfterPayment()
+	{
+		$this->init();
+
+		$this->paytabsController->redirectAfterPayment();
+	}
 }

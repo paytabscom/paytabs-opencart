@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '3.3.1');
+define('PAYTABS_PAYPAGE_VERSION', '3.4.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
@@ -303,8 +303,8 @@ class PaytabsCatalogController
     public function callback()
     {
         $transactionId =
-            isset($this->controller->request->post['tranRef'])
-            ? $this->controller->request->post['tranRef']
+            isset($this->controller->request->post['tran_ref'])
+            ? $this->controller->request->post['tran_ref']
             : false;
         if (!$transactionId) {
             return $this->callbackFailure('Transaction ID is missing');
@@ -349,7 +349,6 @@ class PaytabsCatalogController
                 $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
 
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
-                $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
             }
         }
 
@@ -370,6 +369,66 @@ class PaytabsCatalogController
                 }
             }
 
+            $this->callbackFailure($res_msg);
+        }
+    }
+
+    public function redirectAfterPayment()
+    {
+        $transactionId =
+        isset($this->controller->request->post['tranRef'])
+        ? $this->controller->request->post['tranRef']
+        : false;
+        if (!$transactionId) {
+            return $this->callbackFailure('Transaction ID is missing');
+        }
+
+        $this->controller->load->model('checkout/order');
+        $this->controller->load->model("extension/payment/paytabs_{$this->controller->_code}");
+
+        $is_valid_req = $this->ptApi->is_valid_redirect($this->controller->request->post);
+        if (!$is_valid_req) {
+            $_logVerify = json_encode($this->controller->request->request);
+            PaytabsHelper::log("return failed, Fraud request [{$_logVerify}]", 3);
+            return;
+        }
+
+        $verify_response = $this->ptApi->verify_payment($transactionId);
+
+        $success = $verify_response->success;
+        $fraud = false;
+        $res_msg = $verify_response->message;
+        $order_id = @$verify_response->reference_no;
+        $cart_amount = @$verify_response->cart_amount;
+        $cart_currency = @$verify_response->cart_currency;
+
+        $order_info = $this->controller->model_checkout_order->getOrder($order_id);
+        if (!$order_info) {
+            PaytabsHelper::log("return failed, No Order found [{$order_id}]", 3);
+            return;
+        }
+
+
+        if ($success) {
+            // Check here if the result is tempered
+
+            if (!$this->_confirmAmountPaid($order_info, $cart_amount, $cart_currency)) {
+                $res_msg = 'The Order has been altered';
+                $success = false;
+                $fraud = true;
+            } else {
+                PaytabsHelper::log("PayTabs {$this->controller->_code} checkout successed");
+
+                //$successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
+
+                //$this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
+                $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
+            }
+        }
+
+        if (!$success) {
+            $_logVerify = (json_encode($verify_response));
+            PaytabsHelper::log("return failed, response [{$_logVerify}]", 3);
             $this->callbackFailure($res_msg);
         }
     }
@@ -457,7 +516,8 @@ class PaytabsCatalogController
         $cart = $this->controller->cart;
 
         // $siteUrl = $this->controller->config->get('config_url');
-        $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback", '', true);
+        $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/redirectAfterPayment", '', true);
+        $callback_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback", '', true);
 
         //
 
@@ -549,7 +609,7 @@ class PaytabsCatalogController
                 null
             )
             ->set06HideShipping($hide_shipping)
-            ->set07URLs($return_url, null)
+            ->set07URLs($return_url, $callback_url)
             ->set08Lang($lang_code)
             ->set99PluginInfo('OpenCart', VERSION, PAYTABS_PAYPAGE_VERSION);
 
@@ -755,3 +815,4 @@ function paytabs_error_log($message, $severity = 1)
     $_prefix = "[{$severity}] ";
     $log->write($_prefix . $message);
 }
+
