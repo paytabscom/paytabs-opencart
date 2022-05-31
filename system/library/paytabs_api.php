@@ -302,6 +302,11 @@ class PaytabsCatalogController
 
     public function callback()
     {
+        $response_data = PaytabsHelper::read_ipn_response();
+        if (!$response_data) {
+            return;
+        }
+
         $transactionId =
             isset($this->controller->request->post['tran_ref'])
             ? $this->controller->request->post['tran_ref']
@@ -376,9 +381,9 @@ class PaytabsCatalogController
     public function redirectAfterPayment()
     {
         $transactionId =
-        isset($this->controller->request->post['tranRef'])
-        ? $this->controller->request->post['tranRef']
-        : false;
+            isset($this->controller->request->post['tranRef'])
+            ? $this->controller->request->post['tranRef']
+            : false;
         if (!$transactionId) {
             return $this->callbackFailure('Transaction ID is missing');
         }
@@ -815,4 +820,3 @@ function paytabs_error_log($message, $severity = 1)
     $_prefix = "[{$severity}] ";
     $log->write($_prefix . $message);
 }
-
