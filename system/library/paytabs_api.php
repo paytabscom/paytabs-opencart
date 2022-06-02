@@ -302,14 +302,14 @@ class PaytabsCatalogController
 
     public function callback()
     {
-        $response_data = json_encode(PaytabsHelper::read_ipn_response());
+        $response_data = $this->ptApi->read_response(true);
         if (!$response_data) {
             return;
         }
 
         $transactionId =
-            isset($response_data->tran_ref)
-            ? $response_data->tran_ref
+            isset($response_data->transaction_id)
+            ? $response_data->transaction_id
             : false;
         if (!$transactionId) {
             return $this->callbackFailure('Transaction ID is missing');
@@ -318,11 +318,11 @@ class PaytabsCatalogController
         $this->controller->load->model('checkout/order');
         $this->controller->load->model("extension/payment/paytabs_{$this->controller->_code}");
 
-        $success = $response_data->payment_result->response_status;
+        $success = $response_data->success;
         $fraud = false;
-        $res_msg = $response_data->payment_result->response_message;
-        $order_id = $response_data->cart_id;
-        $cart_amount = $response_data->cart_amount;
+        $res_msg = $response_data->message;
+        $order_id = @$response_data->reference_no;
+        $cart_amount = @$response_data->cart_amount;
         $cart_currency = $response_data->cart_currency;
 
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
@@ -353,9 +353,6 @@ class PaytabsCatalogController
             $_logVerify = (json_encode($response_data));
             PaytabsHelper::log("callback failed, response [{$_logVerify}]", 3);
 
-            // Redirect to failed method
-            // $this->controller->response->redirect($this->controller->url->link('checkout/failure'));
-
             if ($fraud) {
                 $fraudStatus = $this->controller->config->get(PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code));
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $fraudStatus, $res_msg);
@@ -368,6 +365,7 @@ class PaytabsCatalogController
 
             $this->callbackFailure($res_msg);
         }
+        
     }
 
     public function redirectAfterPayment()
