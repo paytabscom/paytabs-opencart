@@ -345,7 +345,6 @@ class PaytabsCatalogController
                 $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
 
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
-            
             }
         }
 
@@ -363,17 +362,19 @@ class PaytabsCatalogController
                 }
             }
 
-            $this->callbackFailure($res_msg);
+            // $this->callbackFailure($res_msg);
         }
-        
     }
+
 
     public function redirectAfterPayment()
     {
-        $transactionId =
-            isset($this->controller->request->post['tranRef'])
-            ? $this->controller->request->post['tranRef']
-            : false;
+        $response_data = $this->ptApi->read_response(false);
+        if (!$response_data) {
+            return;
+        }
+
+        $transactionId = @$response_data->transaction_id;
         if (!$transactionId) {
             return $this->callbackFailure('Transaction ID is missing');
         }
@@ -381,32 +382,23 @@ class PaytabsCatalogController
         $this->controller->load->model('checkout/order');
         $this->controller->load->model("extension/payment/paytabs_{$this->controller->_code}");
 
-        $is_valid_req = $this->ptApi->is_valid_redirect($this->controller->request->post);
-        if (!$is_valid_req) {
-            $_logVerify = json_encode($this->controller->request->request);
-            PaytabsHelper::log("return failed, Fraud request [{$_logVerify}]", 3);
-            return;
-        }
+        // $verify_response = $this->ptApi->verify_payment($transactionId);
 
-        $verify_response = $this->ptApi->verify_payment($transactionId);
-
-        $success = $verify_response->success;
+        $success = $response_data->success;
         $fraud = false;
-        $res_msg = $verify_response->message;
-        $order_id = @$verify_response->reference_no;
-        $cart_amount = @$verify_response->cart_amount;
-        $cart_currency = @$verify_response->cart_currency;
+        $res_msg = $response_data->message;
+        $order_id = @$response_data->reference_no;
+        $cart_amount = @$response_data->cart_amount;
+        $cart_currency = @$response_data->cart_currency;
 
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
-            PaytabsHelper::log("return failed, No Order found [{$order_id}]", 3);
+            PaytabsHelper::log("Return failed, No Order found [{$order_id}]", 3);
             return;
         }
 
-
         if ($success) {
             // Check here if the result is tempered
-
             if (!$this->_confirmAmountPaid($order_info, $cart_amount, $cart_currency)) {
                 $res_msg = 'The Order has been altered';
                 $success = false;
@@ -419,11 +411,13 @@ class PaytabsCatalogController
         }
 
         if (!$success) {
-            $_logVerify = (json_encode($verify_response));
-            PaytabsHelper::log("return failed, response [{$_logVerify}]", 3);
+            $_logVerify = (json_encode($response_data));
+            PaytabsHelper::log("Return failed, response [{$_logVerify}]", 3);
+
             $this->callbackFailure($res_msg);
         }
     }
+
 
     private function _confirmAmountPaid($order_info, $online_amount, $online_currency)
     {
@@ -510,6 +504,7 @@ class PaytabsCatalogController
         // $siteUrl = $this->controller->config->get('config_url');
         $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/redirectAfterPayment", '', true);
         $callback_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback", '', true);
+
         //
 
         $vouchers_arr = [];
