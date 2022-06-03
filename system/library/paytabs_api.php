@@ -286,7 +286,7 @@ class PaytabsCatalogController
 
             $_logResult = json_encode($paypage);
             $_logData = json_encode($values);
-            PaytabsHelper::log("callback failed, Data [{$_logData}], response [{$_logResult}]", 3);
+            PaytabsHelper::log("Callback failed, Data [{$_logData}], response [{$_logResult}]", 3);
 
             $this->_re_checkout($paypage_msg);
         }
@@ -327,7 +327,7 @@ class PaytabsCatalogController
 
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
-            PaytabsHelper::log("callback failed, No Order found [{$order_id}]", 3);
+            PaytabsHelper::log("Callback failed, No Order found [{$order_id}]", 3);
             return;
         }
 
@@ -336,7 +336,7 @@ class PaytabsCatalogController
             // Check here if the result is tempered
 
             if (!$this->_confirmAmountPaid($order_info, $cart_amount, $cart_currency)) {
-                $res_msg = 'The Order has been altered';
+                $res_msg = "The Order has been altered, {$order_id}";
                 $success = false;
                 $fraud = true;
             } else {
@@ -350,7 +350,7 @@ class PaytabsCatalogController
 
         if (!$success) {
             $_logVerify = (json_encode($response_data));
-            PaytabsHelper::log("callback failed, response [{$_logVerify}]", 3);
+            PaytabsHelper::log("Callback failed, response [{$_logVerify}]", 3);
 
             if ($fraud) {
                 $fraudStatus = $this->controller->config->get(PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code));
@@ -385,11 +385,8 @@ class PaytabsCatalogController
         // $verify_response = $this->ptApi->verify_payment($transactionId);
 
         $success = $response_data->success;
-        $fraud = false;
         $res_msg = $response_data->message;
         $order_id = @$response_data->reference_no;
-        $cart_amount = @$response_data->cart_amount;
-        $cart_currency = @$response_data->cart_currency;
 
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
@@ -398,16 +395,9 @@ class PaytabsCatalogController
         }
 
         if ($success) {
-            // Check here if the result is tempered
-            if (!$this->_confirmAmountPaid($order_info, $cart_amount, $cart_currency)) {
-                $res_msg = 'The Order has been altered';
-                $success = false;
-                $fraud = true;
-            } else {
-                PaytabsHelper::log("PayTabs {$this->controller->_code} checkout successed");
+            PaytabsHelper::log("PayTabs {$this->controller->_code} checkout successed");
 
-                $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
-            }
+            $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
         }
 
         if (!$success) {
@@ -798,6 +788,8 @@ function paytabs_error_log($message, $severity = 1)
 {
     $log = new Log(PAYTABS_DEBUG_FILE);
 
-    $_prefix = "[{$severity}] ";
+    $severity_str = $severity == 1 ? 'Info' : ($severity == 2 ? 'Warning' : 'Error');
+    $_prefix = "[{$severity_str}] ";
+
     $log->write($_prefix . $message);
 }
