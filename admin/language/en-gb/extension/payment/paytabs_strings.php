@@ -37,6 +37,7 @@ $_['entry_geo_zone']                = 'Geo Zone';
 $_['entry_status']                  = 'Status';
 $_['entry_sort_order']              = 'Sort Order';
 $_['entry_hide_shipping']           = 'Hide Shipping';
+$_['entry_iframe']                  = 'Iframe';
 $_['entry_allow_associated_methods'] = 'Allow associated methods';
 
 // Help
