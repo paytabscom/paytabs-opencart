@@ -1,17 +1,17 @@
 <?php
 
-class ModelExtensionPaymentClickpayCreditcard extends Model
+class ModelExtensionPaymentClickpayMada extends Model
 {
-	public $_code = 'creditcard';
+	public $_code = 'mada';
 
 	private $clickpayController;
 
 
 	private function init()
 	{
-        $this->load->library('clickpay_api');
+		$this->load->library('clickpay_api');
 
-        $this->clickpayController = new ClickpayCatalogModel($this);
+		$this->clickpayController = new ClickpayCatalogModel($this);
 	}
 
 

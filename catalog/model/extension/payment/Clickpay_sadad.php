@@ -1,17 +1,17 @@
 <?php
 
-class ModelExtensionPaymentClickpayStcpay extends Model
+class ModelExtensionPaymentClickpaySadad extends Model
 {
-	public $_code = 'stcpay';
+	public $_code = 'sadad';
 
 	private $clickpayController;
 
 
 	private function init()
 	{
-        $this->load->library('clickpay_api');
+		$this->load->library('clickpay_api');
 
-        $this->clickpayController = new ClickpayCatalogModel($this);
+		$this->clickpayController = new ClickpayCatalogModel($this);
 	}
 
 

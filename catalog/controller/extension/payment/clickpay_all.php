@@ -21,11 +21,12 @@ class ControllerExtensionPaymentClickpayAll extends Controller
 		return $this->clickpayController->index($data);
 	}
 
-    public function confirm()
-    {
-        $this->init();
-        return $this->clickpayController->confirm($data);
-    }
+
+	public function confirm()
+	{
+		$this->init();
+		return $this->clickpayController->confirm($data);
+	}
 
 
 	public function callback()
@@ -33,5 +34,12 @@ class ControllerExtensionPaymentClickpayAll extends Controller
 		$this->init();
 
 		$this->clickpayController->callback();
+	}
+
+	public function redirectAfterPayment()
+	{
+		$this->init();
+
+		$this->clickpayController->redirectAfterPayment();
 	}
 }

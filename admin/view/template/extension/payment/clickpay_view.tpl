@@ -137,11 +137,11 @@
 								<select name="payment_clickpay_order_failed_status_id" id="input-order-failed-status" class="form-control">
 									<option value="0">No Action</option>
 									<?php foreach ($order_statuses as $order_status) { ?>
-									<?php if ($order_status['order_status_id'] == $payment_clickpay_order_failed_status_id) { ?>
-									<option value="<?= $order_status['order_status_id'] ?>" selected="selected"><?= $order_status['name'] ?></option>
-									<?php } else { ?>
-									<option value="<?= $order_status['order_status_id'] ?>"><?= $order_status['name'] ?></option>
-									<?php } ?>
+										<?php if ($order_status['order_status_id'] == $payment_clickpay_order_failed_status_id) { ?>
+											<option value="<?= $order_status['order_status_id'] ?>" selected="selected"><?= $order_status['name'] ?></option>
+										<?php } else { ?>
+											<option value="<?= $order_status['order_status_id'] ?>"><?= $order_status['name'] ?></option>
+										<?php } ?>
 									<?php } ?>
 								</select>
 							</div>
@@ -152,16 +152,16 @@
 							<div class="col-sm-10">
 								<select name="payment_clickpay_order_fraud_status_id" id="input-order-fraud-status" class="form-control">
 									<?php foreach ($order_statuses as $order_status) { ?>
-									<?php if ($order_status['order_status_id'] == $payment_clickpay_order_fraud_status_id) { ?>
-									<option value="<?= $order_status['order_status_id'] ?>" selected="selected"><?= $order_status['name'] ?></option>
-									<?php } else { ?>
-									<option value="<?= $order_status['order_status_id'] ?>"><?= $order_status['name'] ?></option>
-									<?php } ?>
+										<?php if ($order_status['order_status_id'] == $payment_clickpay_order_fraud_status_id) { ?>
+											<option value="<?= $order_status['order_status_id'] ?>" selected="selected"><?= $order_status['name'] ?></option>
+										<?php } else { ?>
+											<option value="<?= $order_status['order_status_id'] ?>"><?= $order_status['name'] ?></option>
+										<?php } ?>
 									<?php } ?>
 								</select>
 							</div>
 						</div>
-						
+
 						<div class="form-group">
 							<label class="col-sm-2 control-label" for="input-geo-zone"><?= $entry_geo_zone ?></label>
 							<div class="col-sm-10">
@@ -199,6 +199,23 @@
 								</select>
 							</div>
 						</div>
+
+						<?php if ($is_card_payment) { ?>
+							<div class="form-group">
+								<label class="col-sm-2 control-label" for="input-allow_associated_methods"><?= $entry_allow_associated_methods ?></label>
+								<div class="col-sm-10">
+									<select name="payment_clickpay_allow_associated_methods" id="input-allow_associated_methods" class="form-control">
+										<?php if ($payment_clickpay_allow_associated_methods) { ?>
+											<option value="1" selected="selected"><?= $text_yes ?></option>
+											<option value="0"><?= $text_no ?></option>
+										<?php } else { ?>
+											<option value="1"><?= $text_yes ?></option>
+											<option value="0" selected="selected"><?= $text_no ?></option>
+										<?php } ?>
+									</select>
+								</div>
+							</div>
+						<?php } ?>
 
 					</div>
 

@@ -14,7 +14,7 @@ class ControllerExtensionPaymentClickpayAmex extends Controller
 	{
 		$this->load->library('clickpay_api');
 
-        $this->clickpayController = new ClickpayController($this);
+		$this->clickpayController = new ClickpayController($this);
 	}
 
 

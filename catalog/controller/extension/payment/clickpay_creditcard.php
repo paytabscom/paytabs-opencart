@@ -9,9 +9,9 @@ class ControllerExtensionPaymentClickpayCreditcard extends Controller
 
 	public function init()
 	{
-        $this->load->library('clickpay_api');
+		$this->load->library('clickpay_api');
 
-        $this->clickpayController = new ClickpayCatalogController($this);
+		$this->clickpayController = new ClickpayCatalogController($this);
 	}
 
 	public function index()
@@ -21,11 +21,12 @@ class ControllerExtensionPaymentClickpayCreditcard extends Controller
 		return $this->clickpayController->index($data);
 	}
 
-    public function confirm()
-    {
-        $this->init();
-        return $this->clickpayController->confirm($data);
-    }
+
+	public function confirm()
+	{
+		$this->init();
+		return $this->clickpayController->confirm($data);
+	}
 
 
 	public function callback()
@@ -33,5 +34,12 @@ class ControllerExtensionPaymentClickpayCreditcard extends Controller
 		$this->init();
 
 		$this->clickpayController->callback();
+	}
+
+	public function redirectAfterPayment()
+	{
+		$this->init();
+
+		$this->clickpayController->redirectAfterPayment();
 	}
 }

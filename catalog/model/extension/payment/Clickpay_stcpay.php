@@ -1,8 +1,8 @@
 <?php
 
-class ModelExtensionPaymentClickpayAmex extends Model
+class ModelExtensionPaymentClickpayStcpay extends Model
 {
-	public $_code = 'amex';
+	public $_code = 'stcpay';
 
 	private $clickpayController;
 
@@ -11,7 +11,7 @@ class ModelExtensionPaymentClickpayAmex extends Model
 	{
 		$this->load->library('clickpay_api');
 
-        $this->clickpayController = new ClickpayCatalogModel($this);
+		$this->clickpayController = new ClickpayCatalogModel($this);
 	}
 
 

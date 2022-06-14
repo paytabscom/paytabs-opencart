@@ -6,15 +6,15 @@ class ControllerExtensionPaymentClickpayStcpay extends Controller
 	public $error = array();
 	public $userToken;
 
-    private $clickpayController;
+	private $clickpayController;
 
 	//
 
 	function init()
 	{
-        $this->load->library('clickpay_api');
+		$this->load->library('clickpay_api');
 
-        $this->clickpayController = new ClickpayController($this);
+		$this->clickpayController = new ClickpayController($this);
 	}
 
 

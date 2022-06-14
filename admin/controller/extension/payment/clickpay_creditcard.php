@@ -6,7 +6,7 @@ class ControllerExtensionPaymentClickpayCreditcard extends Controller
 	public $error = array();
 	public $userToken;
 
-    private $clickpayController;
+	private $clickpayController;
 
 	//
 
@@ -14,7 +14,7 @@ class ControllerExtensionPaymentClickpayCreditcard extends Controller
 	{
 		$this->load->library('clickpay_api');
 
-        $this->clickpayController = new ClickpayController($this);
+		$this->clickpayController = new ClickpayController($this);
 	}
 
 

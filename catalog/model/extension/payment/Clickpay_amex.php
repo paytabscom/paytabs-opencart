@@ -1,17 +1,17 @@
 <?php
 
-class ModelExtensionPaymentClickpayApplepay extends Model
+class ModelExtensionPaymentClickpayAmex extends Model
 {
-	public $_code = 'applepay';
+	public $_code = 'amex';
 
 	private $clickpayController;
 
 
 	private function init()
 	{
-        $this->load->library('clickpay_api');
+		$this->load->library('clickpay_api');
 
-        $this->clickpayController = new ClickpayCatalogModel($this);
+		$this->clickpayController = new ClickpayCatalogModel($this);
 	}
 
 
