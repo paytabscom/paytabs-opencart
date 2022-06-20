@@ -285,15 +285,13 @@ class PaytabsCatalogController
         if ($paypage->success) {
             $payment_url = $paypage->payment_url;
 
-            if($this->iframe)
-            {
-
-            }
-            else
-            {
+            if ($this->iframe) {
+                $pnl_iFrame = $this->controller->load->view("extension/payment/paytabs_framed", $data);
+                $this->controller->response->setOutput($pnl_iFrame);
+                return;
+            } else {
                 $this->controller->response->redirect($payment_url);
             }
-            
         } else {
             $paypage_msg = $paypage->message;
 
@@ -358,7 +356,6 @@ class PaytabsCatalogController
                 $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
 
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
-            
             }
         }
 
@@ -378,7 +375,6 @@ class PaytabsCatalogController
 
             $this->callbackFailure($res_msg);
         }
-        
     }
 
     public function redirectAfterPayment()
