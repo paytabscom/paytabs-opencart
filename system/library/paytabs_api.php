@@ -68,7 +68,6 @@ class PaytabsController
             $this->settingsKey = "payment_paytabs_{$this->controller->_code}"; // OpenCart 3.x
         }
 
-        $this->iframe = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
     }
 
 
@@ -284,8 +283,9 @@ class PaytabsCatalogController
 
         if ($paypage->success) {
             $payment_url = $paypage->payment_url;
-
-            if ($this->iframe) {
+            $iframe = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
+            if ($iframe) {
+                $data['payment_url'] = $payment_url;
                 $pnl_iFrame = $this->controller->load->view("extension/payment/paytabs_framed", $data);
                 $this->controller->response->setOutput($pnl_iFrame);
                 return;

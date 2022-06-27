@@ -1,25 +1,4 @@
-<!-- if (!iFrame) { -->
 <form action="{{ url_confirm }}" method="post" class="pull-right">
-	<input type="hidden" name="order" value="{{ order_id }}">
-	<button type="submit" class="btn btn-primary">{{ button_confirm }}</button>
-</form>
-	}
-
-<!-- if(iFrame){ -->
-	<div action="{{ url_confirm }}" method="post" class="pull-right">
 		<input type="hidden" name="order" value="{{ order_id }}">
-		<button type="submit" class="btn btn-primary" onclick="pt_submit('{{ order_id }}')">{{ button_confirm }}</button>
-	</div>
-	<div id="pay"></div>
-	
-	<script>
-		function pt_submit(order_id) {
-			$.post('{{ url_confirm }}', {
-				order_id: order_id
-			}).done(function(res) {
-				console.log(res);
-				$('#pay').html(res);
-			});
-		}
-	</script>
-<!-- } -->
+		<button type="submit" class="btn btn-primary">{{ button_confirm }}</button>
+</form>
