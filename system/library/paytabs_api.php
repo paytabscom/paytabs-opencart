@@ -286,6 +286,25 @@ class PaytabsCatalogController
             $iframe = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
             if ($iframe) {
                 $data['payment_url'] = $payment_url;
+
+                /** Fetch page parts */
+                $data['footer'] = $this->controller->load->controller('common/footer');
+                $data['header'] = $this->controller->load->controller('common/header');
+                $data['breadcrumbs'] = [
+                    [
+                        'text' => $this->controller->language->get('text_home'),
+                        'href' => $this->controller->url->link('common/home', '', true)
+                    ],
+                    [
+                        'text' => $this->controller->language->get('text_shopping_cart'),
+                        'href' => $this->controller->url->link('checkout/cart')
+                    ],
+                    [
+                        'text' => $this->controller->language->get('text_checkout'),
+                        'href' => $this->controller->url->link('checkout/checkout', '', true)
+                    ]
+                ];
+                
                 $pnl_iFrame = $this->controller->load->view("extension/payment/paytabs_framed", $data);
                 $this->controller->response->setOutput($pnl_iFrame);
                 return;
