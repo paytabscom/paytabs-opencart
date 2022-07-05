@@ -23,8 +23,6 @@ class PaytabsController
 
     private $settingsKey = '';
 
-    private $iframe;
-
     //
 
     function __construct($controller)
@@ -67,7 +65,6 @@ class PaytabsController
 
             $this->settingsKey = "payment_paytabs_{$this->controller->_code}"; // OpenCart 3.x
         }
-
     }
 
 
@@ -263,48 +260,42 @@ class PaytabsCatalogController
         $orderId = $this->controller->session->data['order_id'];
 
         $data['order_id'] = $orderId;
+        $data['iframe_mode'] = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
         $data['url_confirm'] = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/confirm", '', true);
 
         return $this->controller->load->view("extension/payment/paytabs_view", $data);
     }
 
+
     public function confirm(&$data)
     {
         $order_id = $this->controller->request->post['order'];
         $order_session_id = $this->controller->session->data['order_id'];
+        $order_session_payment = $this->controller->session->data['payment_method']['code'];
+
         if ($order_id != $order_session_id) {
             $this->_re_checkout('The Order has been changed');
             return;
         }
+        if ($order_session_payment != "paytabs_{$this->controller->_code}") {
+            $this->_re_checkout('Payment method is required');
+            return;
+        }
+
+        //
 
         $values = $this->prepareOrder();
 
         $paypage = $this->ptApi->create_pay_page($values);
 
+        $iframe = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
+
         if ($paypage->success) {
             $payment_url = $paypage->payment_url;
-            $iframe = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
+
             if ($iframe) {
                 $data['payment_url'] = $payment_url;
 
-                /** Fetch page parts */
-                $data['footer'] = $this->controller->load->controller('common/footer');
-                $data['header'] = $this->controller->load->controller('common/header');
-                $data['breadcrumbs'] = [
-                    [
-                        'text' => $this->controller->language->get('text_home'),
-                        'href' => $this->controller->url->link('common/home', '', true)
-                    ],
-                    [
-                        'text' => $this->controller->language->get('text_shopping_cart'),
-                        'href' => $this->controller->url->link('checkout/cart')
-                    ],
-                    [
-                        'text' => $this->controller->language->get('text_checkout'),
-                        'href' => $this->controller->url->link('checkout/checkout', '', true)
-                    ]
-                ];
-                
                 $pnl_iFrame = $this->controller->load->view("extension/payment/paytabs_framed", $data);
                 $this->controller->response->setOutput($pnl_iFrame);
                 return;
@@ -318,7 +309,11 @@ class PaytabsCatalogController
             $_logData = json_encode($values);
             PaytabsHelper::log("callback failed, Data [{$_logData}], response [{$_logResult}]", 3);
 
-            $this->_re_checkout($paypage_msg);
+            if ($iframe) {
+                $this->controller->response->setOutput($paypage_msg);
+            } else {
+                $this->_re_checkout($paypage_msg);
+            }
         }
     }
 
