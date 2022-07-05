@@ -337,7 +337,7 @@ class PaytabsCatalogController
             ? $response_data->transaction_id
             : false;
         if (!$transactionId) {
-            return $this->callbackFailure('Transaction ID is missing');
+            return 'Transaction ID is missing';
         }
 
         $this->controller->load->model('checkout/order');
@@ -365,7 +365,7 @@ class PaytabsCatalogController
                 $success = false;
                 $fraud = true;
             } else {
-                PaytabsHelper::log("PayTabs {$this->controller->_code} checkout successed");
+                PaytabsHelper::log("PayTabs {$this->controller->_code} checkout succeeded");
 
                 $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
 
@@ -387,9 +387,12 @@ class PaytabsCatalogController
                 }
             }
 
-            $this->callbackFailure($res_msg);
+            // $this->callbackFailure($res_msg);
         }
+
+        return $success;
     }
+
 
     public function redirectAfterPayment()
     {
@@ -435,7 +438,7 @@ class PaytabsCatalogController
                 $success = false;
                 $fraud = true;
             } else {
-                PaytabsHelper::log("PayTabs {$this->controller->_code} checkout successed");
+                PaytabsHelper::log("PayTabs {$this->controller->_code} checkout succeeded");
 
                 $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
             }
@@ -447,6 +450,7 @@ class PaytabsCatalogController
             $this->callbackFailure($res_msg);
         }
     }
+
 
     private function _confirmAmountPaid($order_info, $online_amount, $online_currency)
     {
