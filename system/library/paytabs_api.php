@@ -361,7 +361,7 @@ class PaytabsCatalogController
             // Check here if the result is tempered
 
             if (!$this->_confirmAmountPaid($order_info, $cart_amount, $cart_currency)) {
-                $res_msg = 'The Order has been altered';
+                $res_msg = "The Order has been altered, {$order_id}";
                 $success = false;
                 $fraud = true;
             } else {
@@ -533,6 +533,7 @@ class PaytabsCatalogController
         // $siteUrl = $this->controller->config->get('config_url');
         $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/redirectAfterPayment", '', true);
         $callback_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback", '', true);
+
         //
 
         $vouchers_arr = [];
@@ -833,6 +834,8 @@ function paytabs_error_log($message, $severity = 1)
 {
     $log = new Log(PAYTABS_DEBUG_FILE);
 
-    $_prefix = "[{$severity}] ";
+    $severity_str = $severity == 1 ? 'Info' : ($severity == 2 ? 'Warning' : 'Error');
+    $_prefix = "[{$severity_str}] ";
+
     $log->write($_prefix . $message);
 }
