@@ -1,6 +1,10 @@
 <?php
 
-class ControllerExtensionPaymentPaytabsAll extends Controller
+namespace Opencart\Admin\Controller\Extension\Paytabs\Payment;
+
+use Opencart\System\Library\PaytabsController;
+
+class PaytabsAll extends \Opencart\System\Engine\Controller
 {
 	public $_code = 'all';
 	public $error = array();
