@@ -16,7 +16,8 @@ class PaytabsAll extends \Opencart\System\Engine\Controller
 
 	function init()
 	{
-		$this->load->library('paytabs_api');
+		// $this->load->library('paytabs_api');
+        require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_api.php';
 
 		$this->paytabsController = new PaytabsController($this);
 	}
