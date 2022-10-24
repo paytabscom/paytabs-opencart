@@ -169,7 +169,11 @@ class PaytabsController
             $postKey = $value['key'];
             $configKey = $value['configKey'];
 
-            $values[$configKey] = $this->controller->request->post[$postKey];
+            $post_value = $this->controller->request->post[$postKey];
+
+            if (!is_null($post_value)) {
+                $values[$configKey] = $post_value;
+            }
         }
 
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $values);
