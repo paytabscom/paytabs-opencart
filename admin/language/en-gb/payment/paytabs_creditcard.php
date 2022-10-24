@@ -3,4 +3,5 @@
 $_['heading_title'] = 'PayTabs - CreditCard';
 
 // Text
-$_['text_paytabs_creditcard'] = '<img src="view/image/payment/paytabs/creditcard.svg" alt="PayTabs - Card" title="PayTabs - Card" />';
+$_images_url = HTTP_CATALOG . 'extension/paytabs/admin/view/image/';
+$_['text_paytabs_creditcard'] = '<img src="' . $_images_url . 'creditcard.svg" alt="PayTabs - Card" title="PayTabs - Card" />';

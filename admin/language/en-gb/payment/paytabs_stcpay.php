@@ -3,4 +3,5 @@
 $_['heading_title'] = 'PayTabs - StcPay';
 
 // Text
-$_['text_paytabs_stcpay'] = '<img src="view/image/payment/paytabs/stcpay.png" alt="PayTabs - STCPay" title="PayTabs - STCPay" />';
+$_images_url = HTTP_CATALOG . 'extension/paytabs/admin/view/image/';
+$_['text_paytabs_stcpay'] = '<img src="' . $_images_url . 'stcpay.png" alt="PayTabs - STCPay" title="PayTabs - STCPay" />';
