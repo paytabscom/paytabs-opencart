@@ -1,6 +1,10 @@
 <?php
 
-class ControllerExtensionPaymentPaytabsValu extends Controller
+namespace Opencart\Admin\Controller\Extension\Paytabs\Payment;
+
+use Opencart\System\Library\PaytabsController;
+
+class PaytabsValu extends \Opencart\System\Engine\Controller
 {
 	public $_code = 'valu';
 	public $error = array();
@@ -12,7 +16,8 @@ class ControllerExtensionPaymentPaytabsValu extends Controller
 
 	function init()
 	{
-		$this->load->library('paytabs_api');
+		// $this->load->library('paytabs_api');
+        require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_api.php';
 
 		$this->paytabsController = new PaytabsController($this);
 	}
