@@ -1,11 +1,14 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '3.5.0');
+namespace Opencart\System\Library;
+
+define('PAYTABS_PAYPAGE_VERSION', '4.0.0-a1');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
-require_once DIR_SYSTEM . '/library/paytabs_core.php';
+// require_once DIR_SYSTEM . '/library/paytabs_core.php';
+require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_core.php';
 
 class paytabs_api
 {
@@ -29,9 +32,9 @@ class PaytabsController
     {
         $this->controller = $controller;
 
-        $this->controller->load->library('paytabs_api');
+        // $this->controller->load->library('paytabs_api');
 
-        $this->controller->load->language("extension/payment/paytabs_strings");
+        $this->controller->load->language("extension/paytabs/payment/paytabs_strings");
         $this->controller->load->model('setting/setting');
 
         $this->controller->document->setTitle($this->controller->language->get("{$this->controller->_code}_heading_title"));
@@ -121,14 +124,14 @@ class PaytabsController
             ],
             [
                 'text' => $this->controller->language->get("{$this->controller->_code}_heading_title"),
-                'href' => $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}", "{$this->userToken_str}", true)
+                'href' => $this->controller->url->link("extension/paytabs/payment/paytabs_{$this->controller->_code}", "{$this->userToken_str}", true)
             ]
         ];
 
 
         /** Actions */
 
-        $data['action'] = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}", "{$this->userToken_str}", true);
+        $data['action'] = $this->controller->url->link("extension/paytabs/payment/paytabs_{$this->controller->_code}", "{$this->userToken_str}", true);
         $data['cancel'] = $this->controller->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true);
 
 
@@ -142,7 +145,7 @@ class PaytabsController
         if (PAYTABS_OPENCART_2_3) {
             /** Strings */ // OpenCart 2.3
 
-            $this->controller->load->language("extension/payment/paytabs_strings");
+            $this->controller->load->language("extension/paytabs/payment/paytabs_strings");
             $strings = $this->controller->language->all();
             foreach ($strings as $key => $value) {
                 if (substr($key, 0, 5) === "error") continue;
@@ -155,7 +158,7 @@ class PaytabsController
 
         $data['method'] = $this->controller->_code;
         $data['title'] = $this->controller->language->get("{$this->controller->_code}_heading_title");
-        $this->controller->response->setOutput($this->controller->load->view("extension/payment/paytabs_view", $data));
+        $this->controller->response->setOutput($this->controller->load->view("extension/paytabs/payment/paytabs_view", $data));
     }
 
 
@@ -179,7 +182,7 @@ class PaytabsController
 
     public function validate()
     {
-        if (!$this->controller->user->hasPermission('modify', "extension/payment/paytabs_{$this->controller->_code}")) {
+        if (!$this->controller->user->hasPermission('modify', "extension/paytabs/payment/paytabs_{$this->controller->_code}")) {
             $this->controller->error['warning'] = $this->controller->language->get('error_permission');
         }
 
@@ -261,9 +264,9 @@ class PaytabsCatalogController
 
         $data['order_id'] = $orderId;
         $data['iframe_mode'] = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
-        $data['url_confirm'] = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/confirm", '', true);
+        $data['url_confirm'] = $this->controller->url->link("extension/paytabs/payment/paytabs_{$this->controller->_code}/confirm", '', true);
 
-        return $this->controller->load->view("extension/payment/paytabs_view", $data);
+        return $this->controller->load->view("extension/paytabs/payment/paytabs_view", $data);
     }
 
 
@@ -296,7 +299,7 @@ class PaytabsCatalogController
             if ($iframe) {
                 $data['payment_url'] = $payment_url;
 
-                $pnl_iFrame = $this->controller->load->view("extension/payment/paytabs_framed", $data);
+                $pnl_iFrame = $this->controller->load->view("extension/paytabs/payment/paytabs_framed", $data);
                 $this->controller->response->setOutput($pnl_iFrame);
                 return;
             } else {
@@ -341,7 +344,7 @@ class PaytabsCatalogController
         }
 
         $this->controller->load->model('checkout/order');
-        $this->controller->load->model("extension/payment/paytabs_{$this->controller->_code}");
+        $this->controller->load->model("extension/paytabs/payment/paytabs_{$this->controller->_code}");
 
         $success = $response_data->success;
         $fraud = false;
@@ -405,7 +408,7 @@ class PaytabsCatalogController
         }
 
         $this->controller->load->model('checkout/order');
-        $this->controller->load->model("extension/payment/paytabs_{$this->controller->_code}");
+        $this->controller->load->model("extension/paytabs/payment/paytabs_{$this->controller->_code}");
 
         $is_valid_req = $this->ptApi->is_valid_redirect($this->controller->request->post);
         if (!$is_valid_req) {
@@ -508,7 +511,7 @@ class PaytabsCatalogController
         $data['header'] = $this->controller->load->controller('common/header');
 
         $data['paytabs_error'] = $message;
-        $this->controller->response->setOutput($this->controller->load->view("extension/payment/paytabs_error", $data));
+        $this->controller->response->setOutput($this->controller->load->view("extension/paytabs/payment/paytabs_error", $data));
     }
 
 
@@ -535,8 +538,8 @@ class PaytabsCatalogController
         $cart = $this->controller->cart;
 
         // $siteUrl = $this->controller->config->get('config_url');
-        $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/redirectAfterPayment", '', true);
-        $callback_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback", '', true);
+        $return_url = $this->controller->url->link("extension/paytabs/payment/paytabs_{$this->controller->_code}/redirectAfterPayment", '', true);
+        $callback_url = $this->controller->url->link("extension/paytabs/payment/paytabs_{$this->controller->_code}/callback", '', true);
 
         //
 
@@ -655,7 +658,7 @@ class PaytabsCatalogModel
     {
         $this->controller = $controller;
 
-        $this->controller->load->language("extension/payment/paytabs_strings");
+        $this->controller->load->language("extension/paytabs/payment/paytabs_strings");
     }
 
 
