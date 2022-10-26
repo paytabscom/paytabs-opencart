@@ -1,6 +1,8 @@
 <?php
 
-class ControllerExtensionPaymentPaytabsStcpay extends Controller
+namespace Opencart\Catalog\Controller\Extension\Paytabs\Payment;
+
+class  PaytabsStcpay extends \Opencart\System\Engine\Controller
 {
 	public $_code = 'stcpay';
 
@@ -9,7 +11,7 @@ class ControllerExtensionPaymentPaytabsStcpay extends Controller
 
 	public function init()
 	{
-		$this->load->library('paytabs_api');
+		require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_api.php';
 
 		$this->paytabsController = new PaytabsCatalogController($this);
 	}
