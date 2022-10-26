@@ -1,6 +1,8 @@
 <?php
 
-class ModelExtensionPaymentPaytabsMeeza extends Model
+namespace Opencart\Catalog\Model\Extension\Paytabs\Payment;
+
+class PaytabsMeeza extends \Opencart\System\Engine\Model
 {
 	public $_code = 'meeza';
 
@@ -9,7 +11,7 @@ class ModelExtensionPaymentPaytabsMeeza extends Model
 
 	private function init()
 	{
-		$this->load->library('paytabs_api');
+		require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_api.php';
 
 		$this->paytabsController = new PaytabsCatalogModel($this);
 	}

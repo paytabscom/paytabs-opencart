@@ -1,6 +1,8 @@
 <?php
 
-class ModelExtensionPaymentPaytabsMada extends Model
+namespace Opencart\Catalog\Model\Extension\Paytabs\Payment;
+
+class PaytabsMada extends \Opencart\System\Engine\Model
 {
 	public $_code = 'mada';
 
@@ -9,7 +11,7 @@ class ModelExtensionPaymentPaytabsMada extends Model
 
 	private function init()
 	{
-		$this->load->library('paytabs_api');
+		require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_api.php';
 
 		$this->paytabsController = new PaytabsCatalogModel($this);
 	}

@@ -1,6 +1,8 @@
 <?php
 
-class ModelExtensionPaymentPaytabsAmex extends Model
+namespace Opencart\Catalog\Model\Extension\Paytabs\Payment;
+
+class PaytabsAmex extends \Opencart\System\Engine\Model
 {
 	public $_code = 'amex';
 
@@ -9,7 +11,7 @@ class ModelExtensionPaymentPaytabsAmex extends Model
 
 	private function init()
 	{
-		$this->load->library('paytabs_api');
+		require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_api.php';
 
 		$this->paytabsController = new PaytabsCatalogModel($this);
 	}
