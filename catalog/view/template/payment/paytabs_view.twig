@@ -1,7 +1,7 @@
 {% if iframe_mode %}
 
 <div id="pt_paymentpage">
-	<div class="pull-right">
+	<div class="float-end">
 		<button type="button" class="btn btn-primary" onclick="pt_submit('{{ order_id }}')">{{ button_confirm }}</button>
 	</div>
 
@@ -33,7 +33,7 @@
 
 {% else %}
 
-<form action="{{ url_confirm }}" method="post" class="pull-right">
+<form action="{{ url_confirm }}" method="post" class="float-end">
 	<input type="hidden" name="order" value="{{ order_id }}">
 	<button type="submit" class="btn btn-primary">{{ button_confirm }}</button>
 </form>
