@@ -2,6 +2,8 @@
 
 namespace Opencart\Catalog\Model\Extension\Paytabs\Payment;
 
+use Opencart\System\Library\PaytabsCatalogModel;
+
 abstract class Paytabs extends \Opencart\System\Engine\Model
 {
 	public $_code = '';
@@ -17,10 +19,10 @@ abstract class Paytabs extends \Opencart\System\Engine\Model
 	}
 
 
-	public function getMethod($address, $total)
+	public function getMethod(array $address): array
 	{
 		$this->init();
 
-		return $this->paytabsController->getMethod($address, $total);
+		return $this->paytabsController->getMethod($address);
 	}
 }
