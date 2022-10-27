@@ -666,22 +666,19 @@ class PaytabsCatalogModel
     }
 
 
-    public function getMethod($address, $total = 0)
+    public function getMethod($address)
     {
         /** Read params */
 
         $currencyCode = $this->controller->session->data['currency'];
-        $ptTotal = (float) $this->controller->config->get(PaytabsAdapter::_key('total', $this->controller->_code));
-
-        $total1 = $this->controller->currency->format($total, $currencyCode, 0, false);
 
         /** Confirm the availability of the payment method */
 
         $status = true;
 
-        if ($ptTotal > 0 && $total1 < $ptTotal) {
-            $status = false;
-        } elseif (!$this->isAvailableForAddress($address)) {
+        if ($this->controller->cart->hasSubscription()) {
+			$status = false;
+		} elseif (!$this->isAvailableForAddress($address)) {
             $status = false;
         } elseif (!PaytabsHelper::paymentAllowed($this->controller->_code, $currencyCode)) {
             $status = false;
@@ -766,11 +763,6 @@ class PaytabsAdapter
             'configKey' => 'paytabs_{PAYMENTMETHOD}_valu_product_id',
             'required' => true,
             'methods' => ['valu']
-        ],
-        'total' => [
-            'key' => 'payment_paytabs_total',
-            'configKey' => 'paytabs_{PAYMENTMETHOD}_total',
-            'required' => false,
         ],
         'order_status_id' => [
             'key' => 'payment_paytabs_order_status_id',
