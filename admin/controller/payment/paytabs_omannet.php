@@ -2,8 +2,11 @@
 
 namespace Opencart\Admin\Controller\Extension\Paytabs\Payment;
 
+require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_api.php';
 
-class PaytabsOmannet extends \Opencart\System\Engine\Controller
+use Opencart\System\Library\PaytabsAdminController;
+
+class PaytabsOmannet extends PaytabsAdminController
 {
 	public $_code = 'omannet';
 }

@@ -14,9 +14,15 @@ class paytabs_api
 {
 }
 
-class PaytabsController
+abstract class PaytabsAdminController extends \Opencart\System\Engine\Controller
 {
-    private $controller;
+    // private $controller;
+
+    public $_code = '_';
+    public $error = array();
+    public $userToken;
+
+    //
 
     private $keys = PaytabsAdapter::KEYS;
 
@@ -28,24 +34,24 @@ class PaytabsController
 
     //
 
-    function __construct($controller)
+    function init()
     {
-        $this->controller = $controller;
+        // $this->controller = $controller;
 
         // $this->controller->load->library('paytabs_api');
 
-        $this->controller->load->language("extension/paytabs/payment/paytabs_strings");
-        $this->controller->load->model('setting/setting');
+        $this->load->language("extension/paytabs/payment/paytabs_strings");
+        $this->load->model('setting/setting');
 
-        $this->controller->document->setTitle($this->controller->language->get("{$this->controller->_code}_heading_title"));
+        $this->document->setTitle($this->language->get("{$this->_code}_heading_title"));
 
         $this->keys = array_filter($this->keys, function ($values) {
-            if (key_exists('methods', $values) && !in_array($this->controller->_code, $values['methods'])) return false;
+            if (key_exists('methods', $values) && !in_array($this->_code, $values['methods'])) return false;
             return true;
         });
 
         foreach ($this->keys as $key => &$value) {
-            $value['configKey'] = PaytabsAdapter::KEY_PREFIX . str_replace('_{PAYMENTMETHOD}_', "_{$this->controller->_code}_", $value['configKey']);
+            $value['configKey'] = PaytabsAdapter::KEY_PREFIX . str_replace('_{PAYMENTMETHOD}_', "_{$this->_code}_", $value['configKey']);
         }
 
         if (PAYTABS_OPENCART_2_3) {
@@ -53,36 +59,38 @@ class PaytabsController
 
             $token_str = 'token'; // OpenCart 2.3
 
-            $this->controller->userToken = $this->controller->session->data[$token_str];
-            $this->userToken_str = "token={$this->controller->userToken}"; // OpenCart 2.3
+            $this->userToken = $this->session->data[$token_str];
+            $this->userToken_str = "token={$this->userToken}"; // OpenCart 2.3
 
-            $this->settingsKey = "paytabs_{$this->controller->_code}"; // OpenCart 2.3
+            $this->settingsKey = "paytabs_{$this->_code}"; // OpenCart 2.3
 
         } else {
             $this->urlExtensions = 'marketplace/extension'; // OpenCart 3.x
 
             $token_str = 'user_token'; // OpenCart 3.x
 
-            $this->controller->userToken = $this->controller->session->data[$token_str];
-            $this->userToken_str = "user_token={$this->controller->userToken}"; // OpenCart 3.x
+            $this->userToken = $this->session->data[$token_str];
+            $this->userToken_str = "user_token={$this->userToken}"; // OpenCart 3.x
 
-            $this->settingsKey = "payment_paytabs_{$this->controller->_code}"; // OpenCart 3.x
+            $this->settingsKey = "payment_paytabs_{$this->_code}"; // OpenCart 3.x
         }
     }
 
 
-    public function index(&$data)
+    public function index()
     {
+        $this->init();
+
         /** Save request Handling */
 
-        if (($this->controller->request->server['REQUEST_METHOD'] == 'POST') && $this->controller->validate()) {
-            $this->controller->save();
+        if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
+            $this->save();
         }
 
 
         /** Error messages Handling */
 
-        PaytabsController::paytabs_errorList($this->controller->error, [
+        PaytabsAdminController::paytabs_errorList($this->error, [
             'warning',
             'profile_id',
             'endpoint',
@@ -94,19 +102,19 @@ class PaytabsController
         /** Fill values */
 
         $data['endpoints'] = PaytabsApi::getEndpoints();
-        $data['is_card_payment'] = PaytabsHelper::isCardPayment($this->controller->_code);
-        $data['support_iframe'] =  PaytabsHelper::supportIframe($this->controller->_code);
+        $data['is_card_payment'] = PaytabsHelper::isCardPayment($this->_code);
+        $data['support_iframe'] =  PaytabsHelper::supportIframe($this->_code);
 
-        $this->controller->load->model('localisation/order_status');
-        $data['order_statuses'] = $this->controller->model_localisation_order_status->getOrderStatuses();
+        $this->load->model('localisation/order_status');
+        $data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
 
-        $this->controller->load->model('localisation/geo_zone');
-        $data['geo_zones'] = $this->controller->model_localisation_geo_zone->getGeoZones();
+        $this->load->model('localisation/geo_zone');
+        $data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
 
-        PaytabsController::paytabs_fillVars(
+        PaytabsAdminController::paytabs_fillVars(
             $this->keys,
-            $this->controller->request->post,
-            $this->controller->config,
+            $this->request->post,
+            $this->config,
             $data
         );
 
@@ -115,38 +123,38 @@ class PaytabsController
 
         $data['breadcrumbs'] = [
             [
-                'text' => $this->controller->language->get('text_home'),
-                'href' => $this->controller->url->link('common/dashboard', "{$this->userToken_str}", true)
+                'text' => $this->language->get('text_home'),
+                'href' => $this->url->link('common/dashboard', "{$this->userToken_str}", true)
             ],
             [
-                'text' => $this->controller->language->get('text_extension'),
-                'href' => $this->controller->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true)
+                'text' => $this->language->get('text_extension'),
+                'href' => $this->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true)
             ],
             [
-                'text' => $this->controller->language->get("{$this->controller->_code}_heading_title"),
-                'href' => $this->controller->url->link("extension/paytabs/payment/paytabs_{$this->controller->_code}", "{$this->userToken_str}", true)
+                'text' => $this->language->get("{$this->_code}_heading_title"),
+                'href' => $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}", "{$this->userToken_str}", true)
             ]
         ];
 
 
         /** Actions */
 
-        $data['action'] = $this->controller->url->link("extension/paytabs/payment/paytabs_{$this->controller->_code}", "{$this->userToken_str}", true);
-        $data['cancel'] = $this->controller->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true);
+        $data['action'] = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}", "{$this->userToken_str}", true);
+        $data['cancel'] = $this->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true);
 
 
         /** Fetch page parts */
 
-        $data['header'] = $this->controller->load->controller('common/header');
-        $data['column_left'] = $this->controller->load->controller('common/column_left');
-        $data['footer'] = $this->controller->load->controller('common/footer');
+        $data['header'] = $this->load->controller('common/header');
+        $data['column_left'] = $this->load->controller('common/column_left');
+        $data['footer'] = $this->load->controller('common/footer');
 
 
         if (PAYTABS_OPENCART_2_3) {
             /** Strings */ // OpenCart 2.3
 
-            $this->controller->load->language("extension/paytabs/payment/paytabs_strings");
-            $strings = $this->controller->language->all();
+            $this->load->language("extension/paytabs/payment/paytabs_strings");
+            $strings = $this->language->all();
             foreach ($strings as $key => $value) {
                 if (substr($key, 0, 5) === "error") continue;
                 $data[$key] = $value;
@@ -156,9 +164,9 @@ class PaytabsController
 
         /** Response */
 
-        $data['method'] = $this->controller->_code;
-        $data['title'] = $this->controller->language->get("{$this->controller->_code}_heading_title");
-        $this->controller->response->setOutput($this->controller->load->view("extension/paytabs/payment/paytabs_view", $data));
+        $data['method'] = $this->_code;
+        $data['title'] = $this->language->get("{$this->_code}_heading_title");
+        $this->response->setOutput($this->load->view("extension/paytabs/payment/paytabs_view", $data));
     }
 
 
@@ -169,25 +177,25 @@ class PaytabsController
             $postKey = $value['key'];
             $configKey = $value['configKey'];
 
-            $post_value = $this->controller->request->post[$postKey];
+            $post_value = $this->request->post[$postKey];
 
             if (!is_null($post_value)) {
                 $values[$configKey] = $post_value;
             }
         }
 
-        $this->controller->model_setting_setting->editSetting($this->settingsKey, $values);
+        $this->model_setting_setting->editSetting($this->settingsKey, $values);
 
-        $this->controller->session->data['success'] = $this->controller->language->get('text_success');
+        $this->session->data['success'] = $this->language->get('text_success');
 
-        $this->controller->response->redirect($this->controller->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true));
+        $this->response->redirect($this->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true));
     }
 
 
     public function validate()
     {
-        if (!$this->controller->user->hasPermission('modify', "extension/paytabs/payment/paytabs_{$this->controller->_code}")) {
-            $this->controller->error['warning'] = $this->controller->language->get('error_permission');
+        if (!$this->user->hasPermission('modify', "extension/paytabs/payment/paytabs_{$this->_code}")) {
+            $this->error['warning'] = $this->language->get('error_permission');
         }
 
         foreach ($this->keys as $option => $value) {
@@ -196,34 +204,34 @@ class PaytabsController
 
             if (!$required) continue;
 
-            if (!$this->controller->request->post[$key]) {
-                $this->controller->error[$option] = $this->controller->language->get("error_{$option}");
+            if (!$this->request->post[$key]) {
+                $this->error[$option] = $this->language->get("error_{$option}");
             }
         }
 
-        return !$this->controller->error;
+        return !$this->error;
     }
 
 
     public function install()
     {
-        $this->controller->load->model('setting/setting');
+        $this->load->model('setting/setting');
 
         $defaults = [
-            PaytabsAdapter::_key('sort_order', $this->controller->_code) => ($this->controller->_code == 'mada') ? 1 : 80,
-            PaytabsAdapter::_key('order_status_id',       $this->controller->_code) => 2, // Processing
-            PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code) => 8, // Denied
+            PaytabsAdapter::_key('sort_order', $this->_code) => ($this->_code == 'mada') ? 1 : 80,
+            PaytabsAdapter::_key('order_status_id',       $this->_code) => 2, // Processing
+            PaytabsAdapter::_key('order_fraud_status_id', $this->_code) => 8, // Denied
         ];
 
-        if (PaytabsHelper::isCardPayment($this->controller->_code)) {
+        if (PaytabsHelper::isCardPayment($this->_code)) {
             $allow_associated_methods = true;
-            if ($this->controller->_code == 'knet') {
+            if ($this->_code == 'knet') {
                 $allow_associated_methods = false;
             }
-            $defaults[PaytabsAdapter::_key('allow_associated_methods', $this->controller->_code)] = $allow_associated_methods;
+            $defaults[PaytabsAdapter::_key('allow_associated_methods', $this->_code)] = $allow_associated_methods;
         }
 
-        $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
+        $this->model_setting_setting->editSetting($this->settingsKey, $defaults);
     }
 
     //
@@ -677,8 +685,8 @@ class PaytabsCatalogModel
         $status = true;
 
         if ($this->controller->cart->hasSubscription()) {
-			$status = false;
-		} elseif (!$this->isAvailableForAddress($address)) {
+            $status = false;
+        } elseif (!$this->isAvailableForAddress($address)) {
             $status = false;
         } elseif (!PaytabsHelper::paymentAllowed($this->controller->_code, $currencyCode)) {
             $status = false;

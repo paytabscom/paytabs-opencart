@@ -2,8 +2,11 @@
 
 namespace Opencart\Admin\Controller\Extension\Paytabs\Payment;
 
+require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_api.php';
 
-class PaytabsApplepay extends Paytabs
+use Opencart\System\Library\PaytabsAdminController;
+
+class PaytabsApplepay extends PaytabsAdminController
 {
 	public $_code = 'applepay';
 }
