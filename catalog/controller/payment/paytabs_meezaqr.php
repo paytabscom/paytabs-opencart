@@ -2,7 +2,11 @@
 
 namespace Opencart\Catalog\Controller\Extension\Paytabs\Payment;
 
-class PaytabsMeezaqr extends Paytabs
+require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_api.php';
+
+use Opencart\System\Library\PaytabsCatalogController;
+
+class PaytabsMeezaqr extends PaytabsCatalogController
 {
 	public $_code = 'meezaqr';
 }

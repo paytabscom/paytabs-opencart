@@ -255,44 +255,50 @@ abstract class PaytabsAdminController extends \Opencart\System\Engine\Controller
 }
 
 
-class PaytabsCatalogController
+abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controller
 {
-    private $controller;
+    public $_code = '';
+
+    // private $controller;
     private $ptApi;
 
-    function __construct($controller)
+    function init()
     {
-        $this->controller = $controller;
+        // $this->controller = $controller;
 
-        $this->ptApi = (new PaytabsAdapter($this->controller->config, $this->controller->_code))->pt();
+        $this->ptApi = (new PaytabsAdapter($this->config, $this->_code))->pt();
     }
 
 
-    public function index(&$data)
+    public function index()
     {
-        $data['button_confirm'] = $this->controller->language->get('button_confirm');
+        $this->init();
 
-        $orderId = $this->controller->session->data['order_id'];
+        $data['button_confirm'] = $this->language->get('button_confirm');
+
+        $orderId = $this->session->data['order_id'];
 
         $data['order_id'] = $orderId;
-        $data['iframe_mode'] = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
-        $data['url_confirm'] = $this->controller->url->link("extension/paytabs/payment/paytabs_{$this->controller->_code}|confirm", '', true);
+        $data['iframe_mode'] = (bool) $this->config->get(PaytabsAdapter::_key('iframe', $this->_code));
+        $data['url_confirm'] = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}|confirm", '', true);
 
-        return $this->controller->load->view("extension/paytabs/payment/paytabs_view", $data);
+        return $this->load->view("extension/paytabs/payment/paytabs_view", $data);
     }
 
 
-    public function confirm(&$data)
+    public function confirm()
     {
-        $order_id = $this->controller->request->post['order'];
-        $order_session_id = $this->controller->session->data['order_id'];
-        $order_session_payment = $this->controller->session->data['payment_method'];
+        $this->init();
+
+        $order_id = $this->request->post['order'];
+        $order_session_id = $this->session->data['order_id'];
+        $order_session_payment = $this->session->data['payment_method'];
 
         if ($order_id != $order_session_id) {
             $this->_re_checkout('The Order has been changed');
             return;
         }
-        if ($order_session_payment != "paytabs_{$this->controller->_code}") {
+        if ($order_session_payment != "paytabs_{$this->_code}") {
             $this->_re_checkout('Payment method is required');
             return;
         }
@@ -303,7 +309,7 @@ class PaytabsCatalogController
 
         $paypage = $this->ptApi->create_pay_page($values);
 
-        $iframe = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
+        $iframe = (bool) $this->config->get(PaytabsAdapter::_key('iframe', $this->_code));
 
         if ($paypage->success) {
             $payment_url = $paypage->payment_url;
@@ -311,11 +317,11 @@ class PaytabsCatalogController
             if ($iframe) {
                 $data['payment_url'] = $payment_url;
 
-                $pnl_iFrame = $this->controller->load->view("extension/paytabs/payment/paytabs_framed", $data);
-                $this->controller->response->setOutput($pnl_iFrame);
+                $pnl_iFrame = $this->load->view("extension/paytabs/payment/paytabs_framed", $data);
+                $this->response->setOutput($pnl_iFrame);
                 return;
             } else {
-                $this->controller->response->redirect($payment_url);
+                $this->response->redirect($payment_url);
             }
         } else {
             $paypage_msg = $paypage->message;
@@ -325,7 +331,7 @@ class PaytabsCatalogController
             PaytabsHelper::log("callback failed, Data [{$_logData}], response [{$_logResult}]", 3);
 
             if ($iframe) {
-                $this->controller->response->setOutput($paypage_msg);
+                $this->response->setOutput($paypage_msg);
             } else {
                 $this->_re_checkout($paypage_msg);
             }
@@ -335,13 +341,15 @@ class PaytabsCatalogController
 
     private function _re_checkout($msg)
     {
-        $this->controller->session->data['error'] = $msg;
-        $this->controller->response->redirect($this->controller->url->link('checkout/checkout', '', true));
+        $this->session->data['error'] = $msg;
+        $this->response->redirect($this->url->link('checkout/checkout', '', true));
     }
 
 
     public function callback()
     {
+        $this->init();
+
         $response_data = $this->ptApi->read_response(true);
         if (!$response_data) {
             return;
@@ -355,8 +363,8 @@ class PaytabsCatalogController
             return 'Transaction ID is missing';
         }
 
-        $this->controller->load->model('checkout/order');
-        $this->controller->load->model("extension/paytabs/payment/paytabs_{$this->controller->_code}");
+        $this->load->model('checkout/order');
+        $this->load->model("extension/paytabs/payment/paytabs_{$this->_code}");
 
         $success = $response_data->success;
         $fraud = false;
@@ -365,7 +373,7 @@ class PaytabsCatalogController
         $cart_amount = @$response_data->cart_amount;
         $cart_currency = $response_data->cart_currency;
 
-        $order_info = $this->controller->model_checkout_order->getOrder($order_id);
+        $order_info = $this->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
             PaytabsHelper::log("callback failed, No Order found [{$order_id}]", 3);
             return;
@@ -380,11 +388,11 @@ class PaytabsCatalogController
                 $success = false;
                 $fraud = true;
             } else {
-                PaytabsHelper::log("PayTabs {$this->controller->_code} checkout succeeded");
+                PaytabsHelper::log("PayTabs {$this->_code} checkout succeeded");
 
-                $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
+                $successStatus = $this->config->get(PaytabsAdapter::_key('order_status_id', $this->_code));
 
-                $this->controller->model_checkout_order->addHistory($order_id, $successStatus, $res_msg);
+                $this->model_checkout_order->addHistory($order_id, $successStatus, $res_msg);
             }
         }
 
@@ -393,12 +401,12 @@ class PaytabsCatalogController
             PaytabsHelper::log("callback failed, response [{$_logVerify}]", 3);
 
             if ($fraud) {
-                $fraudStatus = $this->controller->config->get(PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code));
-                $this->controller->model_checkout_order->addHistory($order_id, $fraudStatus, $res_msg);
+                $fraudStatus = $this->config->get(PaytabsAdapter::_key('order_fraud_status_id', $this->_code));
+                $this->model_checkout_order->addHistory($order_id, $fraudStatus, $res_msg);
             } else {
-                $failedStatus = $this->controller->config->get(PaytabsAdapter::_key('order_failed_status_id', $this->controller->_code));
+                $failedStatus = $this->config->get(PaytabsAdapter::_key('order_failed_status_id', $this->_code));
                 if ($failedStatus) {
-                    $this->controller->model_checkout_order->addHistory($order_id, $failedStatus, $res_msg);
+                    $this->model_checkout_order->addHistory($order_id, $failedStatus, $res_msg);
                 }
             }
 
@@ -412,19 +420,21 @@ class PaytabsCatalogController
     public function redirectAfterPayment()
     {
         $transactionId =
-            isset($this->controller->request->post['tranRef'])
-            ? $this->controller->request->post['tranRef']
+            isset($this->request->post['tranRef'])
+            ? $this->request->post['tranRef']
             : false;
         if (!$transactionId) {
             return $this->callbackFailure('Transaction ID is missing');
         }
 
-        $this->controller->load->model('checkout/order');
-        $this->controller->load->model("extension/paytabs/payment/paytabs_{$this->controller->_code}");
+        $this->init();
 
-        $is_valid_req = $this->ptApi->is_valid_redirect($this->controller->request->post);
+        $this->load->model('checkout/order');
+        $this->load->model("extension/paytabs/payment/paytabs_{$this->_code}");
+
+        $is_valid_req = $this->ptApi->is_valid_redirect($this->request->post);
         if (!$is_valid_req) {
-            $_logVerify = json_encode($this->controller->request->request);
+            $_logVerify = json_encode($this->request->request);
             PaytabsHelper::log("return failed, Fraud request [{$_logVerify}]", 3);
             return;
         }
@@ -438,7 +448,7 @@ class PaytabsCatalogController
         $cart_amount = @$verify_response->cart_amount;
         $cart_currency = @$verify_response->cart_currency;
 
-        $order_info = $this->controller->model_checkout_order->getOrder($order_id);
+        $order_info = $this->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
             PaytabsHelper::log("return failed, No Order found [{$order_id}]", 3);
             return;
@@ -453,9 +463,9 @@ class PaytabsCatalogController
                 $success = false;
                 $fraud = true;
             } else {
-                PaytabsHelper::log("PayTabs {$this->controller->_code} checkout succeeded");
+                PaytabsHelper::log("PayTabs {$this->_code} checkout succeeded");
 
-                $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
+                $this->response->redirect($this->url->link('checkout/success', '', true));
             }
         }
 
@@ -488,42 +498,42 @@ class PaytabsCatalogController
 
     private function callbackFailure($message)
     {
-        $this->controller->load->language('checkout/failure');
+        $this->load->language('checkout/failure');
 
-        $this->controller->document->setTitle($this->controller->language->get('heading_title'));
+        $this->document->setTitle($this->language->get('heading_title'));
 
         $data['breadcrumbs'] = [
             [
-                'text' => $this->controller->language->get('text_home'),
-                'href' => $this->controller->url->link('common/home', '', true)
+                'text' => $this->language->get('text_home'),
+                'href' => $this->url->link('common/home', '', true)
             ],
             [
-                'text' => $this->controller->language->get('text_basket'),
-                'href' => $this->controller->url->link('checkout/cart')
+                'text' => $this->language->get('text_basket'),
+                'href' => $this->url->link('checkout/cart')
             ],
             [
-                'text' => $this->controller->language->get('text_checkout'),
-                'href' => $this->controller->url->link('checkout/checkout', '', true)
+                'text' => $this->language->get('text_checkout'),
+                'href' => $this->url->link('checkout/checkout', '', true)
             ],
             [
-                'text' => $this->controller->language->get('text_failure'),
-                'href' => $this->controller->url->link('checkout/failure', '', true)
+                'text' => $this->language->get('text_failure'),
+                'href' => $this->url->link('checkout/failure', '', true)
             ]
         ];
 
-        $data['text_message'] = sprintf($this->controller->language->get('text_message'), $this->controller->url->link('information/contact', '', true));
+        $data['text_message'] = sprintf($this->language->get('text_message'), $this->url->link('information/contact', '', true));
 
-        $data['continue'] = $this->controller->url->link('common/home', '', true);
+        $data['continue'] = $this->url->link('common/home', '', true);
 
-        $data['column_left'] = $this->controller->load->controller('common/column_left');
-        $data['column_right'] = $this->controller->load->controller('common/column_right');
-        $data['content_top'] = $this->controller->load->controller('common/content_top');
-        $data['content_bottom'] = $this->controller->load->controller('common/content_bottom');
-        $data['footer'] = $this->controller->load->controller('common/footer');
-        $data['header'] = $this->controller->load->controller('common/header');
+        $data['column_left'] = $this->load->controller('common/column_left');
+        $data['column_right'] = $this->load->controller('common/column_right');
+        $data['content_top'] = $this->load->controller('common/content_top');
+        $data['content_bottom'] = $this->load->controller('common/content_bottom');
+        $data['footer'] = $this->load->controller('common/footer');
+        $data['header'] = $this->load->controller('common/header');
 
         $data['paytabs_error'] = $message;
-        $this->controller->response->setOutput($this->controller->load->view("extension/paytabs/payment/paytabs_error", $data));
+        $this->response->setOutput($this->load->view("extension/paytabs/payment/paytabs_error", $data));
     }
 
 
@@ -531,7 +541,7 @@ class PaytabsCatalogController
 
     private function getPrice($value, $order_info)
     {
-        return $this->controller->currency->format($value, $order_info['currency_code'], $order_info['currency_value'], false);
+        return $this->currency->format($value, $order_info['currency_code'], $order_info['currency_value'], false);
     }
 
     /**
@@ -543,21 +553,22 @@ class PaytabsCatalogController
      */
     private function prepareOrder()
     {
-        $this->controller->load->model('checkout/order');
+        $this->load->model('checkout/order');
 
-        $orderId = $this->controller->session->data['order_id'];
-        $order_info = $this->controller->model_checkout_order->getOrder($orderId);
-        $cart = $this->controller->cart;
+        $orderId = $this->session->data['order_id'];
+        $order_info = $this->model_checkout_order->getOrder($orderId);
+        $cart = $this->cart;
 
-        // $siteUrl = $this->controller->config->get('config_url');
-        $return_url = $this->controller->url->link("extension/paytabs/payment/paytabs_{$this->controller->_code}|redirectAfterPayment", '', true);
-        $callback_url = $this->controller->url->link("extension/paytabs/payment/paytabs_{$this->controller->_code}|callback", '', true);
+        // $siteUrl = $this->config->get('config_url');
+        $return_url = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}|redirectAfterPayment", '', true);
+        $callback_url = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}|callback", '', true);
 
+        $callback_url = str_replace('https://sites.localhost', 'https://d0e2-86-96-35-218.ngrok.io', $callback_url);
         //
 
         $vouchers_arr = [];
-        if (isset($this->controller->session->data["vouchers"])) {
-            $vouchers = $this->controller->session->data["vouchers"];
+        if (isset($this->session->data["vouchers"])) {
+            $vouchers = $this->session->data["vouchers"];
 
             $vouchers_arr = array_map(function ($p) use ($order_info) {
                 $name = $p['description'];
@@ -566,8 +577,8 @@ class PaytabsCatalogController
             }, $vouchers);
         }
 
-        // $cost = $this->controller->session->data['shipping_method']['cost'];
-        // $subtotal = $this->controller->cart->getSubTotal();
+        // $cost = $this->session->data['shipping_method']['cost'];
+        // $subtotal = $this->cart->getSubTotal();
         // $discount = $subtotal + $cost - $order_info['total'];
         // $total = $subtotal + $cost;
         $total = $order_info['total'];
@@ -599,20 +610,20 @@ class PaytabsCatalogController
         $zone_billing = PaytabsHelper::getNonEmpty($order_info['payment_zone'], $order_info['payment_city']);
         $zone_shipping = PaytabsHelper::getNonEmpty($order_info['shipping_zone'], $order_info['shipping_city'], $zone_billing);
 
-        $lang_code = $this->controller->language->get('code');
+        $lang_code = $this->language->get('code');
         // $lang = ($lang_code == 'ar') ? 'Arabic' : 'English';
 
         //
 
-        $hide_shipping = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_shipping', $this->controller->_code));
-        $iframe = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
-        $allow_associated_methods = (bool) $this->controller->config->get(PaytabsAdapter::_key('allow_associated_methods', $this->controller->_code));
+        $hide_shipping = (bool) $this->config->get(PaytabsAdapter::_key('hide_shipping', $this->_code));
+        $iframe = (bool) $this->config->get(PaytabsAdapter::_key('iframe', $this->_code));
+        $allow_associated_methods = (bool) $this->config->get(PaytabsAdapter::_key('allow_associated_methods', $this->_code));
 
         //
 
         $holder = new PaytabsRequestHolder();
         $holder
-            ->set01PaymentCode($this->controller->_code, $allow_associated_methods, $order_info['currency_code'])
+            ->set01PaymentCode($this->_code, $allow_associated_methods, $order_info['currency_code'])
             ->set02Transaction(PaytabsEnum::TRAN_TYPE_SALE, PaytabsEnum::TRAN_CLASS_ECOM)
             ->set03Cart(
                 $orderId,
@@ -649,8 +660,8 @@ class PaytabsCatalogController
             ->set09Framed($iframe, 'top')
             ->set99PluginInfo('OpenCart', VERSION, PAYTABS_PAYPAGE_VERSION);
 
-        if ($this->controller->_code === 'valu') {
-            $valu_product_id = $this->controller->config->get(PaytabsAdapter::_key('valu_product_id', $this->controller->_code));
+        if ($this->_code === 'valu') {
+            $valu_product_id = $this->config->get(PaytabsAdapter::_key('valu_product_id', $this->_code));
             // $holder->set20ValuParams($valu_product_id, 0);
         }
 
