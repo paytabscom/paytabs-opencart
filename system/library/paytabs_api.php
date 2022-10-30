@@ -563,7 +563,6 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
         $return_url = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}|redirectAfterPayment", '', true);
         $callback_url = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}|callback", '', true);
 
-        $callback_url = str_replace('https://sites.localhost', 'https://d0e2-86-96-35-218.ngrok.io', $callback_url);
         //
 
         $vouchers_arr = [];
@@ -672,34 +671,38 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
 }
 
 
-class PaytabsCatalogModel
+abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
 {
-    private $controller;
+    public $_code = '';
+
+    // private $controller;
 
 
-    function __construct($controller)
+    function init()
     {
-        $this->controller = $controller;
+        // $this->controller = $controller;
 
-        $this->controller->load->language("extension/paytabs/payment/paytabs_strings");
+        $this->load->language("extension/paytabs/payment/paytabs_strings");
     }
 
 
     public function getMethod($address)
     {
+        $this->init();
+
         /** Read params */
 
-        $currencyCode = $this->controller->session->data['currency'];
+        $currencyCode = $this->session->data['currency'];
 
         /** Confirm the availability of the payment method */
 
         $status = true;
 
-        if ($this->controller->cart->hasSubscription()) {
+        if ($this->cart->hasSubscription()) {
             $status = false;
         } elseif (!$this->isAvailableForAddress($address)) {
             $status = false;
-        } elseif (!PaytabsHelper::paymentAllowed($this->controller->_code, $currencyCode)) {
+        } elseif (!PaytabsHelper::paymentAllowed($this->_code, $currencyCode)) {
             $status = false;
         }
 
@@ -710,10 +713,10 @@ class PaytabsCatalogModel
 
         if ($status) {
             $method_data = array(
-                'code'       => "paytabs_{$this->controller->_code}",
-                'title'      => $this->controller->language->get("{$this->controller->_code}_text_title"),
+                'code'       => "paytabs_{$this->_code}",
+                'title'      => $this->language->get("{$this->_code}_text_title"),
                 'terms'      => '',
-                'sort_order' => $this->controller->config->get(PaytabsAdapter::_key('sort_order', $this->controller->_code))
+                'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
             );
         }
 
@@ -723,7 +726,7 @@ class PaytabsCatalogModel
 
     private function isAvailableForAddress($address)
     {
-        $geoZoneId = (int) $this->controller->config->get(PaytabsAdapter::_key('geo_zone_id', $this->controller->_code));
+        $geoZoneId = (int) $this->config->get(PaytabsAdapter::_key('geo_zone_id', $this->_code));
         $countryId = (int) $address['country_id'];
         $zoneId = (int) $address['zone_id'];
 
@@ -732,7 +735,7 @@ class PaytabsCatalogModel
         }
 
         $table = DB_PREFIX . "zone_to_geo_zone";
-        $query = $this->controller->db->query(
+        $query = $this->db->query(
             "SELECT * FROM ${table} WHERE geo_zone_id = '{$geoZoneId}' AND country_id = '{$countryId}' AND (zone_id = '{$zoneId}' OR zone_id = '0')"
         );
 

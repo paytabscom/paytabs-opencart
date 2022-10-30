@@ -2,7 +2,11 @@
 
 namespace Opencart\Catalog\Model\Extension\Paytabs\Payment;
 
-class PaytabsKnet extends Paytabs
+require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_api.php';
+
+use Opencart\System\Library\PaytabsCatalogModel;
+
+class PaytabsKnet extends PaytabsCatalogModel
 {
 	public $_code = 'knet';
 }
