@@ -3,6 +3,7 @@
 The official **OpenCart** Plugin for PayTabs (PT-2).
 
 Supports OpenCart **4.x**
+
 Supports OpenCart **2.3** & **3.x**, release version (v3.5.0)
 
 ---
