@@ -2,8 +2,7 @@
 
 namespace Opencart\System\Library;
 
-define('PAYTABS_PAYPAGE_VERSION', '4.0.0-a1');
-define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
+define('PAYTABS_PAYPAGE_VERSION', '4.0.0');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
@@ -857,7 +856,7 @@ class PaytabsAdapter
 
 function paytabs_error_log($message, $severity = 1)
 {
-    $log = new Log(PAYTABS_DEBUG_FILE);
+    $log = new Log(PAYTABS_DEBUG_FILE_NAME);
 
     $severity_str = $severity == 1 ? 'Info' : ($severity == 2 ? 'Warning' : 'Error');
     $_prefix = "[{$severity_str}] ";
