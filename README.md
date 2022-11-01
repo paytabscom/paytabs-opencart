@@ -2,7 +2,8 @@
 
 The official **OpenCart** Plugin for PayTabs (PT-2).
 
-Supports OpenCart **2.3** & **3.x**
+Supports OpenCart **4.x**
+Supports OpenCart **2.3** & **3.x**, release version (v3.5.0)
 
 - - -
 
@@ -10,7 +11,17 @@ Supports OpenCart **2.3** & **3.x**
 
 ### Install using OpenCart Admin panel
 
-1. Download the latest release of the plugin [Click here: 3.5.0](<https://github.com/paytabscom/paytabs-opencart/releases/download/3.5.0/paytabs-opencart.ocmod.zip>)
+#### OpenCart 4.x
+
+1. Download the latest release of the plugin [OpenCart 4.x: (v4.0.0)](https://github.com/paytabscom/paytabs-opencart/releases/download/4.0.0/paytabs.ocmod.zip)
+2. Go to `"OpenCart admin panel" >> Extensions >> Installer`
+3. Click `Upload`
+4. Select the downloaded zip file (`paytabs-opencart.ocmod.zip`)
+5. Wait until the upload *Progress* success
+
+#### OpenCart 3.x / OpenCart 2.3
+
+1. Download the latest release of the plugin [OpenCart 3.x / 2.3 (v3.5.0)](https://github.com/paytabscom/paytabs-opencart/releases/download/3.5.0/paytabs-opencart.ocmod.zip)
 2. Go to `"OpenCart admin panel" >> Extensions >> Installer`
 3. Click `Upload`
 4. Select the downloaded zip file (`paytabs-opencart.ocmod.zip`)
@@ -21,6 +32,14 @@ Supports OpenCart **2.3** & **3.x**
 *Note 2*: By removing the Plugin from the `Extension Installer` admin page, You are removing the configurations of the plugin.
 
 ### Install using FTP method
+
+#### OpenCart 4.x
+
+1. Download the latest version
+2. Extract the zip file, Rename to *paytabs*
+3. Upload the folder to `/opencart/extension/`
+
+#### OpenCart 3.x / OpenCart 2.3
 
 1. Upload the content of this repo to the root folder of your OpenCart's website
 
