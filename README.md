@@ -16,8 +16,9 @@ Supports OpenCart **2.3** & **3.x**, release version (v3.5.0)
 1. Download the latest release of the plugin [OpenCart 4.x: (v4.0.0)](https://github.com/paytabscom/paytabs-opencart/releases/download/4.0.0/paytabs.ocmod.zip)
 2. Go to `"OpenCart admin panel" >> Extensions >> Installer`
 3. Click `Upload`
-4. Select the downloaded zip file (`paytabs-opencart.ocmod.zip`)
+4. Select the downloaded zip file (`paytabs.ocmod.zip`)
 5. Wait until the upload *Progress* success
+6. On the plugin row `PayTabs - OpenCart`: Click **Install**
 
 #### OpenCart 3.x / OpenCart 2.3
 
@@ -35,7 +36,10 @@ Supports OpenCart **2.3** & **3.x**, release version (v3.5.0)
 
 #### OpenCart 4.x
 
-1. Not supported
+1. Download the latest version (`paytabs.ocmod.zip`)
+2. Upload the folder to `/opencart/system/storage/marketplace/`
+3. Go to `"OpenCart admin panel" >> Extensions >> Installer`
+4. On the plugin row `PayTabs - OpenCart`: Click **Install**
 
 #### OpenCart 3.x / OpenCart 2.3
 
