@@ -5,7 +5,7 @@ The official **OpenCart** Plugin for PayTabs (PT-2).
 Supports OpenCart **4.x**
 Supports OpenCart **2.3** & **3.x**, release version (v3.5.0)
 
-- - -
+---
 
 ## Installation
 
@@ -35,9 +35,7 @@ Supports OpenCart **2.3** & **3.x**, release version (v3.5.0)
 
 #### OpenCart 4.x
 
-1. Download the latest version
-2. Extract the zip file, Rename to *paytabs*
-3. Upload the folder to `/opencart/extension/`
+1. Not supported
 
 #### OpenCart 3.x / OpenCart 2.3
 
@@ -45,7 +43,7 @@ Supports OpenCart **2.3** & **3.x**, release version (v3.5.0)
 
 *Note: In case a previous version already installed, Replace all previous files when asking.*
 
-- - -
+---
 
 ## Activating the Plugin
 
@@ -54,7 +52,7 @@ Supports OpenCart **2.3** & **3.x**, release version (v3.5.0)
 3. Look for the preferred payment method from the available list of PayTabs payment methods *(`PayTabs - CreditCard` for example)*
 4. Click the *Green plus* button next to the plugin and wait until the installation completes
 
-- - -
+---
 
 ## Configure the Plugin
 
@@ -69,7 +67,7 @@ Supports OpenCart **2.3** & **3.x**, release version (v3.5.0)
 7. Configure other options as your need
 8. Click the `Save` button *(The blue button on top-right of the page)* button
 
-- - -
+---
 
 ## Log Access
 
@@ -81,6 +79,6 @@ Supports OpenCart **2.3** & **3.x**, release version (v3.5.0)
 
 1. Navigate to: `"OpenCart admin panel" >> System >> Maintenance >> Error Logs`
 
-- - -
+---
 
 Done
