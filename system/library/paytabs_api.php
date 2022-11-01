@@ -1,19 +1,27 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '3.5.0');
-define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
+namespace Opencart\System\Library;
+
+define('PAYTABS_PAYPAGE_VERSION', '4.0.0');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
-require_once DIR_SYSTEM . '/library/paytabs_core.php';
+// require_once DIR_SYSTEM . '/library/paytabs_core.php';
+require_once DIR_EXTENSION . 'paytabs/system/library/paytabs_core.php';
 
 class paytabs_api
 {
 }
 
-class PaytabsController
+abstract class PaytabsAdminController extends \Opencart\System\Engine\Controller
 {
-    private $controller;
+    // private $controller;
+
+    public $_code = '_';
+    public $error = array();
+    public $userToken;
+
+    //
 
     private $keys = PaytabsAdapter::KEYS;
 
@@ -25,24 +33,24 @@ class PaytabsController
 
     //
 
-    function __construct($controller)
+    function init()
     {
-        $this->controller = $controller;
+        // $this->controller = $controller;
 
-        $this->controller->load->library('paytabs_api');
+        // $this->controller->load->library('paytabs_api');
 
-        $this->controller->load->language("extension/payment/paytabs_strings");
-        $this->controller->load->model('setting/setting');
+        $this->load->language("extension/paytabs/payment/paytabs_strings");
+        $this->load->model('setting/setting');
 
-        $this->controller->document->setTitle($this->controller->language->get("{$this->controller->_code}_heading_title"));
+        $this->document->setTitle($this->language->get("{$this->_code}_heading_title"));
 
         $this->keys = array_filter($this->keys, function ($values) {
-            if (key_exists('methods', $values) && !in_array($this->controller->_code, $values['methods'])) return false;
+            if (key_exists('methods', $values) && !in_array($this->_code, $values['methods'])) return false;
             return true;
         });
 
         foreach ($this->keys as $key => &$value) {
-            $value['configKey'] = PaytabsAdapter::KEY_PREFIX . str_replace('_{PAYMENTMETHOD}_', "_{$this->controller->_code}_", $value['configKey']);
+            $value['configKey'] = PaytabsAdapter::KEY_PREFIX . str_replace('_{PAYMENTMETHOD}_', "_{$this->_code}_", $value['configKey']);
         }
 
         if (PAYTABS_OPENCART_2_3) {
@@ -50,36 +58,38 @@ class PaytabsController
 
             $token_str = 'token'; // OpenCart 2.3
 
-            $this->controller->userToken = $this->controller->session->data[$token_str];
-            $this->userToken_str = "token={$this->controller->userToken}"; // OpenCart 2.3
+            $this->userToken = $this->session->data[$token_str];
+            $this->userToken_str = "token={$this->userToken}"; // OpenCart 2.3
 
-            $this->settingsKey = "paytabs_{$this->controller->_code}"; // OpenCart 2.3
+            $this->settingsKey = "paytabs_{$this->_code}"; // OpenCart 2.3
 
         } else {
             $this->urlExtensions = 'marketplace/extension'; // OpenCart 3.x
 
             $token_str = 'user_token'; // OpenCart 3.x
 
-            $this->controller->userToken = $this->controller->session->data[$token_str];
-            $this->userToken_str = "user_token={$this->controller->userToken}"; // OpenCart 3.x
+            $this->userToken = $this->session->data[$token_str];
+            $this->userToken_str = "user_token={$this->userToken}"; // OpenCart 3.x
 
-            $this->settingsKey = "payment_paytabs_{$this->controller->_code}"; // OpenCart 3.x
+            $this->settingsKey = "payment_paytabs_{$this->_code}"; // OpenCart 3.x
         }
     }
 
 
-    public function index(&$data)
+    public function index()
     {
+        $this->init();
+
         /** Save request Handling */
 
-        if (($this->controller->request->server['REQUEST_METHOD'] == 'POST') && $this->controller->validate()) {
-            $this->controller->save();
+        if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
+            $this->save();
         }
 
 
         /** Error messages Handling */
 
-        PaytabsController::paytabs_errorList($this->controller->error, [
+        PaytabsAdminController::paytabs_errorList($this->error, [
             'warning',
             'profile_id',
             'endpoint',
@@ -91,19 +101,19 @@ class PaytabsController
         /** Fill values */
 
         $data['endpoints'] = PaytabsApi::getEndpoints();
-        $data['is_card_payment'] = PaytabsHelper::isCardPayment($this->controller->_code);
-        $data['support_iframe'] =  PaytabsHelper::supportIframe($this->controller->_code);
+        $data['is_card_payment'] = PaytabsHelper::isCardPayment($this->_code);
+        $data['support_iframe'] =  PaytabsHelper::supportIframe($this->_code);
 
-        $this->controller->load->model('localisation/order_status');
-        $data['order_statuses'] = $this->controller->model_localisation_order_status->getOrderStatuses();
+        $this->load->model('localisation/order_status');
+        $data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
 
-        $this->controller->load->model('localisation/geo_zone');
-        $data['geo_zones'] = $this->controller->model_localisation_geo_zone->getGeoZones();
+        $this->load->model('localisation/geo_zone');
+        $data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
 
-        PaytabsController::paytabs_fillVars(
+        PaytabsAdminController::paytabs_fillVars(
             $this->keys,
-            $this->controller->request->post,
-            $this->controller->config,
+            $this->request->post,
+            $this->config,
             $data
         );
 
@@ -112,38 +122,38 @@ class PaytabsController
 
         $data['breadcrumbs'] = [
             [
-                'text' => $this->controller->language->get('text_home'),
-                'href' => $this->controller->url->link('common/dashboard', "{$this->userToken_str}", true)
+                'text' => $this->language->get('text_home'),
+                'href' => $this->url->link('common/dashboard', "{$this->userToken_str}", true)
             ],
             [
-                'text' => $this->controller->language->get('text_extension'),
-                'href' => $this->controller->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true)
+                'text' => $this->language->get('text_extension'),
+                'href' => $this->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true)
             ],
             [
-                'text' => $this->controller->language->get("{$this->controller->_code}_heading_title"),
-                'href' => $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}", "{$this->userToken_str}", true)
+                'text' => $this->language->get("{$this->_code}_heading_title"),
+                'href' => $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}", "{$this->userToken_str}", true)
             ]
         ];
 
 
         /** Actions */
 
-        $data['action'] = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}", "{$this->userToken_str}", true);
-        $data['cancel'] = $this->controller->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true);
+        $data['action'] = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}", "{$this->userToken_str}", true);
+        $data['cancel'] = $this->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true);
 
 
         /** Fetch page parts */
 
-        $data['header'] = $this->controller->load->controller('common/header');
-        $data['column_left'] = $this->controller->load->controller('common/column_left');
-        $data['footer'] = $this->controller->load->controller('common/footer');
+        $data['header'] = $this->load->controller('common/header');
+        $data['column_left'] = $this->load->controller('common/column_left');
+        $data['footer'] = $this->load->controller('common/footer');
 
 
         if (PAYTABS_OPENCART_2_3) {
             /** Strings */ // OpenCart 2.3
 
-            $this->controller->load->language("extension/payment/paytabs_strings");
-            $strings = $this->controller->language->all();
+            $this->load->language("extension/paytabs/payment/paytabs_strings");
+            $strings = $this->language->all();
             foreach ($strings as $key => $value) {
                 if (substr($key, 0, 5) === "error") continue;
                 $data[$key] = $value;
@@ -153,9 +163,9 @@ class PaytabsController
 
         /** Response */
 
-        $data['method'] = $this->controller->_code;
-        $data['title'] = $this->controller->language->get("{$this->controller->_code}_heading_title");
-        $this->controller->response->setOutput($this->controller->load->view("extension/payment/paytabs_view", $data));
+        $data['method'] = $this->_code;
+        $data['title'] = $this->language->get("{$this->_code}_heading_title");
+        $this->response->setOutput($this->load->view("extension/paytabs/payment/paytabs_view", $data));
     }
 
 
@@ -166,21 +176,25 @@ class PaytabsController
             $postKey = $value['key'];
             $configKey = $value['configKey'];
 
-            $values[$configKey] = $this->controller->request->post[$postKey];
+            $post_value = $this->request->post[$postKey];
+
+            if (!is_null($post_value)) {
+                $values[$configKey] = $post_value;
+            }
         }
 
-        $this->controller->model_setting_setting->editSetting($this->settingsKey, $values);
+        $this->model_setting_setting->editSetting($this->settingsKey, $values);
 
-        $this->controller->session->data['success'] = $this->controller->language->get('text_success');
+        $this->session->data['success'] = $this->language->get('text_success');
 
-        $this->controller->response->redirect($this->controller->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true));
+        $this->response->redirect($this->url->link($this->urlExtensions, "{$this->userToken_str}&type=payment", true));
     }
 
 
     public function validate()
     {
-        if (!$this->controller->user->hasPermission('modify', "extension/payment/paytabs_{$this->controller->_code}")) {
-            $this->controller->error['warning'] = $this->controller->language->get('error_permission');
+        if (!$this->user->hasPermission('modify', "extension/paytabs/payment/paytabs_{$this->_code}")) {
+            $this->error['warning'] = $this->language->get('error_permission');
         }
 
         foreach ($this->keys as $option => $value) {
@@ -189,34 +203,34 @@ class PaytabsController
 
             if (!$required) continue;
 
-            if (!$this->controller->request->post[$key]) {
-                $this->controller->error[$option] = $this->controller->language->get("error_{$option}");
+            if (!$this->request->post[$key]) {
+                $this->error[$option] = $this->language->get("error_{$option}");
             }
         }
 
-        return !$this->controller->error;
+        return !$this->error;
     }
 
 
     public function install()
     {
-        $this->controller->load->model('setting/setting');
+        $this->load->model('setting/setting');
 
         $defaults = [
-            PaytabsAdapter::_key('sort_order', $this->controller->_code) => ($this->controller->_code == 'mada') ? 1 : 80,
-            PaytabsAdapter::_key('order_status_id',       $this->controller->_code) => 2, // Processing
-            PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code) => 8, // Denied
+            PaytabsAdapter::_key('sort_order', $this->_code) => ($this->_code == 'mada') ? 1 : 80,
+            PaytabsAdapter::_key('order_status_id',       $this->_code) => 2, // Processing
+            PaytabsAdapter::_key('order_fraud_status_id', $this->_code) => 8, // Denied
         ];
 
-        if (PaytabsHelper::isCardPayment($this->controller->_code)) {
+        if (PaytabsHelper::isCardPayment($this->_code)) {
             $allow_associated_methods = true;
-            if ($this->controller->_code == 'knet') {
+            if ($this->_code == 'knet') {
                 $allow_associated_methods = false;
             }
-            $defaults[PaytabsAdapter::_key('allow_associated_methods', $this->controller->_code)] = $allow_associated_methods;
+            $defaults[PaytabsAdapter::_key('allow_associated_methods', $this->_code)] = $allow_associated_methods;
         }
 
-        $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
+        $this->model_setting_setting->editSetting($this->settingsKey, $defaults);
     }
 
     //
@@ -240,44 +254,50 @@ class PaytabsController
 }
 
 
-class PaytabsCatalogController
+abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controller
 {
-    private $controller;
+    public $_code = '';
+
+    // private $controller;
     private $ptApi;
 
-    function __construct($controller)
+    function init()
     {
-        $this->controller = $controller;
+        // $this->controller = $controller;
 
-        $this->ptApi = (new PaytabsAdapter($this->controller->config, $this->controller->_code))->pt();
+        $this->ptApi = (new PaytabsAdapter($this->config, $this->_code))->pt();
     }
 
 
-    public function index(&$data)
+    public function index()
     {
-        $data['button_confirm'] = $this->controller->language->get('button_confirm');
+        $this->init();
 
-        $orderId = $this->controller->session->data['order_id'];
+        $data['button_confirm'] = $this->language->get('button_confirm');
+
+        $orderId = $this->session->data['order_id'];
 
         $data['order_id'] = $orderId;
-        $data['iframe_mode'] = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
-        $data['url_confirm'] = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/confirm", '', true);
+        $data['iframe_mode'] = (bool) $this->config->get(PaytabsAdapter::_key('iframe', $this->_code));
+        $data['url_confirm'] = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}|confirm", '', true);
 
-        return $this->controller->load->view("extension/payment/paytabs_view", $data);
+        return $this->load->view("extension/paytabs/payment/paytabs_view", $data);
     }
 
 
-    public function confirm(&$data)
+    public function confirm()
     {
-        $order_id = $this->controller->request->post['order'];
-        $order_session_id = $this->controller->session->data['order_id'];
-        $order_session_payment = $this->controller->session->data['payment_method']['code'];
+        $this->init();
+
+        $order_id = $this->request->post['order'];
+        $order_session_id = $this->session->data['order_id'];
+        $order_session_payment = $this->session->data['payment_method'];
 
         if ($order_id != $order_session_id) {
             $this->_re_checkout('The Order has been changed');
             return;
         }
-        if ($order_session_payment != "paytabs_{$this->controller->_code}") {
+        if ($order_session_payment != "paytabs_{$this->_code}") {
             $this->_re_checkout('Payment method is required');
             return;
         }
@@ -288,7 +308,7 @@ class PaytabsCatalogController
 
         $paypage = $this->ptApi->create_pay_page($values);
 
-        $iframe = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
+        $iframe = (bool) $this->config->get(PaytabsAdapter::_key('iframe', $this->_code));
 
         if ($paypage->success) {
             $payment_url = $paypage->payment_url;
@@ -296,11 +316,11 @@ class PaytabsCatalogController
             if ($iframe) {
                 $data['payment_url'] = $payment_url;
 
-                $pnl_iFrame = $this->controller->load->view("extension/payment/paytabs_framed", $data);
-                $this->controller->response->setOutput($pnl_iFrame);
+                $pnl_iFrame = $this->load->view("extension/paytabs/payment/paytabs_framed", $data);
+                $this->response->setOutput($pnl_iFrame);
                 return;
             } else {
-                $this->controller->response->redirect($payment_url);
+                $this->response->redirect($payment_url);
             }
         } else {
             $paypage_msg = $paypage->message;
@@ -310,7 +330,7 @@ class PaytabsCatalogController
             PaytabsHelper::log("callback failed, Data [{$_logData}], response [{$_logResult}]", 3);
 
             if ($iframe) {
-                $this->controller->response->setOutput($paypage_msg);
+                $this->response->setOutput($paypage_msg);
             } else {
                 $this->_re_checkout($paypage_msg);
             }
@@ -320,13 +340,15 @@ class PaytabsCatalogController
 
     private function _re_checkout($msg)
     {
-        $this->controller->session->data['error'] = $msg;
-        $this->controller->response->redirect($this->controller->url->link('checkout/checkout', '', true));
+        $this->session->data['error'] = $msg;
+        $this->response->redirect($this->url->link('checkout/checkout', '', true));
     }
 
 
     public function callback()
     {
+        $this->init();
+
         $response_data = $this->ptApi->read_response(true);
         if (!$response_data) {
             return;
@@ -340,8 +362,8 @@ class PaytabsCatalogController
             return 'Transaction ID is missing';
         }
 
-        $this->controller->load->model('checkout/order');
-        $this->controller->load->model("extension/payment/paytabs_{$this->controller->_code}");
+        $this->load->model('checkout/order');
+        $this->load->model("extension/paytabs/payment/paytabs_{$this->_code}");
 
         $success = $response_data->success;
         $fraud = false;
@@ -350,7 +372,7 @@ class PaytabsCatalogController
         $cart_amount = @$response_data->cart_amount;
         $cart_currency = $response_data->cart_currency;
 
-        $order_info = $this->controller->model_checkout_order->getOrder($order_id);
+        $order_info = $this->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
             PaytabsHelper::log("callback failed, No Order found [{$order_id}]", 3);
             return;
@@ -365,11 +387,11 @@ class PaytabsCatalogController
                 $success = false;
                 $fraud = true;
             } else {
-                PaytabsHelper::log("PayTabs {$this->controller->_code} checkout succeeded");
+                PaytabsHelper::log("PayTabs {$this->_code} checkout succeeded");
 
-                $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
+                $successStatus = $this->config->get(PaytabsAdapter::_key('order_status_id', $this->_code));
 
-                $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
+                $this->model_checkout_order->addHistory($order_id, $successStatus, $res_msg);
             }
         }
 
@@ -378,12 +400,12 @@ class PaytabsCatalogController
             PaytabsHelper::log("callback failed, response [{$_logVerify}]", 3);
 
             if ($fraud) {
-                $fraudStatus = $this->controller->config->get(PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code));
-                $this->controller->model_checkout_order->addOrderHistory($order_id, $fraudStatus, $res_msg);
+                $fraudStatus = $this->config->get(PaytabsAdapter::_key('order_fraud_status_id', $this->_code));
+                $this->model_checkout_order->addHistory($order_id, $fraudStatus, $res_msg);
             } else {
-                $failedStatus = $this->controller->config->get(PaytabsAdapter::_key('order_failed_status_id', $this->controller->_code));
+                $failedStatus = $this->config->get(PaytabsAdapter::_key('order_failed_status_id', $this->_code));
                 if ($failedStatus) {
-                    $this->controller->model_checkout_order->addOrderHistory($order_id, $failedStatus, $res_msg);
+                    $this->model_checkout_order->addHistory($order_id, $failedStatus, $res_msg);
                 }
             }
 
@@ -397,19 +419,21 @@ class PaytabsCatalogController
     public function redirectAfterPayment()
     {
         $transactionId =
-            isset($this->controller->request->post['tranRef'])
-            ? $this->controller->request->post['tranRef']
+            isset($this->request->post['tranRef'])
+            ? $this->request->post['tranRef']
             : false;
         if (!$transactionId) {
             return $this->callbackFailure('Transaction ID is missing');
         }
 
-        $this->controller->load->model('checkout/order');
-        $this->controller->load->model("extension/payment/paytabs_{$this->controller->_code}");
+        $this->init();
 
-        $is_valid_req = $this->ptApi->is_valid_redirect($this->controller->request->post);
+        $this->load->model('checkout/order');
+        $this->load->model("extension/paytabs/payment/paytabs_{$this->_code}");
+
+        $is_valid_req = $this->ptApi->is_valid_redirect($this->request->post);
         if (!$is_valid_req) {
-            $_logVerify = json_encode($this->controller->request->request);
+            $_logVerify = json_encode($this->request->request);
             PaytabsHelper::log("return failed, Fraud request [{$_logVerify}]", 3);
             return;
         }
@@ -423,7 +447,7 @@ class PaytabsCatalogController
         $cart_amount = @$verify_response->cart_amount;
         $cart_currency = @$verify_response->cart_currency;
 
-        $order_info = $this->controller->model_checkout_order->getOrder($order_id);
+        $order_info = $this->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
             PaytabsHelper::log("return failed, No Order found [{$order_id}]", 3);
             return;
@@ -438,9 +462,9 @@ class PaytabsCatalogController
                 $success = false;
                 $fraud = true;
             } else {
-                PaytabsHelper::log("PayTabs {$this->controller->_code} checkout succeeded");
+                PaytabsHelper::log("PayTabs {$this->_code} checkout succeeded");
 
-                $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
+                $this->response->redirect($this->url->link('checkout/success', '', true));
             }
         }
 
@@ -473,42 +497,42 @@ class PaytabsCatalogController
 
     private function callbackFailure($message)
     {
-        $this->controller->load->language('checkout/failure');
+        $this->load->language('checkout/failure');
 
-        $this->controller->document->setTitle($this->controller->language->get('heading_title'));
+        $this->document->setTitle($this->language->get('heading_title'));
 
         $data['breadcrumbs'] = [
             [
-                'text' => $this->controller->language->get('text_home'),
-                'href' => $this->controller->url->link('common/home', '', true)
+                'text' => $this->language->get('text_home'),
+                'href' => $this->url->link('common/home', '', true)
             ],
             [
-                'text' => $this->controller->language->get('text_basket'),
-                'href' => $this->controller->url->link('checkout/cart')
+                'text' => $this->language->get('text_basket'),
+                'href' => $this->url->link('checkout/cart')
             ],
             [
-                'text' => $this->controller->language->get('text_checkout'),
-                'href' => $this->controller->url->link('checkout/checkout', '', true)
+                'text' => $this->language->get('text_checkout'),
+                'href' => $this->url->link('checkout/checkout', '', true)
             ],
             [
-                'text' => $this->controller->language->get('text_failure'),
-                'href' => $this->controller->url->link('checkout/failure', '', true)
+                'text' => $this->language->get('text_failure'),
+                'href' => $this->url->link('checkout/failure', '', true)
             ]
         ];
 
-        $data['text_message'] = sprintf($this->controller->language->get('text_message'), $this->controller->url->link('information/contact', '', true));
+        $data['text_message'] = sprintf($this->language->get('text_message'), $this->url->link('information/contact', '', true));
 
-        $data['continue'] = $this->controller->url->link('common/home', '', true);
+        $data['continue'] = $this->url->link('common/home', '', true);
 
-        $data['column_left'] = $this->controller->load->controller('common/column_left');
-        $data['column_right'] = $this->controller->load->controller('common/column_right');
-        $data['content_top'] = $this->controller->load->controller('common/content_top');
-        $data['content_bottom'] = $this->controller->load->controller('common/content_bottom');
-        $data['footer'] = $this->controller->load->controller('common/footer');
-        $data['header'] = $this->controller->load->controller('common/header');
+        $data['column_left'] = $this->load->controller('common/column_left');
+        $data['column_right'] = $this->load->controller('common/column_right');
+        $data['content_top'] = $this->load->controller('common/content_top');
+        $data['content_bottom'] = $this->load->controller('common/content_bottom');
+        $data['footer'] = $this->load->controller('common/footer');
+        $data['header'] = $this->load->controller('common/header');
 
         $data['paytabs_error'] = $message;
-        $this->controller->response->setOutput($this->controller->load->view("extension/payment/paytabs_error", $data));
+        $this->response->setOutput($this->load->view("extension/paytabs/payment/paytabs_error", $data));
     }
 
 
@@ -516,7 +540,7 @@ class PaytabsCatalogController
 
     private function getPrice($value, $order_info)
     {
-        return $this->controller->currency->format($value, $order_info['currency_code'], $order_info['currency_value'], false);
+        return $this->currency->format($value, $order_info['currency_code'], $order_info['currency_value'], false);
     }
 
     /**
@@ -528,21 +552,21 @@ class PaytabsCatalogController
      */
     private function prepareOrder()
     {
-        $this->controller->load->model('checkout/order');
+        $this->load->model('checkout/order');
 
-        $orderId = $this->controller->session->data['order_id'];
-        $order_info = $this->controller->model_checkout_order->getOrder($orderId);
-        $cart = $this->controller->cart;
+        $orderId = $this->session->data['order_id'];
+        $order_info = $this->model_checkout_order->getOrder($orderId);
+        $cart = $this->cart;
 
-        // $siteUrl = $this->controller->config->get('config_url');
-        $return_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/redirectAfterPayment", '', true);
-        $callback_url = $this->controller->url->link("extension/payment/paytabs_{$this->controller->_code}/callback", '', true);
+        // $siteUrl = $this->config->get('config_url');
+        $return_url = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}|redirectAfterPayment", '', true);
+        $callback_url = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}|callback", '', true);
 
         //
 
         $vouchers_arr = [];
-        if (isset($this->controller->session->data["vouchers"])) {
-            $vouchers = $this->controller->session->data["vouchers"];
+        if (isset($this->session->data["vouchers"])) {
+            $vouchers = $this->session->data["vouchers"];
 
             $vouchers_arr = array_map(function ($p) use ($order_info) {
                 $name = $p['description'];
@@ -551,8 +575,8 @@ class PaytabsCatalogController
             }, $vouchers);
         }
 
-        // $cost = $this->controller->session->data['shipping_method']['cost'];
-        // $subtotal = $this->controller->cart->getSubTotal();
+        // $cost = $this->session->data['shipping_method']['cost'];
+        // $subtotal = $this->cart->getSubTotal();
         // $discount = $subtotal + $cost - $order_info['total'];
         // $total = $subtotal + $cost;
         $total = $order_info['total'];
@@ -584,20 +608,20 @@ class PaytabsCatalogController
         $zone_billing = PaytabsHelper::getNonEmpty($order_info['payment_zone'], $order_info['payment_city']);
         $zone_shipping = PaytabsHelper::getNonEmpty($order_info['shipping_zone'], $order_info['shipping_city'], $zone_billing);
 
-        $lang_code = $this->controller->language->get('code');
+        $lang_code = $this->language->get('code');
         // $lang = ($lang_code == 'ar') ? 'Arabic' : 'English';
 
         //
 
-        $hide_shipping = (bool) $this->controller->config->get(PaytabsAdapter::_key('hide_shipping', $this->controller->_code));
-        $iframe = (bool) $this->controller->config->get(PaytabsAdapter::_key('iframe', $this->controller->_code));
-        $allow_associated_methods = (bool) $this->controller->config->get(PaytabsAdapter::_key('allow_associated_methods', $this->controller->_code));
+        $hide_shipping = (bool) $this->config->get(PaytabsAdapter::_key('hide_shipping', $this->_code));
+        $iframe = (bool) $this->config->get(PaytabsAdapter::_key('iframe', $this->_code));
+        $allow_associated_methods = (bool) $this->config->get(PaytabsAdapter::_key('allow_associated_methods', $this->_code));
 
         //
 
         $holder = new PaytabsRequestHolder();
         $holder
-            ->set01PaymentCode($this->controller->_code, $allow_associated_methods, $order_info['currency_code'])
+            ->set01PaymentCode($this->_code, $allow_associated_methods, $order_info['currency_code'])
             ->set02Transaction(PaytabsEnum::TRAN_TYPE_SALE, PaytabsEnum::TRAN_CLASS_ECOM)
             ->set03Cart(
                 $orderId,
@@ -634,8 +658,8 @@ class PaytabsCatalogController
             ->set09Framed($iframe, 'top')
             ->set99PluginInfo('OpenCart', VERSION, PAYTABS_PAYPAGE_VERSION);
 
-        if ($this->controller->_code === 'valu') {
-            $valu_product_id = $this->controller->config->get(PaytabsAdapter::_key('valu_product_id', $this->controller->_code));
+        if ($this->_code === 'valu') {
+            $valu_product_id = $this->config->get(PaytabsAdapter::_key('valu_product_id', $this->_code));
             // $holder->set20ValuParams($valu_product_id, 0);
         }
 
@@ -646,37 +670,38 @@ class PaytabsCatalogController
 }
 
 
-class PaytabsCatalogModel
+abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
 {
-    private $controller;
+    public $_code = '';
+
+    // private $controller;
 
 
-    function __construct($controller)
+    function init()
     {
-        $this->controller = $controller;
+        // $this->controller = $controller;
 
-        $this->controller->load->language("extension/payment/paytabs_strings");
+        $this->load->language("extension/paytabs/payment/paytabs_strings");
     }
 
 
-    public function getMethod($address, $total)
+    public function getMethod($address)
     {
+        $this->init();
+
         /** Read params */
 
-        $currencyCode = $this->controller->session->data['currency'];
-        $ptTotal = (float) $this->controller->config->get(PaytabsAdapter::_key('total', $this->controller->_code));
-
-        $total1 = $this->controller->currency->format($total, $currencyCode, null, false);
+        $currencyCode = $this->session->data['currency'];
 
         /** Confirm the availability of the payment method */
 
         $status = true;
 
-        if ($ptTotal > 0 && $total1 < $ptTotal) {
+        if ($this->cart->hasSubscription()) {
             $status = false;
         } elseif (!$this->isAvailableForAddress($address)) {
             $status = false;
-        } elseif (!PaytabsHelper::paymentAllowed($this->controller->_code, $currencyCode)) {
+        } elseif (!PaytabsHelper::paymentAllowed($this->_code, $currencyCode)) {
             $status = false;
         }
 
@@ -687,10 +712,10 @@ class PaytabsCatalogModel
 
         if ($status) {
             $method_data = array(
-                'code'       => "paytabs_{$this->controller->_code}",
-                'title'      => $this->controller->language->get("{$this->controller->_code}_text_title"),
+                'code'       => "paytabs_{$this->_code}",
+                'title'      => $this->language->get("{$this->_code}_text_title"),
                 'terms'      => '',
-                'sort_order' => $this->controller->config->get(PaytabsAdapter::_key('sort_order', $this->controller->_code))
+                'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
             );
         }
 
@@ -700,7 +725,7 @@ class PaytabsCatalogModel
 
     private function isAvailableForAddress($address)
     {
-        $geoZoneId = (int) $this->controller->config->get(PaytabsAdapter::_key('geo_zone_id', $this->controller->_code));
+        $geoZoneId = (int) $this->config->get(PaytabsAdapter::_key('geo_zone_id', $this->_code));
         $countryId = (int) $address['country_id'];
         $zoneId = (int) $address['zone_id'];
 
@@ -709,7 +734,7 @@ class PaytabsCatalogModel
         }
 
         $table = DB_PREFIX . "zone_to_geo_zone";
-        $query = $this->controller->db->query(
+        $query = $this->db->query(
             "SELECT * FROM ${table} WHERE geo_zone_id = '{$geoZoneId}' AND country_id = '{$countryId}' AND (zone_id = '{$zoneId}' OR zone_id = '0')"
         );
 
@@ -759,11 +784,6 @@ class PaytabsAdapter
             'configKey' => 'paytabs_{PAYMENTMETHOD}_valu_product_id',
             'required' => true,
             'methods' => ['valu']
-        ],
-        'total' => [
-            'key' => 'payment_paytabs_total',
-            'configKey' => 'paytabs_{PAYMENTMETHOD}_total',
-            'required' => false,
         ],
         'order_status_id' => [
             'key' => 'payment_paytabs_order_status_id',
@@ -836,7 +856,7 @@ class PaytabsAdapter
 
 function paytabs_error_log($message, $severity = 1)
 {
-    $log = new Log(PAYTABS_DEBUG_FILE);
+    $log = new Log(PAYTABS_DEBUG_FILE_NAME);
 
     $severity_str = $severity == 1 ? 'Info' : ($severity == 2 ? 'Warning' : 'Error');
     $_prefix = "[{$severity_str}] ";

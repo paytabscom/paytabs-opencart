@@ -1,0 +1,235 @@
+{{ header }}{{ column_left }}
+<div id="content">
+	<div class="page-header">
+		<div class="container-fluid">
+			<div class="float-end">
+				<button type="submit" form="form-payment" data-bs-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary">
+					<i class="fas fa-save"></i>
+				</button>
+				<a href="{{ cancel }}" data-bs-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-light">
+					<i class="fas fa-reply"></i>
+				</a>
+			</div>
+			<h1>{{ title }}</h1>
+			<ul class="breadcrumb">
+				{% for breadcrumb in breadcrumbs %}
+					<li class="breadcrumb-item">
+						<a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a>
+					</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
+
+	<div class="container-fluid">
+		{% if error_warning %}
+			<div class="alert alert-danger alert-dismissible">
+				<i class="fas fa-exclamation-circle"></i>
+				{{ error_warning }}
+				<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+			</div>
+		{% endif %}
+
+		<div class="card">
+			<div class="card-header">
+				<i class="fa fa-pencil"></i>
+				{{ text_edit }}
+			</div>
+			<div class="card-body">
+				<form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-payment" class="form-horizontal" >
+					<div class="tab-content">
+
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="input-status">{{ entry_status }}</label>
+							<div class="col-sm-10">
+								<div class="input-group">
+									<select name="payment_paytabs_status" id="input-status" class="form-select">
+										{% if payment_paytabs_status %}
+											<option value="1" selected="selected">{{ text_enabled }}</option>
+											<option value="0">{{ text_disabled }}</option>
+										{% else %}
+											<option value="1">{{ text_enabled }}</option>
+											<option value="0" selected="selected">{{ text_disabled }}</option>
+										{% endif %}
+									</select>
+								</div>
+							</div>
+						</div>
+
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="input-endpoint">{{ entry_endpoint }}</label>
+							<div class="col-sm-10">
+								<select name="payment_paytabs_endpoint" id="input-endpoint" class="form-select">
+									{% for key, title in endpoints %}
+										{% if key == payment_paytabs_endpoint %}
+											<option value="{{ key }}" selected="selected">{{ title }}</option>
+										{% else %}
+											<option value="{{ key }}">{{ title }}</option>
+										{% endif %}
+									{% endfor %}
+								</select>
+								{% if error_endpoint %}
+									<div class="text-danger">{{ error_endpoint }}</div>
+								{% endif %}
+							</div>
+						</div>
+
+						<div class="row mb-3 required">
+							<label class="col-sm-2 col-form-label" for="entry-profile-id">{{ entry_profile_id }}</label>
+							<div class="col-sm-10">
+								<input type="text" name="payment_paytabs_profile_id" value="{{ payment_paytabs_profile_id }}" placeholder="{{ entry_profile_id }}" id="entry-profile-id" class="form-control"/>
+								{% if error_profile_id %}
+									<div class="text-danger">{{ error_profile_id }}</div>
+								{% endif %}
+							</div>
+						</div>
+
+						<div class="row mb-3 required">
+							<label class="col-sm-2 col-form-label" for="entry-server-key">{{ entry_server_key }}</label>
+							<div class="col-sm-10">
+								<input type="text" name="payment_paytabs_server_key" value="{{ payment_paytabs_server_key }}" placeholder="{{ entry_server_key }}" id="entry-server-key" class="form-control"/>
+								{% if error_server_key %}
+									<div class="text-danger">{{ error_server_key }}</div>
+								{% endif %}
+							</div>
+						</div>
+
+						{% if method == 'valu' %}
+						<div class="row mb-3 required">
+							<label class="col-sm-2 col-form-label" for="input-valu_product_id">{{ entry_valu_product_id }}</label>
+							<div class="col-sm-10">
+								<input type="text" name="payment_paytabs_valu_product_id" value="{{ payment_paytabs_valu_product_id }}" placeholder="{{ entry_valu_product_id }}" id="input-valu_product_id" class="form-control"/>
+								{% if error_valu_product_id %}
+									<div class="text-danger">{{ error_valu_product_id }}</div>
+								{% endif %}
+							</div>
+						</div>
+						{% endif %}
+
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="input-order-status">{{ entry_order_status }}</label>
+							<div class="col-sm-10">
+								<select name="payment_paytabs_order_status_id" id="input-order-status" class="form-select">
+									{% for order_status in order_statuses %}
+										{% if order_status.order_status_id == payment_paytabs_order_status_id %}
+											<option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+										{% else %}
+											<option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+										{% endif %}
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="input-order-failed-status">{{ entry_order_failed_status }}</label>
+							<div class="col-sm-10">
+								<select name="payment_paytabs_order_failed_status_id" id="input-order-failed-status" class="form-select">
+									<option value="0">No Action</option>
+									{% for order_status in order_statuses %}
+										{% if order_status.order_status_id == payment_paytabs_order_failed_status_id %}
+											<option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+										{% else %}
+											<option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+										{% endif %}
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="input-order-fraud-status">{{ entry_order_fraud_status }}</label>
+							<div class="col-sm-10">
+								<select name="payment_paytabs_order_fraud_status_id" id="input-order-fraud-status" class="form-select">
+									{% for order_status in order_statuses %}
+										{% if order_status.order_status_id == payment_paytabs_order_fraud_status_id %}
+											<option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+										{% else %}
+											<option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+										{% endif %}
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="input-geo-zone">{{ entry_geo_zone }}</label>
+							<div class="col-sm-10">
+								<select name="payment_paytabs_geo_zone_id" id="input-geo-zone" class="form-select">
+									<option value="0">{{ text_all_zones }}</option>
+									{% for geo_zone in geo_zones %}
+										{% if geo_zone.geo_zone_id == payment_paytabs_geo_zone_id %}
+											<option value="{{ geo_zone.geo_zone_id }}" selected="selected">{{ geo_zone.name }}</option>
+										{% else %}
+											<option value="{{ geo_zone.geo_zone_id }}">{{ geo_zone.name }}</option>
+										{% endif %}
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="input-sort-order">{{ entry_sort_order }}</label>
+							<div class="col-sm-10">
+								<input type="number" min="0" name="payment_paytabs_sort_order" value="{{ payment_paytabs_sort_order }}" placeholder="{{ entry_sort_order }}" id="input-sort-order" class="form-control"/>
+							</div>
+						</div>
+
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="input-hide_shipping">{{ entry_hide_shipping }}</label>
+							<div class="col-sm-10">
+								<select name="payment_paytabs_hide_shipping" id="input-hide_shipping" class="form-select">
+									{% if payment_paytabs_hide_shipping %}
+										<option value="1" selected="selected">{{ text_yes }}</option>
+										<option value="0">{{ text_no }}</option>
+									{% else %}
+										<option value="1">{{ text_yes }}</option>
+										<option value="0" selected="selected">{{ text_no }}</option>
+									{% endif %}
+								</select>
+							</div>
+						</div>
+
+						{% if support_iframe %}
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="input-iframe">{{ entry_iframe }}</label>
+							<div class="col-sm-10">
+								<select name="payment_paytabs_iframe" id="input-iframe" class="form-select">
+									{% if payment_paytabs_iframe %}
+										<option value="1" selected="selected">{{ text_yes }}</option>
+										<option value="0">{{ text_no }}</option>
+									{% else %}
+										<option value="1">{{ text_yes }}</option>
+										<option value="0" selected="selected">{{ text_no }}</option>
+									{% endif %}
+								</select>
+							</div>
+						</div>
+						{% endif %}
+
+						{% if is_card_payment %}
+						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="input-allow_associated_methods">{{ entry_allow_associated_methods }}</label>
+							<div class="col-sm-10">
+								<select name="payment_paytabs_allow_associated_methods" id="input-allow_associated_methods" class="form-select">
+									{% if payment_paytabs_allow_associated_methods %}
+										<option value="1" selected="selected">{{ text_yes }}</option>
+										<option value="0">{{ text_no }}</option>
+									{% else %}
+										<option value="1">{{ text_yes }}</option>
+										<option value="0" selected="selected">{{ text_no }}</option>
+									{% endif %}
+								</select>
+							</div>
+						</div>
+						{% endif %}
+
+					</div>
+
+				</form>
+				<div class="alert alert-info">{{ help_paytabs_account_setup }}</div>
+			</div>
+		</div>
+	</div>
+</div>
+{{ footer }}
