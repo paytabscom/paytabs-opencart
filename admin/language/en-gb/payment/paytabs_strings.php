@@ -14,6 +14,7 @@ $_['valu_heading_title']            = 'PayTabs - valU';
 $_['meeza_heading_title']           = 'PayTabs - Meeza';
 $_['meezaqr_heading_title']         = 'PayTabs - Meeza QR';
 $_['unionpay_heading_title']        = 'PayTabs - UnionPay';
+$_['touchpoints_heading_title']     = 'PayTabs - TouchPoints';
 
 // Text
 $_['text_extension']                = 'Extensions';
