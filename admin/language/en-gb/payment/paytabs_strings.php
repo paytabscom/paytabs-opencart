@@ -2,7 +2,7 @@
 // Heading
 $_['all_heading_title']             = 'PayTabs - All';
 $_['creditcard_heading_title']      = 'PayTabs - CreditCard';
-$_['mada_heading_title']            = 'PayTabs - Mada';
+$_['mada_heading_title']            = 'PayTabs - mada';
 $_['amex_heading_title']            = 'PayTabs - Amex';
 $_['applepay_heading_title']        = 'PayTabs - ApplePay';
 $_['fawry_heading_title']           = 'PayTabs - @Fawry';
