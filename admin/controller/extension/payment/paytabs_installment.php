@@ -1,3 +1,5 @@
+<?php
+
 class ControllerExtensionPaymentPaytabsInstallment extends Controller
 {
 	public $_code = 'installment';
