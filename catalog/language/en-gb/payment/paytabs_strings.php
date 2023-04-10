@@ -15,3 +15,4 @@ $_['meeza_text_title']       = 'PayTabs - Meeza';
 $_['meezaqr_text_title']     = 'PayTabs - Meeza QR';
 $_['unionpay_text_title']    = 'PayTabs - UnionPay';
 $_['touchpoints_text_title'] = 'PayTabs - TouchPoints';
+$_['paypal_text_title']      = 'PayTabs - PayPal';
