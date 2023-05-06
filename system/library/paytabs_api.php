@@ -244,12 +244,15 @@ class PaytabsCatalogController
 {
     private $controller;
     private $ptApi;
+    private $db;
 
     function __construct($controller)
     {
         $this->controller = $controller;
 
         $this->ptApi = (new PaytabsAdapter($this->controller->config, $this->controller->_code))->pt();
+        
+        $this->db = $controller->db;
     }
 
 
@@ -368,6 +371,9 @@ class PaytabsCatalogController
                 PaytabsHelper::log("PayTabs {$this->controller->_code} checkout succeeded");
 
                 $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
+                
+                $this->generate_paymentRefrence_table();
+                $this->save_payment_refrence($order_id,$transactionId);
 
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
             }
@@ -393,6 +399,23 @@ class PaytabsCatalogController
         return $success;
     }
 
+    
+    private function generate_paymentRefrence_table()
+    {
+        $this->db->query("
+            CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "paytabs_payment_reference` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `order_id` INT(11) NOT NULL,
+            `pt_payment_reference` VARCHAR(255) NOT NULL,
+            PRIMARY KEY (`id`)
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+        ");
+    }
+
+    private function save_payment_refrence($order_id,$payment_refrence)
+    {
+        $this->db->query("INSERT INTO `" . DB_PREFIX . "paytabs_payment_reference` SET `order_id` = '" . (int)$order_id . "', `pt_payment_reference` = '" . $this->db->escape($payment_refrence) . "'");
+    }
 
     public function redirectAfterPayment()
     {
