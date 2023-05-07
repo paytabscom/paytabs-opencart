@@ -4,11 +4,11 @@ namespace Opencart\System\Library;
 
 /**
  * PayTabs v2 PHP SDK
- * Version: 2.11.3
+ * Version: 2.11.4
  * PHP >= 7.0.0
  */
 
-define('PAYTABS_SDK_VERSION', '2.11.3');
+define('PAYTABS_SDK_VERSION', '2.11.4');
 
 define('PAYTABS_DEBUG_FILE_NAME', 'debug_paytabs.log');
 define('PAYTABS_DEBUG_SEVERITY', ['Info', 'Warning', 'Error']);
