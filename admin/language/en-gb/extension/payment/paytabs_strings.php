@@ -18,7 +18,7 @@ $_['touchpoints_heading_title']     = 'PayTabs - TouchPoints';
 $_['paypal_heading_title']          = 'PayTabs - PayPal';
 $_['installment_heading_title']     = 'PayTabs - NBE Installment';
 $_['urpay_heading_title']           = 'PayTabs - UrPay';
-
+$_['aman_heading_title']            = 'PayTabs - Aman';
 
 // Text
 $_['text_extension']                = 'Extensions';
