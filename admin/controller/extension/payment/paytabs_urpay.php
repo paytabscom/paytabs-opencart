@@ -7,6 +7,7 @@ class ControllerExtensionPaymentPaytabsUrpay extends Controller
 	public $userToken;
 
 	private $paytabsController;
+	private $paytabsCatallogController;
 
 	//
 
@@ -15,6 +16,7 @@ class ControllerExtensionPaymentPaytabsUrpay extends Controller
 		$this->load->library('paytabs_api');
 
 		$this->paytabsController = new PaytabsController($this);
+		$this->paytabsCatallogController = new PaytabsCatalogController($this);
 	}
 
 
@@ -45,5 +47,11 @@ class ControllerExtensionPaymentPaytabsUrpay extends Controller
 	{
 		$this->init();
 		$this->paytabsController->install();
+	}
+	
+	public function refund()
+	{
+		$this->init();
+		$this->paytabsCatallogController->process_refund();
 	}
 }
