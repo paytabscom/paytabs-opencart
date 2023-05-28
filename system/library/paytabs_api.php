@@ -241,38 +241,6 @@ class PaytabsController
     }    
 
 
-    public function process_refund()
-    {
-        if (isset($this->controller->request->get['order_id'])) {
-            $order_id = $this->controller->request->get['order_id'];
-        } 
-
-        $payment_refrence =  $this->db->query("SELECT pt_payment_reference FROM " . DB_PREFIX . "paytabs_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
-        
-        $order_amount = $this->db->query("SELECT total FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
-        $order_currency = $this->db->query("SELECT currency_code FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
-       
-
-        $values = [
-            "tran_type" => "refund",
-            "tran_class" => "ecom",
-            "cart_id"=> $order_id,
-            "cart_currency"=> implode(" ",$order_currency),
-            "cart_amount"=> implode(" ",$order_amount),
-            "cart_description"=> "Refunded from opencart",
-            "tran_ref"=> implode(" ",$payment_refrence)
-        ];
-
-        $refund_request = $this->ptApi->request_followup($values);
-
-        echo $refund_request;
-        return;
-
-
-        $this->response->redirect($this->url->link('sale/order/info', 'user_token=' . $this->session->data['user_token'] . '&order_id=' . $order_id, true));
-    
-    }
-
 
 }
 
@@ -432,6 +400,49 @@ class PaytabsCatalogController
         }
 
         return $success;
+    }
+
+    public function process_refund()
+    {
+        if (isset($this->controller->request->get['order_id'])) {
+            $order_id = $this->controller->request->get['order_id'];
+        } 
+
+        $payment_refrence =  $this->db->query("SELECT pt_payment_reference FROM " . DB_PREFIX . "paytabs_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
+        
+        $order_amount = $this->db->query("SELECT total FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
+        $order_currency = $this->db->query("SELECT currency_code FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
+       
+
+        $values = [
+            "tran_type" => "refund",
+            "tran_class" => "ecom",
+            "cart_id"=> $order_id,
+            "cart_currency"=> implode(" ",$order_currency),
+            "cart_amount"=> implode(" ",$order_amount),
+            "cart_description"=> "Refunded from opencart",
+            "tran_ref"=> implode(" ",$payment_refrence)
+        ];
+
+        $refund_request = $this->ptApi->request_followup($values);
+
+        $tran_ref = @$refund_request->tran_ref;
+        $success = $refund_request->success;
+        $message = $refund_request->message;
+
+        if ($success) {
+            $order_status_id = 11; //refunded status id in opencart 3
+            $sql = "UPDATE " . DB_PREFIX . "order SET order_status_id = '" . (int)$order_status_id . "' WHERE order_id = '" . (int)$order_id . "'";
+            $this->db->query($sql)->row;
+            PaytabsHelper::log("refund success, order  [{$order_id} - {$message}]");
+
+
+        } else {
+            PaytabsHelper::log("refund failed, {$order_id} - {$message}", 3);
+        }
+
+        $this->controller->response->redirect($this->controller->url->link('sale/order/info', 'user_token=' . $this->controller->session->data['user_token'] . '&order_id=' . $order_id, true));
+    
     }
 
 
