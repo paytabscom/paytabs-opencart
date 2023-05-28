@@ -7,6 +7,7 @@ class ControllerExtensionPaymentPaytabsAmex extends Controller
 	public $userToken;
 
 	private $paytabsController;
+	private $paytabsCatallogController;
 
 	//
 
@@ -15,6 +16,9 @@ class ControllerExtensionPaymentPaytabsAmex extends Controller
 		$this->load->library('paytabs_api');
 
 		$this->paytabsController = new PaytabsController($this);
+		
+		$this->paytabsCatallogController = new PaytabsCatalogController($this);
+
 	}
 
 
@@ -45,5 +49,11 @@ class ControllerExtensionPaymentPaytabsAmex extends Controller
 	{
 		$this->init();
 		$this->paytabsController->install();
+	}
+	
+	public function refund()
+	{
+		$this->init();
+		$this->paytabsCatallogController->process_refund();
 	}
 }
