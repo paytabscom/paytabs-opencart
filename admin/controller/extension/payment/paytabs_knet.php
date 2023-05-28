@@ -7,6 +7,7 @@ class ControllerExtensionPaymentPaytabsKnet extends Controller
 	public $userToken;
 
 	private $paytabsController;
+	private $paytabsCatallogController;
 
 	//
 
@@ -15,6 +16,8 @@ class ControllerExtensionPaymentPaytabsKnet extends Controller
 		$this->load->library('paytabs_api');
 
 		$this->paytabsController = new PaytabsController($this);
+		
+		$this->paytabsCatallogController = new PaytabsCatalogController($this);
 	}
 
 
@@ -45,5 +48,11 @@ class ControllerExtensionPaymentPaytabsKnet extends Controller
 	{
 		$this->init();
 		$this->paytabsController->install();
+	}
+	
+	public function refund()
+	{
+		$this->init();
+		$this->paytabsCatallogController->process_refund();
 	}
 }
