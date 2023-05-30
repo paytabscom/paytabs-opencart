@@ -62,8 +62,9 @@ Supports OpenCart **2.3** & **3.x**
 1. go to admin/controller/startup/event.php
 2. inside the index function paste the below code after the line "$this->load->model('setting/event');" 
 
-      " $this->model_setting_event->addEvent('paytabs_order_info', 'admin/controller/sale/order/info/after', 'paytabs/order/info');
-		  $this->model_setting_event->addEvent('paytabs_order_info_view', 'admin/view/sale/order_info/before', 'paytabs/order_info'); "
+      " 
+      	$this->model_setting_event->addEvent('paytabs_order_info', 'admin/controller/sale/order/info/after', 'paytabs/order/info');
+      "
 
 
 ### OpenCart error log
