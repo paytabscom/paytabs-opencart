@@ -390,6 +390,10 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
                 PaytabsHelper::log("PayTabs {$this->_code} checkout succeeded");
 
                 $successStatus = $this->config->get(PaytabsAdapter::_key('order_status_id', $this->_code));
+                
+                //save paytabs transaction refrence.
+                $sql = "UPDATE " . DB_PREFIX . "order SET transaction_id = '" . $transactionId . "' WHERE order_id = '" . (int)$order_id . "'";
+                $this->db->query($sql)->row;
 
                 $this->model_checkout_order->addHistory($order_id, $successStatus, $res_msg);
             }
