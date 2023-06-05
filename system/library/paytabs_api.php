@@ -162,8 +162,16 @@ abstract class PaytabsAdminController extends \Opencart\System\Engine\Controller
 
 
         /** Response */
+        if (VERSION >= '4.0.2.0')
+        {
+            $data['method'] = "paytabs_{$this->_code}".".paytabs_{$this->_code}";
+        }
+        else
+        {
+            $data['method'] = $this->_code;
+        }
 
-        $data['method'] = $this->_code;
+        
         $data['title'] = $this->language->get("{$this->_code}_heading_title");
         $this->response->setOutput($this->load->view("extension/paytabs/payment/paytabs_view", $data));
     }
@@ -297,10 +305,21 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
             $this->_re_checkout('The Order has been changed');
             return;
         }
-        if ($order_session_payment != "paytabs_{$this->_code}") {
-            $this->_re_checkout('Payment method is required');
-            return;
+        if (VERSION >= '4.0.2.0')
+        {
+            if ($order_session_payment['code'] != "paytabs_{$this->_code}".".paytabs_{$this->_code}") {
+                $this->_re_checkout('Payment method is required');
+                return;
+            }
         }
+        else
+        {
+            if ($order_session_payment != "paytabs_{$this->_code}") {
+                $this->_re_checkout('Payment method is required');
+                return;
+            }
+        }
+      
 
         //
 
@@ -390,7 +409,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
                 PaytabsHelper::log("PayTabs {$this->_code} checkout succeeded");
 
                 $successStatus = $this->config->get(PaytabsAdapter::_key('order_status_id', $this->_code));
-                
+
                 //save paytabs transaction refrence.
                 $sql = "UPDATE " . DB_PREFIX . "order SET transaction_id = '" . $transactionId . "' WHERE order_id = '" . (int)$order_id . "'";
                 $this->db->query($sql)->row;
@@ -422,11 +441,11 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
 
         return $success;
     }
-    
-      public function refund()
+
+    public function refund()
     {
         $this->init();
-          
+        
         if (isset($this->controller->request->get['order_id'])) {
             $order_id = $this->controller->request->get['order_id'];
         } 
@@ -613,9 +632,13 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
         $order_info = $this->model_checkout_order->getOrder($orderId);
         $cart = $this->cart;
 
+       
+
+
         // $siteUrl = $this->config->get('config_url');
         $return_url = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}|redirectAfterPayment", '', true);
         $callback_url = $this->url->link("extension/paytabs/payment/paytabs_{$this->_code}|callback", '', true);
+
 
         //
 
@@ -766,12 +789,80 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
         $method_data = array();
 
         if ($status) {
-            $method_data = array(
-                'code'       => "paytabs_{$this->_code}",
-                'title'      => $this->language->get("{$this->_code}_text_title"),
-                'terms'      => '',
-                'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
-            );
+            if (VERSION >= '4.0.2.0')
+            {
+                $method_data = array(
+                    'code'       => "paytabs_{$this->_code}",
+                    'name'       => $this->language->get("{$this->_code}_text_title"),
+                    'option'     => '',
+                    'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
+                );
+            }
+            else
+            {
+                $method_data = array(
+                    'code'       => "paytabs_{$this->_code}",
+                    'title'      => $this->language->get("{$this->_code}_text_title"),
+                    'terms'      => '',
+                    'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
+                );
+            }
+           
+        }
+
+        return $method_data;
+    }
+
+    public function getMethods(array $address = []): array 
+    {
+        $this->init();
+
+        /** Read params */
+
+        $currencyCode = $this->session->data['currency'];
+
+        /** Confirm the availability of the payment method */
+
+        $status = true;
+
+        if ($this->cart->hasSubscription()) {
+            $status = false;
+        } elseif (!$this->isAvailableForAddress($address)) {
+            $status = false;
+        } elseif (!PaytabsHelper::paymentAllowed($this->_code, $currencyCode)) {
+            $status = false;
+        }
+    
+
+        /** Prepare the payment method */
+
+        $method_data = [];
+
+        if ($status) {
+            if (VERSION >= '4.0.2.0')
+            {
+                $option_data["paytabs_{$this->_code}"] = [
+                    'code' => "paytabs_{$this->_code}".".paytabs_{$this->_code}",
+                    'name' => $this->language->get("{$this->_code}_text_title"),
+                ];
+                
+                $method_data = [
+                    'code'       => "paytabs_{$this->_code}",
+                    'name'       => $this->language->get("{$this->_code}_text_title"),
+                    'option'     => $option_data,
+                    'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
+                ];
+            }
+            else
+            {
+                $method_data = array(
+                    'code'       => "paytabs_{$this->_code}",
+                    'title'      => $this->language->get("{$this->_code}_text_title"),
+                    'terms'      => '',
+                    'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
+                );
+            }
+           
         }
 
         return $method_data;
@@ -781,8 +872,6 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
     private function isAvailableForAddress($address)
     {
         $geoZoneId = (int) $this->config->get(PaytabsAdapter::_key('geo_zone_id', $this->_code));
-        $countryId = (int) $address['country_id'];
-        $zoneId = (int) $address['zone_id'];
 
         if (!$geoZoneId) {
             return true;
@@ -790,7 +879,7 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
 
         $table = DB_PREFIX . "zone_to_geo_zone";
         $query = $this->db->query(
-            "SELECT * FROM ${table} WHERE geo_zone_id = '{$geoZoneId}' AND country_id = '{$countryId}' AND (zone_id = '{$zoneId}' OR zone_id = '0')"
+            "SELECT * FROM ${table} WHERE geo_zone_id = '{$geoZoneId}' AND country_id =". (int)$address['country_id']." AND (zone_id =". (int)$address['zone_id']." OR zone_id = '0')"
         );
 
         if ($query->num_rows) {
