@@ -816,8 +816,6 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
     private function isAvailableForAddress($address)
     {
         $geoZoneId = (int) $this->config->get(PaytabsAdapter::_key('geo_zone_id', $this->_code));
-        $countryId = (int) $address['country_id'];
-        $zoneId = (int) $address['zone_id'];
 
         if (!$geoZoneId) {
             return true;
@@ -825,7 +823,7 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
 
         $table = DB_PREFIX . "zone_to_geo_zone";
         $query = $this->db->query(
-            "SELECT * FROM ${table} WHERE geo_zone_id = '{$geoZoneId}' AND country_id = '{$countryId}' AND (zone_id = '{$zoneId}' OR zone_id = '0')"
+            "SELECT * FROM ${table} WHERE geo_zone_id = '{$geoZoneId}' AND country_id =". (int)$address['country_id']." AND (zone_id =". (int)$address['zone_id']." OR zone_id = '0')"
         );
 
         if ($query->num_rows) {
