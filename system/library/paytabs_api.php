@@ -2,7 +2,7 @@
 
 namespace Opencart\System\Library;
 
-define('PAYTABS_PAYPAGE_VERSION', '4.4.0');
+define('PAYTABS_PAYPAGE_VERSION', '4.5.0');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
@@ -160,10 +160,16 @@ abstract class PaytabsAdminController extends \Opencart\System\Engine\Controller
             }
         }
 
-
         /** Response */
-
-        $data['method'] = $this->_code;
+        if (VERSION >= '4.0.2.0')
+        {
+            $data['method'] = "paytabs_{$this->_code}".".paytabs_{$this->_code}";
+        }
+        else
+        {
+            $data['method'] = $this->_code;
+        }
+        
         $data['title'] = $this->language->get("{$this->_code}_heading_title");
         $this->response->setOutput($this->load->view("extension/paytabs/payment/paytabs_view", $data));
     }
@@ -297,9 +303,19 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
             $this->_re_checkout('The Order has been changed');
             return;
         }
-        if ($order_session_payment != "paytabs_{$this->_code}") {
-            $this->_re_checkout('Payment method is required');
-            return;
+       if (VERSION >= '4.0.2.0')
+        {
+            if ($order_session_payment['code'] != "paytabs_{$this->_code}".".paytabs_{$this->_code}") {
+                $this->_re_checkout('Payment method is required');
+                return;
+            }
+        }
+        else
+        {
+            if ($order_session_payment != "paytabs_{$this->_code}") {
+                $this->_re_checkout('Payment method is required');
+                return;
+            }
         }
 
         //
@@ -715,16 +731,86 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
         $method_data = array();
 
         if ($status) {
-            $method_data = array(
-                'code'       => "paytabs_{$this->_code}",
-                'title'      => $this->language->get("{$this->_code}_text_title"),
-                'terms'      => '',
-                'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
-            );
+            if (VERSION >= '4.0.2.0')
+            {
+                $method_data = array(
+                    'code'       => "paytabs_{$this->_code}",
+                    'name'       => $this->language->get("{$this->_code}_text_title"),
+                    'option'     => '',
+                    'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
+                );
+            }
+            else
+            {
+                $method_data = array(
+                    'code'       => "paytabs_{$this->_code}",
+                    'title'      => $this->language->get("{$this->_code}_text_title"),
+                    'terms'      => '',
+                    'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
+                );
+            }
+           
         }
 
         return $method_data;
     }
+    
+    
+     public function getMethods(array $address = []): array 
+    {
+        $this->init();
+
+        /** Read params */
+
+        $currencyCode = $this->session->data['currency'];
+
+        /** Confirm the availability of the payment method */
+
+        $status = true;
+
+        if ($this->cart->hasSubscription()) {
+            $status = false;
+        } elseif (!$this->isAvailableForAddress($address)) {
+            $status = false;
+        } elseif (!PaytabsHelper::paymentAllowed($this->_code, $currencyCode)) {
+            $status = false;
+        }
+    
+
+        /** Prepare the payment method */
+
+        $method_data = [];
+
+        if ($status) {
+            if (VERSION >= '4.0.2.0')
+            {
+                $option_data["paytabs_{$this->_code}"] = [
+                    'code' => "paytabs_{$this->_code}".".paytabs_{$this->_code}",
+                    'name' => $this->language->get("{$this->_code}_text_title"),
+                ];
+                
+                $method_data = [
+                    'code'       => "paytabs_{$this->_code}",
+                    'name'       => $this->language->get("{$this->_code}_text_title"),
+                    'option'     => $option_data,
+                    'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
+                ];
+            }
+            else
+            {
+                $method_data = array(
+                    'code'       => "paytabs_{$this->_code}",
+                    'title'      => $this->language->get("{$this->_code}_text_title"),
+                    'terms'      => '',
+                    'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
+                );
+            }
+           
+        }
+
+        return $method_data;
+    }
+    
 
 
     private function isAvailableForAddress($address)
