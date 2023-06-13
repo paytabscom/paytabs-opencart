@@ -239,6 +239,16 @@ abstract class PaytabsAdminController extends \Opencart\System\Engine\Controller
         }
 
         $this->model_setting_setting->editSetting($this->settingsKey, $defaults);
+        
+         $this->model_setting_event->addEvent(
+			[
+                "code"=>'paytabs_refund', 
+			    "status"=> true,
+			    "sort_order"=> 80,
+			    "description"=>'paytabs refund event ',
+			    "trigger"=>'admin/view/sale/order_info/before',
+			    "action"=>'extension/paytabs/payment/order.info'
+            ]);
     }
 
     //
