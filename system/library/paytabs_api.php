@@ -707,52 +707,7 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
 
     public function getMethod($address)
     {
-        $this->init();
-
-        /** Read params */
-
-        $currencyCode = $this->session->data['currency'];
-
-        /** Confirm the availability of the payment method */
-
-        $status = true;
-
-        if ($this->cart->hasSubscription()) {
-            $status = false;
-        } elseif (!$this->isAvailableForAddress($address)) {
-            $status = false;
-        } elseif (!PaytabsHelper::paymentAllowed($this->_code, $currencyCode)) {
-            $status = false;
-        }
-
-
-        /** Prepare the payment method */
-
-        $method_data = array();
-
-        if ($status) {
-            if (VERSION >= '4.0.2.0')
-            {
-                $method_data = array(
-                    'code'       => "paytabs_{$this->_code}",
-                    'name'       => $this->language->get("{$this->_code}_text_title"),
-                    'option'     => '',
-                    'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
-                );
-            }
-            else
-            {
-                $method_data = array(
-                    'code'       => "paytabs_{$this->_code}",
-                    'title'      => $this->language->get("{$this->_code}_text_title"),
-                    'terms'      => '',
-                    'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
-                );
-            }
-           
-        }
-
-        return $method_data;
+        $this->getMethods($address);
     }
     
     
