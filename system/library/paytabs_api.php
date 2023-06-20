@@ -2,7 +2,7 @@
 
 namespace Opencart\System\Library;
 
-define('PAYTABS_PAYPAGE_VERSION', '4.5.0');
+define('PAYTABS_PAYPAGE_VERSION', '4.4.1');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
@@ -160,16 +160,14 @@ abstract class PaytabsAdminController extends \Opencart\System\Engine\Controller
             }
         }
 
+
         /** Response */
-        if (VERSION >= '4.0.2.0')
-        {
-            $data['method'] = "paytabs_{$this->_code}".".paytabs_{$this->_code}";
-        }
-        else
-        {
+        if (VERSION >= '4.0.2.0') {
+            $data['method'] = "paytabs_{$this->_code}" . ".paytabs_{$this->_code}";
+        } else {
             $data['method'] = $this->_code;
         }
-        
+
         $data['title'] = $this->language->get("{$this->_code}_heading_title");
         $this->response->setOutput($this->load->view("extension/paytabs/payment/paytabs_view", $data));
     }
@@ -303,15 +301,12 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
             $this->_re_checkout('The Order has been changed');
             return;
         }
-       if (VERSION >= '4.0.2.0')
-        {
-            if ($order_session_payment['code'] != "paytabs_{$this->_code}".".paytabs_{$this->_code}") {
+        if (VERSION >= '4.0.2.0') {
+            if ($order_session_payment['code'] != "paytabs_{$this->_code}" . ".paytabs_{$this->_code}") {
                 $this->_re_checkout('Payment method is required');
                 return;
             }
-        }
-        else
-        {
+        } else {
             if ($order_session_payment != "paytabs_{$this->_code}") {
                 $this->_re_checkout('Payment method is required');
                 return;
@@ -707,11 +702,11 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
 
     public function getMethod($address)
     {
-        $this->getMethods($address);
+        return $this->getMethods($address);
     }
-    
-    
-     public function getMethods(array $address = []): array 
+
+
+    public function getMethods(array $address = []): array
     {
         $this->init();
 
@@ -730,29 +725,26 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
         } elseif (!PaytabsHelper::paymentAllowed($this->_code, $currencyCode)) {
             $status = false;
         }
-    
+
 
         /** Prepare the payment method */
 
         $method_data = [];
 
         if ($status) {
-            if (VERSION >= '4.0.2.0')
-            {
+            if (VERSION >= '4.0.2.0') {
                 $option_data["paytabs_{$this->_code}"] = [
-                    'code' => "paytabs_{$this->_code}".".paytabs_{$this->_code}",
+                    'code' => "paytabs_{$this->_code}" . ".paytabs_{$this->_code}",
                     'name' => $this->language->get("{$this->_code}_text_title"),
                 ];
-                
+
                 $method_data = [
                     'code'       => "paytabs_{$this->_code}",
                     'name'       => $this->language->get("{$this->_code}_text_title"),
                     'option'     => $option_data,
                     'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
                 ];
-            }
-            else
-            {
+            } else {
                 $method_data = array(
                     'code'       => "paytabs_{$this->_code}",
                     'title'      => $this->language->get("{$this->_code}_text_title"),
@@ -760,12 +752,11 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
                     'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
                 );
             }
-           
         }
 
         return $method_data;
     }
-    
+
 
 
     private function isAvailableForAddress($address)
@@ -778,7 +769,7 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
 
         $table = DB_PREFIX . "zone_to_geo_zone";
         $query = $this->db->query(
-            "SELECT * FROM ${table} WHERE geo_zone_id = '{$geoZoneId}' AND country_id =". (int)$address['country_id']." AND (zone_id =". (int)$address['zone_id']." OR zone_id = '0')"
+            "SELECT * FROM ${table} WHERE geo_zone_id = '{$geoZoneId}' AND country_id =" . (int)$address['country_id'] . " AND (zone_id =" . (int)$address['zone_id'] . " OR zone_id = '0')"
         );
 
         if ($query->num_rows) {
