@@ -180,7 +180,9 @@ abstract class PaytabsAdminController extends \Opencart\System\Engine\Controller
             $postKey = $value['key'];
             $configKey = $value['configKey'];
 
-            $post_value = $this->request->post[$postKey];
+            if (array_key_exists($postKey, $this->request->post)) {
+                $post_value = $this->request->post[$postKey];
+            }
 
             if (!is_null($post_value)) {
                 $values[$configKey] = $post_value;
@@ -768,7 +770,7 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
 
         $table = DB_PREFIX . "zone_to_geo_zone";
         $query = $this->db->query(
-            "SELECT * FROM ${table} WHERE geo_zone_id = '{$geoZoneId}' AND country_id =" . (int)$address['country_id'] . " AND (zone_id =" . (int)$address['zone_id'] . " OR zone_id = '0')"
+            "SELECT * FROM {$table} WHERE geo_zone_id = '{$geoZoneId}' AND country_id =" . (int)$address['country_id'] . " AND (zone_id =" . (int)$address['zone_id'] . " OR zone_id = '0')"
         );
 
         if ($query->num_rows) {
