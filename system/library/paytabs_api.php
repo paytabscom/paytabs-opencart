@@ -758,7 +758,6 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
     }
 
 
-
     private function isAvailableForAddress($address)
     {
         $geoZoneId = (int) $this->config->get(PaytabsAdapter::_key('geo_zone_id', $this->_code));
