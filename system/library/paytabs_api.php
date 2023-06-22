@@ -217,7 +217,7 @@ class PaytabsController
             }
             $defaults[PaytabsAdapter::_key('allow_associated_methods', $this->controller->_code)] = $allow_associated_methods;
         }
-
+        $this->controller->model_setting_event->addEvent('paytabs_order_info', 'admin/controller/sale/order/info/after', 'paytabs/order/info');
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
     }
 
