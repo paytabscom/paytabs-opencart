@@ -217,8 +217,17 @@ class PaytabsController
             }
             $defaults[PaytabsAdapter::_key('allow_associated_methods', $this->controller->_code)] = $allow_associated_methods;
         }
-        $this->controller->model_setting_event->addEvent('paytabs_order_info', 'admin/controller/sale/order/info/after', 'paytabs/order/info');
+
+
+        $this->controller->load->model('setting/event');
+
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
+
+        $this->controller->model_setting_event->deleteEventByCode('paytabs_order_info');
+
+        $this->controller->model_setting_event->addEvent('paytabs_order_info', 'admin/controller/sale/order/info/after', 'paytabs/order/info');
+        $this->generate_paymentRefrence_table();
+
     }
 
     //
@@ -239,6 +248,25 @@ class PaytabsController
             $data[$htmlKey] = isset($arrData[$htmlKey]) ? $arrData[$htmlKey] : $configs->get($configKey);
         }
     }    
+
+
+    private function generate_paymentRefrence_table()
+    {
+        $this->db->query("
+            CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "pt_transaction_reference` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `order_id` INT(11) NOT NULL,
+            `pt_payment_reference` VARCHAR(255) NOT NULL,
+            `pt_parent_reference` VARCHAR(255)  NULL,
+            `pt_payment_method` VARCHAR(255)  NULL,
+            `pt_payment_type` VARCHAR(255)  NULL,
+            `pt_payment_status` VARCHAR(255)  NULL,
+            `pt_payment_amount` VARCHAR(255)  NULL,
+            `pt_payment_currency` VARCHAR(255)  NULL,
+            PRIMARY KEY (`id`)
+            ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+        ");
+    }
 
 
 
@@ -382,7 +410,6 @@ class PaytabsCatalogController
                     'transaction_amount' => $cart_amount,
                     'transaction_currency' => $cart_currency
                 ];
-                $this->generate_paymentRefrence_table();
                 $this->save_payment_refrence($order_id,$transaction_data);
 
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
@@ -415,7 +442,7 @@ class PaytabsCatalogController
             $order_id = $this->controller->request->get['order_id'];
         } 
 
-        $payment_refrence =  $this->db->query("SELECT pt_payment_reference FROM " . DB_PREFIX . "paytabs_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
+        $payment_refrence =  $this->db->query("SELECT pt_payment_reference FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
         
         $order_amount = $this->db->query("SELECT total FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
         $order_currency = $this->db->query("SELECT currency_code FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
@@ -440,9 +467,9 @@ class PaytabsCatalogController
         if ($success) {
             $order_status_id = 11; //refunded status id in opencart 3
             $sql = "UPDATE " . DB_PREFIX . "order SET order_status_id = '" . (int)$order_status_id . "' WHERE order_id = '" . (int)$order_id . "'";
-            $this->db->query($sql)->row;
-            
-             $transaction_data = [
+            $this->db->query($sql);
+
+            $transaction_data = [
                 'status' => $success,
                 'transaction_ref' => $tran_ref,
                 'parent_transaction_ref' => $values['tran_ref'],
@@ -451,7 +478,7 @@ class PaytabsCatalogController
             ];
 
             $this->save_payment_refrence($order_id,$transaction_data);
-            
+
             PaytabsHelper::log("refund success, order  [{$order_id} - {$message}]");
 
 
@@ -464,35 +491,17 @@ class PaytabsCatalogController
     }
 
 
-
-    private function generate_paymentRefrence_table()
-    {
-        $this->db->query("
-            CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "paytabs_transaction_reference` (
-            `id` INT(11) NOT NULL AUTO_INCREMENT,
-            `order_id` INT(11) NOT NULL,
-            `pt_payment_reference` VARCHAR(255) NOT NULL,
-            `pt_parent_reference` VARCHAR(255)  NULL,
-            `pt_payment_method` VARCHAR(255)  NULL,
-            `pt_payment_type` VARCHAR(255)  NULL,
-            `pt_payment_status` VARCHAR(255)  NULL,
-            `pt_payment_amount` VARCHAR(255)  NULL,
-            `pt_payment_currency` VARCHAR(255)  NULL,
-            PRIMARY KEY (`id`)
-            ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-        ");
-    }
-
     private function save_payment_refrence($order_id,$transaction_data)
     {
-        $this->db->query("INSERT INTO `" . DB_PREFIX . "paytabs_transaction_reference` SET 
+        $this->db->query("INSERT INTO `" . DB_PREFIX . "pt_transaction_reference` SET 
         `order_id` = '" . (int)$order_id . "', 
         `pt_payment_reference` = '" . $this->db->escape($transaction_data['transaction_ref']) . "',
         `pt_parent_reference` = '" . $transaction_data['parent_transaction_ref'] . "',
         `pt_payment_method` = '" . $this->controller->_code . "',
         `pt_payment_status` = '" . $transaction_data['status']. "',
         `pt_payment_amount` = '" . $transaction_data['transaction_amount'] . "',
-         `pt_payment_currency` = '" . $transaction_data['transaction_currency'] . "'");
+        `pt_payment_currency` = '" . $transaction_data['transaction_currency'] . "'");
+       
 
     }
 
@@ -544,9 +553,6 @@ class PaytabsCatalogController
                 $fraud = true;
             } else {
                 PaytabsHelper::log("PayTabs {$this->controller->_code} checkout succeeded");
-
-                $this->generate_paymentRefrence_table();
-                $this->save_payment_refrence($order_id,$transactionId);
 
                 $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
             }
