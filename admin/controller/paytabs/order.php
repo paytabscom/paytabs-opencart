@@ -40,32 +40,7 @@ class ControllerPaytabsOrder extends ControllerSaleOrder
 
         if (strpos($payment_method, "PayTabs") !== false) {
 
-            // Start capturing the output into a buffer
-            ob_start();
-
-            // Execute the parent::info() method
-            $parentOutput = parent::info();
-
-            // Get the captured output from the buffer
-            $parentView = ob_get_clean();
-
-
-            if ($order_status_id['order_status_id'] == 11) {
-                // Append your custom button to the captured output
-                $customButton = '<p style="cursor: auto; position: absolute; display: block; z-index: 11111111; right: 12%; top: 8%;" class="btn btn-primary"> 
-                Refunded to Paytabs </p>';
-            } else {
-                // Append your custom button to the captured output
-                $customButton = '<a style="position: absolute; display: block; z-index: 11111111; right: 12%; top: 8%;"href="' . $data['refund'] . '" class="btn btn-primary"><i class="fa fa-undo"></i>Refund using PayTabs</a>';
-            }
-
-            $modifiedOutput = str_replace('</div>', $customButton . '</div>', $parentView);
-
-            // Output the modified content
-            echo $customButton;
-
-            // Return the parent output
-            return $modifiedOutput;
+            $this->_append_refund_btn($order_status_id,$data);
         }
     }
 
@@ -106,7 +81,33 @@ class ControllerPaytabsOrder extends ControllerSaleOrder
         return true;
     }
 
-    private function _append_refund_btn()
+    private function _append_refund_btn($order_status_id,$data)
     {
+         // Start capturing the output into a buffer
+         ob_start();
+
+         // Execute the parent::info() method
+         $parentOutput = parent::info();
+
+         // Get the captured output from the buffer
+         $parentView = ob_get_clean();
+
+
+         if ($order_status_id == 11) {
+             // Append your custom button to the captured output
+             $customButton = '<p style="cursor: auto; position: absolute; display: block; z-index: 11111111; right: 12%; top: 8%;" class="btn btn-primary"> 
+             Refunded to Paytabs </p>';
+         } else {
+             // Append your custom button to the captured output
+             $customButton = '<a style="position: absolute; display: block; z-index: 11111111; right: 12%; top: 8%;"href="' . $data['refund'] . '" class="btn btn-primary"><i class="fa fa-undo"></i>Refund using PayTabs</a>';
+         }
+
+         $modifiedOutput = str_replace('</div>', $customButton . '</div>', $parentView);
+
+         // Output the modified content
+         echo $customButton;
+
+         // Return the parent output
+         return $modifiedOutput;
     }
 }
