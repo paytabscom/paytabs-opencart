@@ -227,7 +227,6 @@ class PaytabsController
 
         $this->controller->model_setting_event->addEvent('paytabs_order_info', 'admin/controller/sale/order/info/after', 'paytabs/order/info');
         $this->generate_paymentRefrence_table();
-
     }
 
     //
@@ -247,7 +246,7 @@ class PaytabsController
 
             $data[$htmlKey] = isset($arrData[$htmlKey]) ? $arrData[$htmlKey] : $configs->get($configKey);
         }
-    }    
+    }
 
 
     private function generate_paymentRefrence_table()
@@ -267,9 +266,6 @@ class PaytabsController
             ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
         ");
     }
-
-
-
 }
 
 
@@ -410,7 +406,7 @@ class PaytabsCatalogController
                     'transaction_amount' => $cart_amount,
                     'transaction_currency' => $cart_currency
                 ];
-                $this->save_payment_refrence($order_id,$transaction_data);
+                $this->save_payment_refrence($order_id, $transaction_data);
 
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
             }
@@ -440,22 +436,22 @@ class PaytabsCatalogController
     {
         if (isset($this->controller->request->get['order_id'])) {
             $order_id = $this->controller->request->get['order_id'];
-        } 
+        }
 
         $payment_refrence =  $this->db->query("SELECT pt_payment_reference FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
-        
+
         $order_amount = $this->db->query("SELECT total FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
         $order_currency = $this->db->query("SELECT currency_code FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
-       
+
 
         $values = [
             "tran_type" => "refund",
             "tran_class" => "ecom",
-            "cart_id"=> $order_id,
-            "cart_currency"=> implode(" ",$order_currency),
-            "cart_amount"=> implode(" ",$order_amount),
-            "cart_description"=> "Refunded from opencart",
-            "tran_ref"=> implode(" ",$payment_refrence)
+            "cart_id" => $order_id,
+            "cart_currency" => implode(" ", $order_currency),
+            "cart_amount" => implode(" ", $order_amount),
+            "cart_description" => "Refunded from opencart",
+            "tran_ref" => implode(" ", $payment_refrence)
         ];
 
         $refund_request = $this->ptApi->request_followup($values);
@@ -477,36 +473,30 @@ class PaytabsCatalogController
                 'transaction_currency' => $values['cart_currency'],
             ];
 
-            $this->save_payment_refrence($order_id,$transaction_data);
+            $this->save_payment_refrence($order_id, $transaction_data);
 
             PaytabsHelper::log("refund success, order  [{$order_id} - {$message}]");
-
-
         } else {
             PaytabsHelper::log("refund failed, {$order_id} - {$message}", 3);
         }
 
         $this->controller->response->redirect($this->controller->url->link('sale/order/info', 'user_token=' . $this->controller->session->data['user_token'] . '&order_id=' . $order_id, true));
-    
     }
 
 
-    private function save_payment_refrence($order_id,$transaction_data)
+    private function save_payment_refrence($order_id, $transaction_data)
     {
         $this->db->query("INSERT INTO `" . DB_PREFIX . "pt_transaction_reference` SET 
         `order_id` = '" . (int)$order_id . "', 
         `pt_payment_reference` = '" . $this->db->escape($transaction_data['transaction_ref']) . "',
         `pt_parent_reference` = '" . $transaction_data['parent_transaction_ref'] . "',
         `pt_payment_method` = '" . $this->controller->_code . "',
-        `pt_payment_status` = '" . $transaction_data['status']. "',
+        `pt_payment_status` = '" . $transaction_data['status'] . "',
         `pt_payment_amount` = '" . $transaction_data['transaction_amount'] . "',
         `pt_payment_currency` = '" . $transaction_data['transaction_currency'] . "'");
-       
-
     }
 
 
-   
 
     public function redirectAfterPayment()
     {

@@ -1,28 +1,28 @@
 <?php
 
-class ControllerPaytabsOrder extends ControllerSaleOrder {
-     
-    public function info() {
-        
+class ControllerPaytabsOrder extends ControllerSaleOrder
+{
+
+    public function info()
+    {
         if (isset($this->request->get['order_id'])) {
             $order_id = $this->request->get['order_id'];
-        } 
+        }
 
         $payment_code =  $this->db->query("SELECT pt_payment_method FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
 
         $order_status_id = $this->db->query("SELECT order_status_id FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
 
         $payment_method = $this->db->query("SELECT payment_method FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
-       
-        $refund_url = "extension/payment/paytabs_".implode(" ",$payment_code)."/refund";
-        $data['refund'] = $this->url->link($refund_url, 'user_token=' . $this->session->data['user_token'] . '&order_id=' . $order_id, true);
-       
 
-        $payment_gateway = implode(" ",$payment_method);
-        
-        if(strpos($payment_gateway, "PayTabs") !== false)
-        {
-            
+        $refund_url = "extension/payment/paytabs_" . implode(" ", $payment_code) . "/refund";
+        $data['refund'] = $this->url->link($refund_url, 'user_token=' . $this->session->data['user_token'] . '&order_id=' . $order_id, true);
+
+
+        $payment_gateway = implode(" ", $payment_method);
+
+        if (strpos($payment_gateway, "PayTabs") !== false) {
+
             // Start capturing the output into a buffer
             ob_start();
 
@@ -32,20 +32,15 @@ class ControllerPaytabsOrder extends ControllerSaleOrder {
             // Get the captured output from the buffer
             $parentView = ob_get_clean();
 
-        
 
-            if($order_status_id['order_status_id'] == 11)
-            {
+
+            if ($order_status_id['order_status_id'] == 11) {
                 // Append your custom button to the captured output
                 $customButton = '<p  style = "cursor: auto; position: absolute; display: block; z-index: 11111111; right: 12%; top: 8%;" class="btn btn-primary"> 
                 Refunded to Paytabs </p>';
-                
-            }
-            else
-            {
+            } else {
                 // Append your custom button to the captured output
                 $customButton = '<a  style = "position: absolute; display: block; z-index: 11111111; right: 12%; top: 8%;"href="' . $data['refund'] . '" class="btn btn-primary"><i class="fa fa-undo"></i> refund to paytabs</a>';
-
             }
 
             $modifiedOutput = str_replace('</div>', $customButton . '</div>', $parentView);
@@ -55,13 +50,6 @@ class ControllerPaytabsOrder extends ControllerSaleOrder {
 
             // Return the parent output
             return $modifiedOutput;
-
         }
-
-
-       
-
     }
-
-    
 }
