@@ -14,6 +14,7 @@ class paytabs_api
 class PaytabsController
 {
     private $controller;
+    private $db;
 
     private $keys = PaytabsAdapter::KEYS;
 
@@ -22,7 +23,6 @@ class PaytabsController
     private $urlExtensions = '';
 
     private $settingsKey = '';
-    private $db;
 
     //
 
@@ -218,14 +218,12 @@ class PaytabsController
             $defaults[PaytabsAdapter::_key('allow_associated_methods', $this->controller->_code)] = $allow_associated_methods;
         }
 
-
-        $this->controller->load->model('setting/event');
-
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
 
+        $this->controller->load->model('setting/event');
         $this->controller->model_setting_event->deleteEventByCode('paytabs_order_info');
-
         $this->controller->model_setting_event->addEvent('paytabs_order_info', 'admin/controller/sale/order/info/after', 'paytabs/order/info');
+
         $this->generate_paymentRefrence_table();
     }
 
@@ -263,7 +261,7 @@ class PaytabsController
             `pt_payment_amount` VARCHAR(255)  NULL,
             `pt_payment_currency` VARCHAR(255)  NULL,
             PRIMARY KEY (`id`)
-            ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+            );
         ");
     }
 }
@@ -274,6 +272,7 @@ class PaytabsCatalogController
     private $controller;
     private $ptApi;
     private $db;
+
     function __construct($controller)
     {
         $this->controller = $controller;
@@ -437,12 +436,14 @@ class PaytabsCatalogController
         if (isset($this->controller->request->get['order_id'])) {
             $order_id = $this->controller->request->get['order_id'];
         }
+        if (!$order_id) {
+            return;
+        }
 
         $payment_refrence =  $this->db->query("SELECT pt_payment_reference FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
 
         $order_amount = $this->db->query("SELECT total FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
         $order_currency = $this->db->query("SELECT currency_code FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
-
 
         $values = [
             "tran_type" => "refund",
@@ -461,7 +462,7 @@ class PaytabsCatalogController
         $message = $refund_request->message;
 
         if ($success) {
-            $order_status_id = 11; //refunded status id in opencart 3
+            $order_status_id = 11; // Refunded status id in opencart 3
             $sql = "UPDATE " . DB_PREFIX . "order SET order_status_id = '" . (int)$order_status_id . "' WHERE order_id = '" . (int)$order_id . "'";
             $this->db->query($sql);
 
@@ -475,9 +476,9 @@ class PaytabsCatalogController
 
             $this->save_payment_refrence($order_id, $transaction_data);
 
-            PaytabsHelper::log("refund success, order  [{$order_id} - {$message}]");
+            PaytabsHelper::log("Refund success, order [{$order_id} - {$message}]");
         } else {
-            PaytabsHelper::log("refund failed, {$order_id} - {$message}", 3);
+            PaytabsHelper::log("Refund failed, {$order_id} - {$message}", 3);
         }
 
         $this->controller->response->redirect($this->controller->url->link('sale/order/info', 'user_token=' . $this->controller->session->data['user_token'] . '&order_id=' . $order_id, true));
@@ -495,7 +496,6 @@ class PaytabsCatalogController
         `pt_payment_amount` = '" . $transaction_data['transaction_amount'] . "',
         `pt_payment_currency` = '" . $transaction_data['transaction_currency'] . "'");
     }
-
 
 
     public function redirectAfterPayment()
