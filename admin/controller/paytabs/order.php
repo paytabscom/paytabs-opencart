@@ -29,8 +29,6 @@ class ControllerPaytabsOrder extends ControllerSaleOrder
             return;
         }
 
-
-
         $refund_url = "extension/payment/paytabs_" . $payment_code . "/refund";
         $data['refund'] = $this->url->link($refund_url, 'user_token=' . $this->session->data['user_token'] . '&order_id=' . $order_id, true);
 
@@ -40,7 +38,7 @@ class ControllerPaytabsOrder extends ControllerSaleOrder
 
         if (strpos($payment_method, "PayTabs") !== false) {
 
-            $this->_append_refund_btn($order_status_id,$data);
+            // $this->_append_refund_btn($order_status_id,$data);
         }
     }
 
@@ -87,7 +85,7 @@ class ControllerPaytabsOrder extends ControllerSaleOrder
          ob_start();
 
          // Execute the parent::info() method
-         $parentOutput = parent::info();
+         parent::info();
 
          // Get the captured output from the buffer
          $parentView = ob_get_clean();

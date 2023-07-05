@@ -11,6 +11,24 @@ class paytabs_api
 {
 }
 
+class PaytabsOrder
+{
+    static function pt_add_actions($order_info, &$data, $controller)
+    {
+        $payment_code = $order_info['payment_code'];
+        $order_status_id = $order_info['order_status_id'];
+
+        // $trx = $controller->db->query("SELECT pt_payment_method FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_info['order_id'] . "'")->row;
+
+        if (strpos($payment_code, "paytabs_") !== false) {
+            if ($order_status_id != 11) {
+                $data['pt_refund'] = true;
+                $data['pt_refund_action'] = $controller->url->link("extension/payment/{$payment_code}/refund", 'user_token=' . $controller->session->data['user_token'], true);
+            }
+        }
+    }
+}
+
 class PaytabsController
 {
     private $controller;
