@@ -15,8 +15,27 @@ class PaytabsOrder
 {
     static function pt_add_actions($order_info, &$data, $controller)
     {
+        if (isset($this->request->get['order_id'])) {
+            $order_id = $this->request->get['order_id'];
+        }
+
+        if (!$order_id) {
+            return;
+        }
+
         $payment_code = $order_info['payment_code'];
+        $payment_method = $order_info['payment_method'];
         $order_status_id = $order_info['order_status_id'];
+
+
+        $trx_payment_code = $this->_get_pt_transaction($order_id);
+
+        // ToDo
+        // Confirm if the plugin is installed & the table is exists
+        if (!$this->_is_pt_order($payment_code, $trx_payment_code)) {
+            return;
+        }
+
 
         // $trx = $controller->db->query("SELECT pt_payment_method FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_info['order_id'] . "'")->row;
 
@@ -27,6 +46,33 @@ class PaytabsOrder
             }
         }
     }
+
+
+      // ToDo
+    // 1. Get only latest Success, Sale or Captured trx
+    // 2. Return only one string
+    // 3. Validate the result
+    private function _get_pt_transaction($order_id)
+    {
+        $payment_code =  $this->db->query("SELECT pt_payment_method FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
+
+        $payment_code = implode(" ", $payment_code);
+
+        return $payment_code;
+    }
+
+      /**
+     * Check if the Order paid by PayTabs
+     * Check if PT is already installed & the pt table exists
+     */
+    private function _is_pt_order($order_payment_code, $trx_payment_code)
+    {
+        // PaytabsHelper::isPayTabsPayment($order_payment_code);
+        // PaytabsHelper::isPayTabsPayment($trx_payment_code);
+        return true;
+    }
+
+
 }
 
 class PaytabsController
