@@ -15,8 +15,8 @@ class PaytabsOrder
 {
     static function pt_add_actions($order_info, &$data, $controller)
     {
-        if (isset($this->request->get['order_id'])) {
-            $order_id = $this->request->get['order_id'];
+        if (isset($controller->request->get['order_id'])) {
+            $order_id = $controller->request->get['order_id'];
         }
 
         if (!$order_id) {
@@ -28,11 +28,11 @@ class PaytabsOrder
         $order_status_id = $order_info['order_status_id'];
 
 
-        $trx_payment_code = $this->_get_pt_transaction($order_id);
+        $trx_payment_code = PaytabsOrder::_get_pt_transaction($controller->db, $order_id);
 
         // ToDo
         // Confirm if the plugin is installed & the table is exists
-        if (!$this->_is_pt_order($payment_code, $trx_payment_code)) {
+        if (!PaytabsOrder::_is_pt_order($payment_code, $trx_payment_code)) {
             return;
         }
 
@@ -42,37 +42,35 @@ class PaytabsOrder
         if (strpos($payment_code, "paytabs_") !== false) {
             if ($order_status_id != 11) {
                 $data['pt_refund'] = true;
-                $data['pt_refund_action'] = $controller->url->link("extension/payment/{$payment_code}/refund", 'user_token=' . $controller->session->data['user_token'], true);
+                $data['pt_refund_action'] = $controller->url->link("extension/payment/{$payment_code}/refund", 'order_id=' . $order_id . '&user_token=' . $controller->session->data['user_token'], true);
             }
         }
     }
 
 
-      // ToDo
+    // ToDo
     // 1. Get only latest Success, Sale or Captured trx
     // 2. Return only one string
     // 3. Validate the result
-    private function _get_pt_transaction($order_id)
+    static function _get_pt_transaction($db, $order_id)
     {
-        $payment_code =  $this->db->query("SELECT pt_payment_method FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
+        $payment_code =  $db->query("SELECT pt_payment_method FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
 
         $payment_code = implode(" ", $payment_code);
 
         return $payment_code;
     }
 
-      /**
+    /**
      * Check if the Order paid by PayTabs
      * Check if PT is already installed & the pt table exists
      */
-    private function _is_pt_order($order_payment_code, $trx_payment_code)
+    static function _is_pt_order($order_payment_code, $trx_payment_code)
     {
         // PaytabsHelper::isPayTabsPayment($order_payment_code);
         // PaytabsHelper::isPayTabsPayment($trx_payment_code);
         return true;
     }
-
-
 }
 
 class PaytabsController
@@ -232,7 +230,9 @@ class PaytabsController
             $postKey = $value['key'];
             $configKey = $value['configKey'];
 
-            $values[$configKey] = $this->controller->request->post[$postKey];
+            if (array_key_exists($postKey, $this->controller->request->post)) {
+                $values[$configKey] = $this->controller->request->post[$postKey];
+            }
         }
 
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $values);
@@ -497,6 +497,7 @@ class PaytabsCatalogController
 
     public function process_refund()
     {
+        $order_id = null;
         if (isset($this->controller->request->get['order_id'])) {
             $order_id = $this->controller->request->get['order_id'];
         }
