@@ -442,6 +442,8 @@ class PaytabsCatalogController
         $order_id = @$response_data->reference_no;
         $cart_amount = @$response_data->cart_amount;
         $cart_currency = $response_data->cart_currency;
+        $tran_type = $response_data->tran_type;
+
 
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
@@ -467,7 +469,8 @@ class PaytabsCatalogController
                     'transaction_ref' => $transactionId,
                     'parent_transaction_ref' => '',
                     'transaction_amount' => $cart_amount,
-                    'transaction_currency' => $cart_currency
+                    'transaction_currency' => $cart_currency,
+                    'pt_payment_type'=>$tran_type
                 ];
                 $this->save_payment_refrence($order_id, $transaction_data);
 
@@ -536,6 +539,7 @@ class PaytabsCatalogController
                 'transaction_ref' => $tran_ref,
                 'parent_transaction_ref' => $values['tran_ref'],
                 'transaction_amount' => $values['cart_amount'],
+                'pt_payment_type' => $values['tran_type'],
                 'transaction_currency' => $values['cart_currency'],
             ];
 
@@ -557,6 +561,7 @@ class PaytabsCatalogController
         `pt_payment_reference` = '" . $this->db->escape($transaction_data['transaction_ref']) . "',
         `pt_parent_reference` = '" . $transaction_data['parent_transaction_ref'] . "',
         `pt_payment_method` = '" . $this->controller->_code . "',
+        `pt_payment_type` = '" . $transaction_data['pt_payment_type'] . "',
         `pt_payment_status` = '" . $transaction_data['status'] . "',
         `pt_payment_amount` = '" . $transaction_data['transaction_amount'] . "',
         `pt_payment_currency` = '" . $transaction_data['transaction_currency'] . "'");
@@ -585,12 +590,15 @@ class PaytabsCatalogController
 
         $verify_response = $this->ptApi->verify_payment($transactionId);
 
+
+
         $success = $verify_response->success;
         $fraud = false;
         $res_msg = $verify_response->message;
         $order_id = @$verify_response->reference_no;
         $cart_amount = @$verify_response->cart_amount;
         $cart_currency = @$verify_response->cart_currency;
+
 
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
@@ -607,6 +615,7 @@ class PaytabsCatalogController
                 $success = false;
                 $fraud = true;
             } else {
+
                 PaytabsHelper::log("PayTabs {$this->controller->_code} checkout succeeded");
 
                 $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
