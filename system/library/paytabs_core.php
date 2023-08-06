@@ -2,11 +2,11 @@
 
 /**
  * PayTabs v2 PHP SDK
- * Version: 2.11.3
+ * Version: 2.11.4
  * PHP >= 7.0.0
  */
 
-define('PAYTABS_SDK_VERSION', '2.11.3');
+define('PAYTABS_SDK_VERSION', '2.11.4');
 
 define('PAYTABS_DEBUG_FILE_NAME', 'debug_paytabs.log');
 define('PAYTABS_DEBUG_SEVERITY', ['Info', 'Warning', 'Error']);
@@ -1084,7 +1084,6 @@ class PaytabsApi
     {
         $values['tran_ref'] = $tran_reference;
         $verify = json_decode($this->sendRequest(self::URL_QUERY, $values));
-
         $verify = $this->enhanceVerify($verify);
 
         return $verify;
@@ -1228,6 +1227,7 @@ class PaytabsApi
 
     private function enhanceVerify($verify)
     {
+        
         $_verify = $verify;
 
         if (!$verify) {
@@ -1264,6 +1264,7 @@ class PaytabsApi
 
         $_verify->reference_no = @$verify->cart_id;
         $_verify->transaction_id = @$verify->tran_ref;
+        $_verify->tran_type = @$verify->tran_type;
 
         $_verify->failed = !($_verify->success || $_verify->is_on_hold || $_verify->is_pending);
 
@@ -1293,6 +1294,7 @@ class PaytabsApi
 
             $_verify->transaction_id = $return_data['tranRef'];
             $_verify->reference_no = $return_data['cartId'];
+            $_verify->tran_type = @$verify->tran_type;
         }
 
         $_verify->failed = !($_verify->success || $_verify->is_on_hold || $_verify->is_pending);
