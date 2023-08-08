@@ -38,6 +38,8 @@ public function info() {
 <i class="fa fa-reply"></i></a>
 {% if pt_refund %}
 <a class="btn btn-warning" data-toggle="tooltip" href="{{ pt_refund_action }}"><i class="fa fa-undo"></i> Refund by PayTabs</a>
+{% else %}
+<a class="btn btn-default" data-toggle="tooltip" >Refunded by PayTabs</a>
 {% endif %}
 ]]></add>
 		</operation>
