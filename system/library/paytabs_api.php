@@ -284,10 +284,6 @@ class PaytabsController
 
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
 
-        $this->controller->load->model('setting/event');
-        $this->controller->model_setting_event->deleteEventByCode('paytabs_order_info');
-        $this->controller->model_setting_event->addEvent('paytabs_order_info', 'admin/controller/sale/order/info/after', 'paytabs/order/info');
-
         $this->generate_paymentRefrence_table();
     }
 
@@ -320,7 +316,7 @@ class PaytabsController
             `pt_payment_reference` VARCHAR(255) NOT NULL,
             `pt_parent_reference` VARCHAR(255)  NULL,
             `pt_payment_method` VARCHAR(255)  NULL,
-            `pt_payment_type` VARCHAR(255)  NULL,
+            `pt_transaction_type` VARCHAR(255)  NULL,
             `pt_payment_status` VARCHAR(255)  NULL,
             `pt_payment_amount` VARCHAR(255)  NULL,
             `pt_payment_currency` VARCHAR(255)  NULL,
@@ -470,7 +466,7 @@ class PaytabsCatalogController
                     'parent_transaction_ref' => '',
                     'transaction_amount' => $cart_amount,
                     'transaction_currency' => $cart_currency,
-                    'pt_payment_type'=>$tran_type
+                    'transaction_type'=>$tran_type
                 ];
                 $this->save_payment_refrence($order_id, $transaction_data);
 
@@ -508,20 +504,29 @@ class PaytabsCatalogController
             return;
         }
 
+        
         $payment_refrence =  $this->db->query("SELECT pt_payment_reference FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
 
-        $order_amount = $this->db->query("SELECT total FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
-        $order_currency = $this->db->query("SELECT currency_code FROM " . DB_PREFIX . "order WHERE order_id = '" . (int)$order_id . "'")->row;
+        $this->controller->load->model('sale/order');
+        $order_info = $this->controller->model_sale_order->getOrder($order_id);
+
+        $total = $order_info['total'];
+        $amount = $this->getPrice($total, $order_info);
+
+
+        $order_amount = $amount;
+        $order_currency = $order_info['currency_code'];
 
         $values = [
             "tran_type" => "refund",
             "tran_class" => "ecom",
             "cart_id" => $order_id,
-            "cart_currency" => implode(" ", $order_currency),
-            "cart_amount" => implode(" ", $order_amount),
-            "cart_description" => "Refunded from opencart",
+            "cart_currency" => $order_currency,
+            "cart_amount" => $order_amount,
+            "cart_description" => "Admin Refund",
             "tran_ref" => implode(" ", $payment_refrence)
         ];
+
 
         $refund_request = $this->ptApi->request_followup($values);
 
@@ -539,7 +544,7 @@ class PaytabsCatalogController
                 'transaction_ref' => $tran_ref,
                 'parent_transaction_ref' => $values['tran_ref'],
                 'transaction_amount' => $values['cart_amount'],
-                'pt_payment_type' => $values['tran_type'],
+                'transaction_type' => $values['tran_type'],
                 'transaction_currency' => $values['cart_currency'],
             ];
 
@@ -549,7 +554,7 @@ class PaytabsCatalogController
         } else {
             PaytabsHelper::log("Refund failed, {$order_id} - {$message}", 3);
         }
-
+        
         $this->controller->response->redirect($this->controller->url->link('sale/order/info', 'user_token=' . $this->controller->session->data['user_token'] . '&order_id=' . $order_id, true));
     }
 
@@ -561,7 +566,7 @@ class PaytabsCatalogController
         `pt_payment_reference` = '" . $this->db->escape($transaction_data['transaction_ref']) . "',
         `pt_parent_reference` = '" . $transaction_data['parent_transaction_ref'] . "',
         `pt_payment_method` = '" . $this->controller->_code . "',
-        `pt_payment_type` = '" . $transaction_data['pt_payment_type'] . "',
+        `pt_transaction_type` = '" . $transaction_data['transaction_type'] . "',
         `pt_payment_status` = '" . $transaction_data['status'] . "',
         `pt_payment_amount` = '" . $transaction_data['transaction_amount'] . "',
         `pt_payment_currency` = '" . $transaction_data['transaction_currency'] . "'");
