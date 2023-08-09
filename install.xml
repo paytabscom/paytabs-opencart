@@ -15,6 +15,7 @@ $data['cancel'] = $this->url->link('sale/order', 'user_token=' . $this->session-
 $this->pt_add_buttons($order_info, $data, $this);
 ]]></add>
 		</operation>
+
 		<operation error="log">
 			<search><![CDATA[
 public function info() {
@@ -38,8 +39,6 @@ public function info() {
 <i class="fa fa-reply"></i></a>
 {% if pt_refund %}
 <a class="btn btn-warning" data-toggle="tooltip" href="{{ pt_refund_action }}"><i class="fa fa-undo"></i> Refund by PayTabs</a>
-{% else %}
-<a class="btn btn-default" data-toggle="tooltip" >Refunded by PayTabs</a>
 {% endif %}
 ]]></add>
 		</operation>
