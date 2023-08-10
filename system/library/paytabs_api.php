@@ -5,6 +5,8 @@ define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
+define('PT_DB_TRANS_TABLE', DB_PREFIX . 'pt_transactions');
+
 require_once DIR_SYSTEM . '/library/paytabs_core.php';
 
 class paytabs_api
@@ -37,7 +39,7 @@ class PaytabsOrder
         }
 
 
-        // $trx = $controller->db->query("SELECT pt_payment_method FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_info['order_id'] . "'")->row;
+        // $trx = $controller->db->query("SELECT payment_method FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_info['order_id'] . "'")->row;
 
         if (strpos($payment_code, "paytabs_") !== false) {
             if ($order_status_id != 11) {
@@ -54,7 +56,7 @@ class PaytabsOrder
     // 3. Validate the result
     static function _get_pt_transaction($db, $order_id)
     {
-        $payment_code =  $db->query("SELECT pt_payment_method FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
+        $payment_code =  $db->query("SELECT payment_method FROM " . PT_DB_TRANS_TABLE . " WHERE order_id = '" . (int)$order_id . "'")->row;
 
         $payment_code = implode(" ", $payment_code);
 
@@ -310,16 +312,18 @@ class PaytabsController
     private function generate_paymentRefrence_table()
     {
         $this->db->query("
-            CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "pt_transaction_reference` (
+            CREATE TABLE IF NOT EXISTS `" . PT_DB_TRANS_TABLE . "` (
             `id` INT(11) NOT NULL AUTO_INCREMENT,
             `order_id` INT(11) NOT NULL,
-            `pt_payment_reference` VARCHAR(255) NOT NULL,
-            `pt_parent_reference` VARCHAR(255)  NULL,
-            `pt_payment_method` VARCHAR(255)  NULL,
-            `pt_transaction_type` VARCHAR(255)  NULL,
-            `pt_payment_status` VARCHAR(255)  NULL,
-            `pt_payment_amount` VARCHAR(255)  NULL,
-            `pt_payment_currency` VARCHAR(255)  NULL,
+            `payment_method` VARCHAR(32) NOT NULL,
+            `transaction_ref` VARCHAR(64) NOT NULL,
+            `parent_ref` VARCHAR(64)  NULL,
+            `transaction_type` VARCHAR(32) NOT NULL,
+            `transaction_status` TINYINT(1) NOT NULL,
+            `transaction_amount` DECIMAL(15,4) NOT NULL,
+            `transaction_currency` VARCHAR(8) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`)
             );
         ");
@@ -463,9 +467,9 @@ class PaytabsCatalogController
                     'status' => $success,
                     'transaction_ref' => $transactionId,
                     'parent_transaction_ref' => '',
-                    'transaction_amount' => $cart_amount,
+                    'transaction_amount'   => $cart_amount,
                     'transaction_currency' => $cart_currency,
-                    'transaction_type'=>$tran_type
+                    'transaction_type' => $tran_type
                 ];
                 $this->save_payment_refrence($order_id, $transaction_data);
 
@@ -503,8 +507,7 @@ class PaytabsCatalogController
             return;
         }
 
-        
-        $payment_refrence =  $this->db->query("SELECT pt_payment_reference FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_id . "'")->row;
+        $payment_refrence =  $this->db->query("SELECT transaction_ref FROM " . PT_DB_TRANS_TABLE . " WHERE order_id = '" . (int)$order_id . "'")->row;
 
         $this->controller->load->model('sale/order');
         $order_info = $this->controller->model_sale_order->getOrder($order_id);
@@ -553,22 +556,36 @@ class PaytabsCatalogController
         } else {
             PaytabsHelper::log("Refund failed, {$order_id} - {$message}", 3);
         }
-        
+
         $this->controller->response->redirect($this->controller->url->link('sale/order/info', 'user_token=' . $this->controller->session->data['user_token'] . '&order_id=' . $order_id, true));
     }
 
 
     private function save_payment_refrence($order_id, $transaction_data)
     {
-        $this->db->query("INSERT INTO `" . DB_PREFIX . "pt_transaction_reference` SET 
-        `order_id` = '" . (int)$order_id . "', 
-        `pt_payment_reference` = '" . $this->db->escape($transaction_data['transaction_ref']) . "',
-        `pt_parent_reference` = '" . $transaction_data['parent_transaction_ref'] . "',
-        `pt_payment_method` = '" . $this->controller->_code . "',
-        `pt_transaction_type` = '" . $transaction_data['transaction_type'] . "',
-        `pt_payment_status` = '" . $transaction_data['status'] . "',
-        `pt_payment_amount` = '" . $transaction_data['transaction_amount'] . "',
-        `pt_payment_currency` = '" . $transaction_data['transaction_currency'] . "'");
+        $sql_data = [
+            'order_id' => (int)$order_id,
+            'payment_method'   => $this->db->escape($this->controller->_code),
+            'transaction_ref'  => $this->db->escape($transaction_data['transaction_ref']),
+            'parent_ref'       => $this->db->escape($transaction_data['parent_transaction_ref']),
+            'transaction_type' => $this->db->escape(strtolower($transaction_data['transaction_type'])),
+            'transaction_status'   => $this->db->escape($transaction_data['status']),
+            'transaction_amount'   => $this->db->escape($transaction_data['transaction_amount']),
+            'transaction_currency' => $this->db->escape($transaction_data['transaction_currency']),
+        ];
+
+        // Map to array of values only
+        $sql_data = array_map(fn ($key, $value) => "`$key` = '$value'", array_keys($sql_data), array_values($sql_data));
+
+        // Merge all updates in one string
+        $sql_cmd = implode(", ", $sql_data);
+
+        $result = $this->db->query("INSERT INTO `" . PT_DB_TRANS_TABLE . "` SET $sql_cmd;");
+
+        if (!$result->num_rows) {
+            $_log_msg = json_encode($transaction_data);
+            PaytabsHelper::log("DB insert failed, [$order_id], [$_log_msg]", 3);
+        }
     }
 
 
