@@ -595,15 +595,12 @@ class PaytabsCatalogController
 
         $verify_response = $this->ptApi->verify_payment($transactionId);
 
-
-
         $success = $verify_response->success;
         $fraud = false;
         $res_msg = $verify_response->message;
         $order_id = @$verify_response->reference_no;
         $cart_amount = @$verify_response->cart_amount;
         $cart_currency = @$verify_response->cart_currency;
-
 
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
@@ -620,7 +617,6 @@ class PaytabsCatalogController
                 $success = false;
                 $fraud = true;
             } else {
-
                 PaytabsHelper::log("PayTabs {$this->controller->_code} checkout succeeded");
 
                 $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));

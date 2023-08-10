@@ -58,13 +58,17 @@ Supports OpenCart **2.3** & **3.x**
 
 1. Access `debug_paytabs.log` file found at: `/system/storage/logs/debug_paytabs.log`
 
-## Enable Refund Function
-1. go to admin/controller/startup/event.php
-2. inside the index function paste the below code after the line "$this->load->model('setting/event');" 
+## Enable Refund Functionality
 
-      " 
-      	$this->model_setting_event->addEvent('paytabs_order_info', 'admin/controller/sale/order/info/after', 'paytabs/order/info');
-      "
+Depends on the installation type:
+If you install the plugin using OpenCart Admin panel => Refund will be available.
+
+If you install the plugins using FTP methos then:
+1. Zip the `install.xml` file and name it `install.ocmod.zip`.
+2. Navigate to OpenCart Admin panel >> Extensions >> Installer
+3. Click Upload button and select the `install.ocmod.zip` file
+4. Navigate to OpenCart Admin panel >> Extensions >> Modifications
+5. Click on the Refresh button
 
 
 ### OpenCart error log
