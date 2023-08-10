@@ -1264,7 +1264,6 @@ class PaytabsApi
 
         $_verify->reference_no = @$verify->cart_id;
         $_verify->transaction_id = @$verify->tran_ref;
-        $_verify->tran_type = @$verify->tran_type;
 
         $_verify->failed = !($_verify->success || $_verify->is_on_hold || $_verify->is_pending);
 

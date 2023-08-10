@@ -438,8 +438,7 @@ class PaytabsCatalogController
         $order_id = @$response_data->reference_no;
         $cart_amount = @$response_data->cart_amount;
         $cart_currency = $response_data->cart_currency;
-        $tran_type = $response_data->tran_type;
-
+        $tran_type = @$response_data->tran_type;
 
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
