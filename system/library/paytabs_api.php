@@ -286,7 +286,7 @@ class PaytabsController
 
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
 
-        $this->generate_paymentRefrence_table();
+        $this->generate_paymentReference_table();
     }
 
     //
@@ -309,7 +309,7 @@ class PaytabsController
     }
 
 
-    private function generate_paymentRefrence_table()
+    private function generate_paymentReference_table()
     {
         $this->db->query("
             CREATE TABLE IF NOT EXISTS `" . PT_DB_TRANS_TABLE . "` (
@@ -471,7 +471,7 @@ class PaytabsCatalogController
                     'transaction_currency' => $cart_currency,
                     'transaction_type' => $tran_type
                 ];
-                $this->save_payment_refrence($order_id, $transaction_data);
+                $this->save_payment_reference($order_id, $transaction_data);
 
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
             }
@@ -507,14 +507,13 @@ class PaytabsCatalogController
             return;
         }
 
-        $payment_refrence =  $this->db->query("SELECT transaction_ref FROM " . PT_DB_TRANS_TABLE . " WHERE order_id = '" . (int)$order_id . "'")->row;
+        $payment_refrence = $this->db->query("SELECT transaction_ref FROM " . PT_DB_TRANS_TABLE . " WHERE order_id = '" . (int)$order_id . "'")->row;
 
         $this->controller->load->model('sale/order');
         $order_info = $this->controller->model_sale_order->getOrder($order_id);
 
         $total = $order_info['total'];
         $amount = $this->getPrice($total, $order_info);
-
 
         $order_amount = $amount;
         $order_currency = $order_info['currency_code'];
@@ -528,7 +527,6 @@ class PaytabsCatalogController
             "cart_description" => "Admin Refund",
             "tran_ref" => implode(" ", $payment_refrence)
         ];
-
 
         $refund_request = $this->ptApi->request_followup($values);
 
@@ -550,7 +548,7 @@ class PaytabsCatalogController
                 'transaction_currency' => $values['cart_currency'],
             ];
 
-            $this->save_payment_refrence($order_id, $transaction_data);
+            $this->save_payment_reference($order_id, $transaction_data);
 
             PaytabsHelper::log("Refund success, order [{$order_id} - {$message}]");
         } else {
@@ -561,7 +559,7 @@ class PaytabsCatalogController
     }
 
 
-    private function save_payment_refrence($order_id, $transaction_data)
+    private function save_payment_reference($order_id, $transaction_data)
     {
         $sql_data = [
             'order_id' => (int)$order_id,
