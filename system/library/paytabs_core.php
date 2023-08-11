@@ -2,11 +2,11 @@
 
 /**
  * PayTabs v2 PHP SDK
- * Version: 2.11.3
+ * Version: 2.11.5
  * PHP >= 7.0.0
  */
 
-define('PAYTABS_SDK_VERSION', '2.11.3');
+define('PAYTABS_SDK_VERSION', '2.11.5');
 
 define('PAYTABS_DEBUG_FILE_NAME', 'debug_paytabs.log');
 define('PAYTABS_DEBUG_SEVERITY', ['Info', 'Warning', 'Error']);
@@ -320,7 +320,7 @@ abstract class PaytabsEnum
 
             // Or Expired
             $tran_status = @$ipn_data->payment_result->response_status;
-            if ($tran_status  === 'X') {
+            if ($tran_status === 'X') {
                 return true;
             }
         }
@@ -944,7 +944,7 @@ class PaytabsApi
         '0'  => ['name' => 'all', 'title' => 'PayTabs - All', 'currencies' => null, 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_IFRAME]],
         '1'  => ['name' => 'stcpay', 'title' => 'PayTabs - StcPay', 'currencies' => ['SAR'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
         '2'  => ['name' => 'stcpayqr', 'title' => 'PayTabs - StcPay(QR)', 'currencies' => ['SAR'], 'groups' => []],
-        '3'  => ['name' => 'applepay', 'title' => 'PayTabs - ApplePay', 'currencies' => ['AED', 'SAR', 'ILS'], 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_AUTH_CAPTURE]],
+        '3'  => ['name' => 'applepay', 'title' => 'PayTabs - ApplePay', 'currencies' => null, 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_AUTH_CAPTURE]],
         '4'  => ['name' => 'omannet', 'title' => 'PayTabs - OmanNet', 'currencies' => ['OMR'], 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_IFRAME]],
         '5'  => ['name' => 'mada', 'title' => 'PayTabs - mada', 'currencies' => ['SAR'], 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_IFRAME]],
         '6'  => ['name' => 'creditcard', 'title' => 'PayTabs - CreditCard', 'currencies' => null, 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_CARDS_INTERNATIONAL, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_IFRAME]],
@@ -961,7 +961,7 @@ class PaytabsApi
         '17' => ['name' => 'knetcredit', 'title' => 'PayTabs - KnPay (Credit)', 'currencies' => ['KWD'], 'groups' => []],
         '18' => ['name' => 'aman', 'title' => 'PayTabs - Aman', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
         '19' => ['name' => 'urpay', 'title' => 'PayTabs - UrPay', 'currencies' => ['SAR'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
-        '20' => ['name' => 'paypal', 'title' => 'PayTabs - PayPal', 'currencies' => ['USD', 'EUR', 'GPB', 'HKD', 'JPY'], 'groups' => []],
+        '20' => ['name' => 'paypal', 'title' => 'PayTabs - PayPal', 'currencies' => ['AED', 'EGP', 'USD', 'EUR', 'GPB', 'HKD', 'JPY'], 'groups' => []],
         '21' => ['name' => 'installment', 'title' => 'PayTabs - Installment', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_IFRAME]],
         '22' => ['name' => 'touchpoints', 'title' => 'PayTabs - Touchpoints', 'currencies' => ['AED'], 'groups' => [PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_IFRAME]],
     ];
@@ -1183,7 +1183,7 @@ class PaytabsApi
             // Lower case all keys
             $headers = array_change_key_case($headers);
 
-            $signature = $headers['signature'];
+            $signature = @$headers['signature'] ?? '';
             // $client_key = $headers['Client-Key'];
 
             $is_valid = $this->is_valid_ipn($response, $signature, false);
