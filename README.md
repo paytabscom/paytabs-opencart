@@ -10,7 +10,7 @@ Supports OpenCart **2.3** & **3.x**
 
 ### Install using OpenCart Admin panel
 
-1. Download the latest release of the plugin [Click here: 3.9.0](<https://github.com/paytabscom/paytabs-opencart/releases/download/3.9.0/paytabs-opencart.ocmod.zip>)
+1. Download the latest release of the plugin [Click here: 3.10.0](<https://github.com/paytabscom/paytabs-opencart/releases/download/3.10.0/paytabs-opencart.ocmod.zip>)
 2. Go to `"OpenCart admin panel" >> Extensions >> Installer`
 3. Click `Upload`
 4. Select the downloaded zip file (`paytabs-opencart.zip`)
@@ -49,6 +49,25 @@ Supports OpenCart **2.3** & **3.x**
    - **Server Key**: `Merchant’s Dashboard >> Developers >> Key management >> Server Key`
 7. Configure other options as your need
 8. Click the `Save` button *(The blue button on top-right of the page)* button
+
+- - -
+
+## Enable Refund Functionality
+
+Depends on the installation type:
+
+### Installed using OpenCart Admin panel
+
+1. Navigate to `OpenCart Admin panel >> Extensions >> Modifications`.
+2. Click on the **Refresh** button.
+
+### Installed using FTP method
+
+1. Zip the `install.xml` file and name it `install.ocmod.zip`.
+2. Navigate to `OpenCart Admin panel >> Extensions >> Installer`.
+3. Click Upload button and select the `install.ocmod.zip` file.
+4. Navigate to `OpenCart Admin panel >> Extensions >> Modifications`.
+5. Click on the **Refresh** button.
 
 - - -
 

@@ -7,6 +7,8 @@ class ControllerExtensionPaymentPaytabsCreditcard extends Controller
 	public $userToken;
 
 	private $paytabsController;
+	private $paytabsCatallogController;
+
 
 	//
 
@@ -23,6 +25,9 @@ class ControllerExtensionPaymentPaytabsCreditcard extends Controller
 		$this->init();
 
 		$this->paytabsController->index($data);
+		
+		$this->paytabsCatallogController = new PaytabsCatalogController($this);
+
 	}
 
 
@@ -45,5 +50,11 @@ class ControllerExtensionPaymentPaytabsCreditcard extends Controller
 	{
 		$this->init();
 		$this->paytabsController->install();
+	}
+	
+	public function refund()
+	{
+		$this->init();
+		$this->paytabsCatallogController->process_refund();
 	}
 }

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<name>Add PayTabs actions Order</name>
+	<code>pt_order_actions</code>
+	<version>3</version>
+	<author>PayTabs Integration</author>
+	<link>site.paytabs.com</link>
+
+	<file path="admin/controller/sale/order.php">
+		<operation error="log">
+			<search><![CDATA[
+$data['cancel'] = $this->url->link('sale/order', 'user_token=' . $this->session->data['user_token'] . $url, true);
+]]></search>
+			<add position="after"><![CDATA[
+$this->pt_add_buttons($order_info, $data, $this);
+]]></add>
+		</operation>
+
+		<operation error="log">
+			<search><![CDATA[
+public function info() {
+]]></search>
+			<add position="before"><![CDATA[
+	public function pt_add_buttons($order_info, &$data, $controller) {
+		$this->load->library('paytabs_api');
+		PaytabsOrder::pt_add_actions($order_info, $data, $controller);
+	}
+]]></add>
+		</operation>
+	</file>
+
+
+	<file path="admin/view/template/sale/order_info.twig">
+		<operation error="log">
+			<search><![CDATA[
+<i class="fa fa-reply"></i></a>
+]]></search>
+			<add position="replace"><![CDATA[
+<i class="fa fa-reply"></i></a>
+{% if pt_refund %}
+<a class="btn btn-warning" data-toggle="tooltip" href="{{ pt_refund_action }}" onclick="return confirm('Are you sure? this will issue a full Refund!')"><i class="fa fa-undo"></i> Refund by PayTabs</a>
+{% endif %}
+]]></add>
+		</operation>
+	</file>
+
+</modification>
