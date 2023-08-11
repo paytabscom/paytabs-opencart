@@ -52,24 +52,30 @@ Supports OpenCart **2.3** & **3.x**
 
 - - -
 
+## Enable Refund Functionality
+
+Depends on the installation type:
+
+### Installed using OpenCart Admin panel
+
+1. Navigate to `OpenCart Admin panel >> Extensions >> Modifications`.
+2. Click on the **Refresh** button.
+
+### Installed using FTP method
+
+1. Zip the `install.xml` file and name it `install.ocmod.zip`.
+2. Navigate to `OpenCart Admin panel >> Extensions >> Installer`.
+3. Click Upload button and select the `install.ocmod.zip` file.
+4. Navigate to `OpenCart Admin panel >> Extensions >> Modifications`.
+5. Click on the **Refresh** button.
+
+- - -
+
 ## Log Access
 
 ### PayTabs custome log
 
 1. Access `debug_paytabs.log` file found at: `/system/storage/logs/debug_paytabs.log`
-
-## Enable Refund Functionality
-
-Depends on the installation type:
-If you install the plugin using OpenCart Admin panel => Refund will be available.
-
-If you install the plugins using FTP methos then:
-1. Zip the `install.xml` file and name it `install.ocmod.zip`.
-2. Navigate to OpenCart Admin panel >> Extensions >> Installer
-3. Click Upload button and select the `install.ocmod.zip` file
-4. Navigate to OpenCart Admin panel >> Extensions >> Modifications
-5. Click on the Refresh button
-
 
 ### OpenCart error log
 
