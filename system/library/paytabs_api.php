@@ -573,7 +573,7 @@ class PaytabsCatalogController
         ];
 
         // Map to array of values only
-        $sql_data = array_map(fn ($key, $value) => "`$key` = '$value'", array_keys($sql_data), array_values($sql_data));
+        $sql_data = array_map(function ($key, $value) { return "`$key` = '$value'"; }, array_keys($sql_data), array_values($sql_data));
 
         // Merge all updates in one string
         $sql_cmd = implode(", ", $sql_data);
