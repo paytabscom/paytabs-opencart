@@ -10,15 +10,15 @@ Supports OpenCart **2.3** & **3.x**
 
 ### Install using OpenCart Admin panel
 
-1. Download the latest release of the plugin [Click here: 3.10.0](<https://github.com/paytabscom/paytabs-opencart/releases/download/3.10.0/paytabs-opencart.ocmod.zip>)
+1. Download the latest release of the plugin [Click here](<https://github.com/paytabscom/paytabs-opencart/releases/download/latest/paytabs-opencart.ocmod.zip>)
 2. Go to `"OpenCart admin panel" >> Extensions >> Installer`
 3. Click `Upload`
 4. Select the downloaded zip file (`paytabs-opencart.zip`)
 5. Wait until the upload *Progress* success
 
-*Note 1*: The new uploaded plugin will overwrite any previous version.
-
-*Note 2*: By removing the Plugin from the `Extension Installer` admin page, You are removing the configurations of the plugin.
+*Notes*:
+- The new uploaded plugin will overwrite any previous version.
+- By removing the Plugin from the `Extension Installer` admin page, You are removing the configurations of the plugin.
 
 ### Install using FTP method
 
