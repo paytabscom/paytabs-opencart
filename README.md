@@ -4,7 +4,7 @@ The official **OpenCart** Plugin for PayTabs (PT-2).
 
 Supports OpenCart **4.x**
 
-Supports OpenCart **2.3** & **3.x**, release version (v3.10.0)
+Supports OpenCart **2.3** & **3.x**, release version (v3.x.x)
 
 ---
 
@@ -14,7 +14,7 @@ Supports OpenCart **2.3** & **3.x**, release version (v3.10.0)
 
 #### Install using OpenCart Admin panel
 
-1. Download the latest release of the plugin [OpenCart 4.x: (v4.4.1)](https://github.com/paytabscom/paytabs-opencart/releases/download/4.4.1/paytabs.ocmod.zip)
+1. Download the latest release of the plugin [OpenCart 4.x](https://github.com/paytabscom/paytabs-opencart/releases/download/latest/paytabs.ocmod.zip)
 2. Go to `"OpenCart admin panel" >> Extensions >> Installer`
 3. Click `Upload`
 4. Select the downloaded zip file (`paytabs.ocmod.zip`)
