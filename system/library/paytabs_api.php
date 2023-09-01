@@ -404,15 +404,15 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
 
                 $successStatus = $this->config->get(PaytabsAdapter::_key('order_status_id', $this->_code));
 
-                // Save Transaction refrence.
+                // Save Transaction reference.
                 $this->model_checkout_order->editTransactionId($order_id, $transactionId);
-                
+
                 $this->model_checkout_order->addHistory($order_id, $successStatus, $res_msg);
             }
         } else if ($response_data->is_on_hold) {
 
         } else if ($response_data->is_pending) {
-            
+
         }
 
         if (!$success) {
