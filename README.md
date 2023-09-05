@@ -15,6 +15,7 @@ Supports OpenCart **2.3** & **3.x**
 3. Click `Upload`
 4. Select the downloaded zip file (`paytabs-opencart.zip`)
 5. Wait until the upload *Progress* success
+6. Apply the modifications
 
 *Notes*:
 - The new uploaded plugin will overwrite any previous version.
@@ -23,8 +24,16 @@ Supports OpenCart **2.3** & **3.x**
 ### Install using FTP method
 
 1. Upload the content of this repo to the root folder of your OpenCart's website
+2. Apply the modifications
 
 *Note: In case a previous version already installed, Replace all previous files when asking.*
+
+## Applying the Modifications
+
+Applying the modifications is essential to enable the actions on the Sale Orders (such as **`Refund`**).
+
+1. Go to `OpenCart admin panel >> Modifications`
+2. Click `Refresh` button *(top-right next to `Clear` & `Delete` buttons)*, you should see a successful message saying: "Success: You have modified modifications!"
 
 - - -
 
