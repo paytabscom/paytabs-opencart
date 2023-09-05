@@ -1,8 +1,8 @@
-# paytabs-opencart
+# PayTabs OpenCart
 
 The official **OpenCart** Plugin for PayTabs (PT-2).
 
-Supports OpenCart **2.3** & **3.x**
+Supports OpenCart **3.x** & **2.3**.
 
 - - -
 
@@ -15,7 +15,7 @@ Supports OpenCart **2.3** & **3.x**
 3. Click `Upload`
 4. Select the downloaded zip file (`paytabs-opencart.zip`)
 5. Wait until the upload *Progress* success
-6. Apply the modifications
+6. Apply the modifications [Details](#applying-the-modifications)
 
 *Notes*:
 - The new uploaded plugin will overwrite any previous version.
@@ -24,7 +24,7 @@ Supports OpenCart **2.3** & **3.x**
 ### Install using FTP method
 
 1. Upload the content of this repo to the root folder of your OpenCart's website
-2. Apply the modifications
+2. Apply the modifications [Details](#applying-the-modifications)
 
 *Note: In case a previous version already installed, Replace all previous files when asking.*
 
@@ -32,8 +32,20 @@ Supports OpenCart **2.3** & **3.x**
 
 Applying the modifications is essential to enable the actions on the Sale Orders (such as **`Refund`**).
 
-1. Go to `OpenCart admin panel >> Modifications`
-2. Click `Refresh` button *(top-right next to `Clear` & `Delete` buttons)*, you should see a successful message saying: "Success: You have modified modifications!"
+Depends on the installation type:
+
+### Installed using OpenCart Admin panel
+
+1. Navigate to `OpenCart Admin panel >> Extensions >> Modifications`.
+2. Click on the **`Refresh`** button *(top-right next to `Clear` & `Delete` buttons)*, you should see a successful message saying: "`Success: You have modified modifications!`".
+
+### Installed using FTP method
+
+1. Zip the `install.xml` file and name it `install.ocmod.zip`.
+2. Navigate to `OpenCart Admin panel >> Extensions >> Installer`.
+3. Click Upload button and select the `install.ocmod.zip` file.
+4. Navigate to `OpenCart Admin panel >> Extensions >> Modifications`.
+5. Click on the **`Refresh`** button *(top-right next to `Clear` & `Delete` buttons)*, you should see a successful message saying: "`Success: You have modified modifications!`".
 
 - - -
 
@@ -63,20 +75,7 @@ Applying the modifications is essential to enable the actions on the Sale Orders
 
 ## Enable Refund Functionality
 
-Depends on the installation type:
-
-### Installed using OpenCart Admin panel
-
-1. Navigate to `OpenCart Admin panel >> Extensions >> Modifications`.
-2. Click on the **Refresh** button.
-
-### Installed using FTP method
-
-1. Zip the `install.xml` file and name it `install.ocmod.zip`.
-2. Navigate to `OpenCart Admin panel >> Extensions >> Installer`.
-3. Click Upload button and select the `install.ocmod.zip` file.
-4. Navigate to `OpenCart Admin panel >> Extensions >> Modifications`.
-5. Click on the **Refresh** button.
+You should apply the modifications in order to have the Refund functionality [More details](#applying-the-modifications).
 
 - - -
 
