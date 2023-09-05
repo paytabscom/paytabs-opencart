@@ -2,7 +2,7 @@
 
 namespace Opencart\System\Library;
 
-define('PAYTABS_PAYPAGE_VERSION', '4.4.1');
+define('PAYTABS_PAYPAGE_VERSION', '4.4.2');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
@@ -404,12 +404,15 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
 
                 $successStatus = $this->config->get(PaytabsAdapter::_key('order_status_id', $this->_code));
 
+                // Save Transaction reference.
+                $this->model_checkout_order->editTransactionId($order_id, $transactionId);
+
                 $this->model_checkout_order->addHistory($order_id, $successStatus, $res_msg);
             }
         } else if ($response_data->is_on_hold) {
 
         } else if ($response_data->is_pending) {
-            
+
         }
 
         if (!$success) {
