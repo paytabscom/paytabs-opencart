@@ -820,7 +820,7 @@ class PaytabsAdapter
         'valu_product_id' => [
             'key' => 'payment_paytabs_valu_product_id',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_valu_product_id',
-            'required' => true,
+            'required' => false,
             'methods' => ['valu']
         ],
         'order_status_id' => [
