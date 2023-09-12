@@ -2,7 +2,7 @@
 
 namespace Opencart\System\Library;
 
-define('PAYTABS_PAYPAGE_VERSION', '4.4.2');
+define('PAYTABS_PAYPAGE_VERSION', '4.4.3');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
@@ -820,7 +820,7 @@ class PaytabsAdapter
         'valu_product_id' => [
             'key' => 'payment_paytabs_valu_product_id',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_valu_product_id',
-            'required' => true,
+            'required' => false,
             'methods' => ['valu']
         ],
         'order_status_id' => [
