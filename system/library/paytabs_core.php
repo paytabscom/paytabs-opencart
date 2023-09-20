@@ -2,7 +2,7 @@
 
 /**
  * PayTabs v2 PHP SDK
- * Version: 2.11.5
+ * Version: 2.11.6
  * PHP >= 7.0.0
  */
 
@@ -964,6 +964,8 @@ class PaytabsApi
         '20' => ['name' => 'paypal', 'title' => 'PayTabs - PayPal', 'currencies' => ['AED', 'EGP', 'USD', 'EUR', 'GPB', 'HKD', 'JPY'], 'groups' => []],
         '21' => ['name' => 'installment', 'title' => 'PayTabs - Installment', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_IFRAME]],
         '22' => ['name' => 'touchpoints', 'title' => 'PayTabs - Touchpoints', 'currencies' => ['AED'], 'groups' => [PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_IFRAME]],
+        '23' => ['name' => 'forsa', 'title' => 'PayTabs - Forsa', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
+
     ];
 
     const BASE_URLS = [

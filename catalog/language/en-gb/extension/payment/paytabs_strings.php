@@ -19,3 +19,4 @@ $_['paypal_text_title']      = 'PayTabs - PayPal';
 $_['installment_text_title'] = 'PayTabs - NBE Installment';
 $_['urpay_text_title']       = 'PayTabs - UrPay';
 $_['aman_text_title']        = 'PayTabs - Aman';
+$_['forsa_text_title']       = 'PayTabs - Forsa';
