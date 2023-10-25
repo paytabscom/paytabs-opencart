@@ -4,11 +4,11 @@ namespace Opencart\System\Library;
 
 /**
  * PayTabs v2 PHP SDK
- * Version: 2.12.1
+ * Version: 2.12.2
  * PHP >= 7.0.0
  */
 
-define('PAYTABS_SDK_VERSION', '2.12.1');
+define('PAYTABS_SDK_VERSION', '2.12.2');
 
 define('PAYTABS_DEBUG_FILE_NAME', 'debug_paytabs.log');
 define('PAYTABS_DEBUG_SEVERITY', ['Info', 'Warning', 'Error']);
@@ -1001,7 +1001,7 @@ class PaytabsApi
         '21' => ['name' => 'installment', 'title' => 'PayTabs - Installment', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_IFRAME]],
         '22' => ['name' => 'touchpoints', 'title' => 'PayTabs - Touchpoints', 'currencies' => ['AED'], 'groups' => [PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_IFRAME]],
         '23' => ['name' => 'forsa', 'title' => 'PayTabs - Forsa', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
-        '24' => ['name' => 'tabby', 'title' => 'PayTabs - Tabby', 'currencies' => ['AED'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
+        '24' => ['name' => 'tabby', 'title' => 'PayTabs - Tabby', 'currencies' => ['AED'], 'groups' => []],
 
     ];
 
@@ -1237,7 +1237,8 @@ class PaytabsApi
         }
 
         if (!$is_valid) {
-            PaytabsHelper::log("Paytabs Admin: Invalid Signature", 3);
+            $hashed_key = explode('-', @$this->server_key ?? '')[0];
+            PaytabsHelper::log("Paytabs Admin: Invalid Signature ({$hashed_key}, {$signature})", 3);
             return false;
         }
 
