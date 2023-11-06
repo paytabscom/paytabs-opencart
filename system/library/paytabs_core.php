@@ -1258,6 +1258,8 @@ class PaytabsApi
             $_paypage = new stdClass();
             $_paypage->success = false;
             $_paypage->message = 'Create paytabs payment failed';
+        } else if (isset($_paypage->code)) {
+            $_paypage->success = false;
         } else {
             $_paypage->success = isset($paypage->tran_ref, $paypage->redirect_url) && !empty($paypage->redirect_url);
 
