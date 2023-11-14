@@ -334,7 +334,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
             } else {
 
                 $this->response->addHeader('Content-Type: application/json');
-                $this->response->setOutput(json_encode(["redirect_url"=>$payment_url,"status"=>true]));
+                $this->response->setOutput(json_encode(["redirect_url" => $payment_url, "status" => true]));
             }
         } else {
             $paypage_msg = $paypage->message;
@@ -347,7 +347,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
                 $this->response->setOutput($paypage_msg);
             } else {
                 $this->response->addHeader('Content-Type: application/json');
-                $this->response->setOutput(json_encode(["message"=>$paypage_msg,"status"=>false]));
+                $this->response->setOutput(json_encode(["message" => $paypage_msg, "status" => false]));
             }
         }
     }
@@ -412,9 +412,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
                 $this->model_checkout_order->addHistory($order_id, $successStatus, $res_msg);
             }
         } else if ($response_data->is_on_hold) {
-
         } else if ($response_data->is_pending) {
-
         }
 
         if (!$success) {
