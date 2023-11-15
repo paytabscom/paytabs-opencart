@@ -221,8 +221,8 @@ abstract class PaytabsHelper
             paytabs_error_log($msg, $severity);
         } catch (\Throwable $th) {
             try {
-                $severity_str = PAYTABS_DEBUG_SEVERITY[$severity];
-                $_prefix = date('c') . " " . PAYTABS_PREFIX . "{$severity_str}: ";
+                $severity_str = PAYTABS_DEBUG_SEVERITY[--$severity];
+                $_prefix = date('c') . " " . PAYTABS_PREFIX . ".{$severity_str} (FB): ";
                 $_msg = ($_prefix . $msg . PHP_EOL);
 
                 $_file = defined('PAYTABS_DEBUG_FILE') ? PAYTABS_DEBUG_FILE : PAYTABS_DEBUG_FILE_NAME;
