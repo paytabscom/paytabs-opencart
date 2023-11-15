@@ -1,41 +1,46 @@
-{% if iframe_mode %}
-
 <div id="pt_paymentpage">
 	<div class="float-end">
 		<button type="button" class="btn btn-primary" onclick="pt_submit('{{ order_id }}')">{{ button_confirm }}</button>
 	</div>
 
-	<div id="pt_loading" style="display: none;">
-		<img src="extension/paytabs/catalog/view/image/logo-animation.gif" alt="PayTabs loading" style="max-height: 200px; margin: auto; display: block;">
+	<div id="pt_loading" style="display: none">
+		<img src="extension/paytabs/catalog/view/image/logo-animation.gif" alt="PayTabs loading" style="max-height: 200px; margin: auto; display: block" />
 	</div>
 </div>
 
 <script>
 	function pt_submit(order_id) {
-		$('#pt_loading').show('fast').prev().hide();
+		$('#pt_paymentpage button').attr("disabled", 'disabled');
+		$("#pt_loading").show("fast")
 
 		$.post('{{ url_confirm }}', {
-				order: order_id
-			})
-			.always(function() {
+			order: order_id
+		})
+			.always(function () {
 				$('#pt_loading').hide('fast');
 			})
-			.done(function(res) {
-				console.log(res);
-				$('#pt_paymentpage').html(res);
+			.done(function (res) {
+				ptDone(res);
 			})
-			.fail(function(xhr, status, error) {
-				console.log(status, error);
-				$('#pt_paymentpage').html(error);
+			.fail(function (xhr, status, error) {
+				$('#pt_paymentpage button').attr("disabled", false);
+				$('#alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> ' + error + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
 			});
 	}
+
+	{% if iframe_mode %}
+	function ptDone(res) {
+		$('#pt_paymentpage').html(res);
+	}
+
+	{% else %}
+	function ptDone(res) {
+		if (res.status && res.redirect_url) {
+			window.location.href = res.redirect_url;
+		} else {
+			$('#pt_paymentpage button').attr("disabled", false);
+			$('#alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> Error ! <br> ' + res.message + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+		}
+	}
+	{% endif %}
 </script>
-
-{% else %}
-
-<form action="{{ url_confirm }}" method="post" class="float-end">
-	<input type="hidden" name="order" value="{{ order_id }}">
-	<button type="submit" class="btn btn-primary">{{ button_confirm }}</button>
-</form>
-
-{% endif %}
