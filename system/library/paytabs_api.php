@@ -331,9 +331,10 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
 
                 $pnl_iFrame = $this->load->view("extension/paytabs/payment/paytabs_framed", $data);
                 $this->response->setOutput($pnl_iFrame);
-                return;
             } else {
-                $this->response->redirect($payment_url);
+
+                $this->response->addHeader('Content-Type: application/json');
+                $this->response->setOutput(json_encode(["redirect_url" => $payment_url, "status" => true]));
             }
         } else {
             $paypage_msg = $paypage->message;
@@ -345,7 +346,8 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
             if ($iframe) {
                 $this->response->setOutput($paypage_msg);
             } else {
-                $this->_re_checkout($paypage_msg);
+                $this->response->addHeader('Content-Type: application/json');
+                $this->response->setOutput(json_encode(["message" => $paypage_msg, "status" => false]));
             }
         }
     }
@@ -410,9 +412,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
                 $this->model_checkout_order->addHistory($order_id, $successStatus, $res_msg);
             }
         } else if ($response_data->is_on_hold) {
-
         } else if ($response_data->is_pending) {
-
         }
 
         if (!$success) {
