@@ -694,6 +694,23 @@ abstract class PaytabsBasicHolder extends PaytabsHolder
         return $this;
     }
 
+    /**
+     * @param $config_id
+     */
+
+    public function set11ThemeConfigId($config_id)
+    {
+        $config_id = (int) trim($config_id);
+
+        if (isset($config_id) && (is_int($config_id) && $config_id > 0)) {
+            $this->config_id = [
+                'config_id' => $config_id
+            ];
+        }
+
+        return $this;
+    }
+
 
     public function set50UserDefined($udf1, $udf2 = null, $udf3 = null, $udf4 = null, $udf5 = null, $udf6 = null, $udf7 = null, $udf8 = null, $udf9 = null)
     {

@@ -863,6 +863,11 @@ class PaytabsAdapter
             'configKey' => 'paytabs_{PAYMENTMETHOD}_allow_associated_methods',
             'required' => false,
         ],
+        'config_id' => [
+            'key' => 'payment_paytabs_config_id',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_config_id',
+            'required' => false,
+        ],
     ];
 
     const KEY_PREFIX = PAYTABS_OPENCART_2_3 ? '' : 'payment_'; // OpenCart 2.3
