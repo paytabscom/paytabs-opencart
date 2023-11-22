@@ -2,7 +2,6 @@
 
 namespace Opencart\System\Library;
 
-
 /**
  * PayTabs v2 PHP SDK
  * Version: 2.13.1
