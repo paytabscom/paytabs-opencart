@@ -21,3 +21,4 @@ $_['urpay_text_title']       = 'PayTabs - UrPay';
 $_['aman_text_title']        = 'PayTabs - Aman';
 $_['forsa_text_title']       = 'PayTabs - Forsa';
 $_['tabby_text_title']       = 'PayTabs - Tabby';
+$_['souhoola_text_title']    = 'PayTabs - Souhoola';
