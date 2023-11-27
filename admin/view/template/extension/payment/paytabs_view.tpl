@@ -234,8 +234,14 @@
 							</div>
 						<?php } ?>
 
-					</div>
+						<div class="form-group">
+							<label class="col-sm-2 control-label" for="input-config_id"><?= $entry_config_id ?></label>
+							<div class="col-sm-10">
+								<input type="number" min="1" id="input-config_id" name="payment_paytabs_config_id" class="form-control" value="<?= $payment_paytabs_config_id ?>" />
+							</div>
+						</div>
 
+					</div>
 				</form>
 				<div class="alert alert-info"><?= $help_paytabs_account_setup ?></div>
 			</div>
