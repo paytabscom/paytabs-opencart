@@ -636,7 +636,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
         $hide_shipping = (bool) $this->config->get(PaytabsAdapter::_key('hide_shipping', $this->_code));
         $iframe = (bool) $this->config->get(PaytabsAdapter::_key('iframe', $this->_code));
         $allow_associated_methods = (bool) $this->config->get(PaytabsAdapter::_key('allow_associated_methods', $this->_code));
-        $theme_config_id = $this->config->get(PaytabsAdapter::_key('config_id', $this->controller->_code));
+        $theme_config_id = $this->config->get(PaytabsAdapter::_key('config_id', $this->_code));
 
         //
 
