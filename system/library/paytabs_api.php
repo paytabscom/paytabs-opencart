@@ -2,7 +2,7 @@
 
 namespace Opencart\System\Library;
 
-define('PAYTABS_PAYPAGE_VERSION', '4.7.0');
+define('PAYTABS_PAYPAGE_VERSION', '4.8.0');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
@@ -636,6 +636,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
         $hide_shipping = (bool) $this->config->get(PaytabsAdapter::_key('hide_shipping', $this->_code));
         $iframe = (bool) $this->config->get(PaytabsAdapter::_key('iframe', $this->_code));
         $allow_associated_methods = (bool) $this->config->get(PaytabsAdapter::_key('allow_associated_methods', $this->_code));
+        $theme_config_id = $this->config->get(PaytabsAdapter::_key('config_id', $this->_code));
 
         //
 
@@ -676,6 +677,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
             ->set07URLs($return_url, $callback_url)
             ->set08Lang($lang_code)
             ->set09Framed($iframe, 'top')
+            ->set11ThemeConfigId($theme_config_id)
             ->set99PluginInfo('OpenCart', VERSION, PAYTABS_PAYPAGE_VERSION);
 
         if ($this->_code === 'valu') {
@@ -861,6 +863,11 @@ class PaytabsAdapter
         'allow_associated_methods' => [
             'key' => 'payment_paytabs_allow_associated_methods',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_allow_associated_methods',
+            'required' => false,
+        ],
+        'config_id' => [
+            'key' => 'payment_paytabs_config_id',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_config_id',
             'required' => false,
         ],
     ];
