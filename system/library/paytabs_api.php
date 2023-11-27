@@ -2,7 +2,7 @@
 
 namespace Opencart\System\Library;
 
-define('PAYTABS_PAYPAGE_VERSION', '4.7.1');
+define('PAYTABS_PAYPAGE_VERSION', '4.8.0');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
