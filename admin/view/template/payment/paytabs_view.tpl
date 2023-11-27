@@ -235,9 +235,9 @@
 						<?php } ?>
 
 						<div class="row mb-3">
-							<label class="col-sm-2 col-form-label" for="entry-config-id"><?= entry_config_id ?></label>
+							<label class="col-sm-2 col-form-label" for="entry-config-id"><?= $entry_config_id ?></label>
 							<div class="col-sm-10">
-								<input type="text" name="payment_paytabs_config_id" value="<?= payment_paytabs_config_id ?>" placeholder="<?= entry_config_id ?>" id="entry-config-id" class="form-control"/>
+								<input type="number" min="1" name="payment_paytabs_config_id" value="<?= $payment_paytabs_config_id ?>" id="entry-config-id" class="form-control"/>
 							</div>
 						</div>
 
