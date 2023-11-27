@@ -47,6 +47,7 @@ $_['entry_sort_order']              = 'Sort Order';
 $_['entry_hide_shipping']           = 'Hide Shipping';
 $_['entry_iframe']                  = 'iFrame mode';
 $_['entry_allow_associated_methods'] = 'Allow associated methods';
+$_['entry_alt_currency']            = 'Alternative Currency';
 
 // Help
 $_['help_total']                    = 'The checkout total the order must reach before this payment method becomes active';

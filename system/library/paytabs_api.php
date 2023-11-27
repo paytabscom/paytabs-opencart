@@ -636,6 +636,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
         $hide_shipping = (bool) $this->config->get(PaytabsAdapter::_key('hide_shipping', $this->_code));
         $iframe = (bool) $this->config->get(PaytabsAdapter::_key('iframe', $this->_code));
         $allow_associated_methods = (bool) $this->config->get(PaytabsAdapter::_key('allow_associated_methods', $this->_code));
+        $alt_currency = $this->config->get(PaytabsAdapter::_key('alt_currency', $this->_code));
 
         //
 
@@ -676,6 +677,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
             ->set07URLs($return_url, $callback_url)
             ->set08Lang($lang_code)
             ->set09Framed($iframe, 'top')
+            ->set12AltCurrency($alt_currency)
             ->set99PluginInfo('OpenCart', VERSION, PAYTABS_PAYPAGE_VERSION);
 
         if ($this->_code === 'valu') {
@@ -861,6 +863,11 @@ class PaytabsAdapter
         'allow_associated_methods' => [
             'key' => 'payment_paytabs_allow_associated_methods',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_allow_associated_methods',
+            'required' => false,
+        ],
+        'alt_currency' => [
+            'key' => 'payment_paytabs_alt_currency',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_alt_currency',
             'required' => false,
         ],
     ];
