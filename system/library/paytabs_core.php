@@ -735,6 +735,11 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
     //
 
     /**
+     * alt_currency
+     */
+    private $alt_currency;
+
+    /**
      * @return array
      */
     public function pt_build()
@@ -744,7 +749,8 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
         $this->pt_merges(
             $all,
             $this->hide_shipping,
-            $this->framed
+            $this->framed,
+            $this->alt_currency
         );
 
         return $all;
@@ -770,6 +776,18 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
             'framed_return_top' => $redirect_target == 'top'
         ];
 
+        return $this;
+    }
+
+    public function set12AltCurrency($alt_currency)
+    {
+        $alt_currency = trim($alt_currency ?? "");
+
+        if (!empty($alt_currency)) {
+            $this->alt_currency = [
+                'alt_currency' => $alt_currency
+            ];
+        }
         return $this;
     }
 }

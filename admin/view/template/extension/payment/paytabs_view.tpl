@@ -234,6 +234,15 @@
 							</div>
 						<?php } ?>
 
+						<div class="form-group">
+							<label class="col-sm-2 control-label" for="input-alt_currency">
+								<?= $entry_alt_currency ?>
+							</label>
+							<div class="col-sm-10">
+								<input type="text" name="payment_paytabs_alt_currency" value="<?= $payment_paytabs_alt_currency ?>" placeholder="<?= $entry_alt_currency ?>" id="input-alt_currency" class="form-control"/>
+							</div>
+						</div>
+
 					</div>
 
 				</form>
