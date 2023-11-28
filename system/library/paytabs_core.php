@@ -1,14 +1,12 @@
 <?php
 
-namespace Opencart\System\Library;
-
 /**
  * PayTabs v2 PHP SDK
- * Version: 2.13.1
+ * Version: 2.15.0
  * PHP >= 7.0.0
  */
 
-define('PAYTABS_SDK_VERSION', '2.13.1');
+define('PAYTABS_SDK_VERSION', '2.15.0');
 
 define('PAYTABS_DEBUG_FILE_NAME', 'debug_paytabs.log');
 define('PAYTABS_DEBUG_SEVERITY', ['Info', 'Warning', 'Error']);
@@ -734,12 +732,17 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
      */
     private $framed;
 
-    //
+    /**
+     * config_id
+     */
+    private $config_id;
 
     /**
      * alt_currency
      */
     private $alt_currency;
+
+    //
 
     /**
      * @return array
@@ -752,6 +755,7 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
             $all,
             $this->hide_shipping,
             $this->framed,
+            $this->config_id,
             $this->alt_currency
         );
 
@@ -777,6 +781,19 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
             'framed_return_parent' => $redirect_target == 'parent',
             'framed_return_top' => $redirect_target == 'top'
         ];
+
+        return $this;
+    }
+
+    public function set11ThemeConfigId($config_id)
+    {
+        $config_id = (int) trim($config_id ?? "");
+
+        if (is_int($config_id) && $config_id > 0) {
+            $this->config_id = [
+                'config_id' => $config_id
+            ];
+        }
 
         return $this;
     }
