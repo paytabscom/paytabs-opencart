@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '3.13.0');
+define('PAYTABS_PAYPAGE_VERSION', '3.14.2');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
@@ -518,15 +518,16 @@ class PaytabsCatalogController
         $order_amount = $amount;
         $order_currency = $order_info['currency_code'];
 
-        $values = [
-            "tran_type" => "refund",
-            "tran_class" => "ecom",
-            "cart_id" => $order_id,
-            "cart_currency" => $order_currency,
-            "cart_amount" => $order_amount,
-            "cart_description" => "Admin Refund",
-            "tran_ref" => implode(" ", $payment_refrence)
-        ];
+        $tran_ref_prev = implode(" ", $payment_refrence);
+
+        $pt_holder = new PaytabsFollowupHolder();
+        $pt_holder
+            ->set02Transaction(PaytabsEnum::TRAN_TYPE_REFUND)
+            ->set03Cart($order_id, $order_currency, $order_amount, "Admin refund request")
+            ->set30TransactionInfo($tran_ref_prev)
+            ->set99PluginInfo('OpenCart', VERSION, PAYTABS_PAYPAGE_VERSION);
+
+        $values = $pt_holder->pt_build();
 
         $refund_request = $this->ptApi->request_followup($values);
 
@@ -573,7 +574,9 @@ class PaytabsCatalogController
         ];
 
         // Map to array of values only
-        $sql_data = array_map(function ($key, $value) { return "`$key` = '$value'"; }, array_keys($sql_data), array_values($sql_data));
+        $sql_data = array_map(function ($key, $value) {
+            return "`$key` = '$value'";
+        }, array_keys($sql_data), array_values($sql_data));
 
         // Merge all updates in one string
         $sql_cmd = implode(", ", $sql_data);
@@ -787,6 +790,7 @@ class PaytabsCatalogController
         $allow_associated_methods = (bool) $this->controller->config->get(PaytabsAdapter::_key('allow_associated_methods', $this->controller->_code));
         $alt_currency = $this->controller->config->get(PaytabsAdapter::_key('alt_currency', $this->controller->_code));
 
+        $theme_config_id = $this->controller->config->get(PaytabsAdapter::_key('config_id', $this->controller->_code));
         //
 
         $holder = new PaytabsRequestHolder();
@@ -826,6 +830,7 @@ class PaytabsCatalogController
             ->set07URLs($return_url, $callback_url)
             ->set08Lang($lang_code)
             ->set09Framed($iframe, 'top')
+            ->set11ThemeConfigId($theme_config_id)
             ->set12AltCurrency($alt_currency)
             ->set99PluginInfo('OpenCart', VERSION, PAYTABS_PAYPAGE_VERSION);
 
@@ -998,6 +1003,11 @@ class PaytabsAdapter
         'allow_associated_methods' => [
             'key' => 'payment_paytabs_allow_associated_methods',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_allow_associated_methods',
+            'required' => false,
+        ],
+        'config_id' => [
+            'key' => 'payment_paytabs_config_id',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_config_id',
             'required' => false,
         ],
         'alt_currency' => [
