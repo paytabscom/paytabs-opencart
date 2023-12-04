@@ -38,6 +38,7 @@ $_['entry_merchant_id']             = 'Merchant ID';
 $_['entry_server_key']              = 'Server Key';
 $_['entry_secure_sign']             = 'Secure Sign';
 $_['entry_total']                   = 'Total';
+$_['entry_order_pending_status']    = 'Pending Status';
 $_['entry_order_status']            = 'Completed Status';
 $_['entry_order_failed_status']     = 'Failed Status';
 $_['entry_order_fraud_status']      = 'Fraud Status';
