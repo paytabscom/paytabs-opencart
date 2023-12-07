@@ -241,11 +241,10 @@
 							</div>
 						</div>
 
-
 						<div class="row mb-3">
 							<label class="col-sm-2 col-form-label" for="entry-alt-currency"><?= $entry_alt_currency ?></label>
 							<div class="col-sm-10">
-								<input type="text" name="payment_paytabs_alt_currency" value="<?= $payment_paytabs_alt_currency ?>"  id="entry-alt-currency" class="form-control"/>
+								<input type="text" name="payment_paytabs_alt_currency" value="<?= $payment_paytabs_alt_currency ?>" id="entry-alt-currency" class="form-control"/>
 							</div>
 						</div>
 
