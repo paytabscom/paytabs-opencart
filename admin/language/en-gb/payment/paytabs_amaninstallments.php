@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title'] = 'PayTabs - Aman';
+$_['heading_title'] = 'PayTabs - Aman Installments';
 
 // Text
 $_images_url = HTTP_CATALOG . 'extension/paytabs/admin/view/image/';
