@@ -2,7 +2,7 @@
 
 namespace Opencart\System\Library;
 
-define('PAYTABS_PAYPAGE_VERSION', '4.8.0');
+define('PAYTABS_PAYPAGE_VERSION', '4.9.0');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
 
@@ -637,6 +637,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
         $iframe = (bool) $this->config->get(PaytabsAdapter::_key('iframe', $this->_code));
         $allow_associated_methods = (bool) $this->config->get(PaytabsAdapter::_key('allow_associated_methods', $this->_code));
         $theme_config_id = $this->config->get(PaytabsAdapter::_key('config_id', $this->_code));
+        $alt_currency = $this->config->get(PaytabsAdapter::_key('alt_currency', $this->_code));
 
         //
 
@@ -678,6 +679,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
             ->set08Lang($lang_code)
             ->set09Framed($iframe, 'top')
             ->set11ThemeConfigId($theme_config_id)
+            ->set12AltCurrency($alt_currency)
             ->set99PluginInfo('OpenCart', VERSION, PAYTABS_PAYPAGE_VERSION);
 
         if ($this->_code === 'valu') {
@@ -868,6 +870,11 @@ class PaytabsAdapter
         'config_id' => [
             'key' => 'payment_paytabs_config_id',
             'configKey' => 'paytabs_{PAYMENTMETHOD}_config_id',
+            'required' => false,
+        ],
+        'alt_currency' => [
+            'key' => 'payment_paytabs_alt_currency',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_alt_currency',
             'required' => false,
         ],
     ];
