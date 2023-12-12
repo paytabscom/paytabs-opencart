@@ -246,12 +246,11 @@
 								<?= $entry_alt_currency ?>
 							</label>
 							<div class="col-sm-10">
-								<input type="text" name="payment_paytabs_alt_currency" value="<?= $payment_paytabs_alt_currency ?>"  id="input-alt_currency" class="form-control"/>
+								<input type="text" name="payment_paytabs_alt_currency" value="<?= $payment_paytabs_alt_currency ?>" id="input-alt_currency" class="form-control"/>
 							</div>
 						</div>
 
 					</div>
-
 				</form>
 				<div class="alert alert-info"><?= $help_paytabs_account_setup ?></div>
 			</div>

@@ -809,8 +809,6 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
         }
         return $this;
     }
-
-
 }
 
 
