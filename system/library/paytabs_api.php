@@ -460,7 +460,7 @@ class PaytabsCatalogController
             $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_pending_status_id', $this->controller->_code));
 
             $res_msg = "Order with {$this->controller->_code} placed successfuly, Payment reference {$response_data->response_code}";
-            $this->setOrderStatusToPending($order_info,$successStatus,$res_msg);
+            $this->controller->model_checkout_order->addOrderHistory($order_info["order_id"], $successStatus, $res_msg,true,true);
             return;
         }
 
@@ -473,7 +473,7 @@ class PaytabsCatalogController
                 $success = false;
                 $fraud = true;
             } else {
-                PaytabsHelper::log("PayTabs {$this->controller->_code} checkout succeeded");
+                PaytabsHelper::log("Callback response : [Order ID $order_id, Tran Ref : $response_data->tran_ref] Result : [Status : $res_msg]");
 
                 $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
 
@@ -486,6 +486,9 @@ class PaytabsCatalogController
                     'transaction_type' => $tran_type
                 ];
                 $this->save_payment_reference($order_id, $transaction_data);
+                
+
+                PaytabsHelper::log("Change order $order_id status ");
 
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
             }
@@ -648,7 +651,7 @@ class PaytabsCatalogController
 
             $res_msg = "Order with {$this->controller->_code} placed successfuly, Payment reference {$verify_response->response_code}";
             
-            $this->setOrderStatusToPending($order_info,$successStatus,$res_msg);
+            
             
             if (isset($this->controller->session->data['order_id'])) {
                 $this->controller->cart->clear();
@@ -797,11 +800,7 @@ class PaytabsCatalogController
         $this->controller->response->setOutput($this->controller->load->view("extension/payment/paytabs_pending", $data));
     }
 
-    private function setOrderStatusToPending($order_info,$successStatus,$res_msg) {
-        if ($order_info["order_status_id"] < 1) {
-            $this->controller->model_checkout_order->addOrderHistory($order_info["order_id"], $successStatus, $res_msg,true,true);
-        }
-    }
+ 
 
     //
 
