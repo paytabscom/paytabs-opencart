@@ -486,8 +486,6 @@ class PaytabsCatalogController
                     'transaction_type' => $tran_type
                 ];
                 $this->save_payment_reference($order_id, $transaction_data);
-                
-
                 PaytabsHelper::log("Change order $order_id status ");
 
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
@@ -652,7 +650,6 @@ class PaytabsCatalogController
             $res_msg = "Order with {$this->controller->_code} placed successfuly, Payment reference {$verify_response->response_code}";
             
             
-            
             if (isset($this->controller->session->data['order_id'])) {
                 $this->controller->cart->clear();
                 unset($this->controller->session->data['shipping_method']);
@@ -800,7 +797,6 @@ class PaytabsCatalogController
         $this->controller->response->setOutput($this->controller->load->view("extension/payment/paytabs_pending", $data));
     }
 
- 
 
     //
 
