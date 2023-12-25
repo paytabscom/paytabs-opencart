@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '3.15.0');
+define('PAYTABS_PAYPAGE_VERSION', '3.15.2');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
@@ -158,6 +158,8 @@ class PaytabsController
 
         $data['endpoints'] = PaytabsApi::getEndpoints();
         $data['is_card_payment'] = PaytabsHelper::isCardPayment($this->controller->_code);
+        $data["card_discount_persentage"] = PaytabsEnum::DISCOUNT_PERCENTAGE;
+        $data["card_discount_fixed"] = PaytabsEnum::DISCOUNT_FIXED;
         $data['support_iframe'] =  PaytabsHelper::supportIframe($this->controller->_code);
 
         $this->controller->load->model('localisation/order_status');
@@ -218,7 +220,6 @@ class PaytabsController
 
 
         /** Response */
-
         $data['method'] = $this->controller->_code;
         $data['title'] = $this->controller->language->get("{$this->controller->_code}_heading_title");
         $this->controller->response->setOutput($this->controller->load->view("extension/payment/paytabs_view", $data));
@@ -473,7 +474,11 @@ class PaytabsCatalogController
                 ];
                 $this->save_payment_reference($order_id, $transaction_data);
 
+                PaytabsHelper::log("Change order $order_id status ");
+
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
+
+                $this->_addDiscount($order_id,$response_data);
             }
         }
 
@@ -666,6 +671,99 @@ class PaytabsCatalogController
         return true;
     }
 
+    private function _addDiscount($order_id,$trans_data) {
+        $this->controller->load->model("checkout/order");
+        if ($trans_data->user_defined->udf2 == true && $trans_data->tran_total < $trans_data->cart_amount) {
+
+            //Get card Disccount
+            $card_discounts = $this->controller->config->get(PaytabsAdapter::_key('payment_paytabs_card_discounts', $this->controller->_code));
+            $card_discount = null;
+            $card_number = substr(str_replace(" ","",$trans_data->payment_info->payment_description),0,6);
+
+            foreach ($card_discounts["patterns"] as $index => $pattern) {
+                $pattern = $this->_comparePatterns($pattern,$card_number);
+                if ($pattern) {
+                    $card_discount = [
+                        "pattern"=> $pattern,
+                        "type"=>$card_discounts["types"][$index],
+                        "amount"=>$card_discounts["amounts"][$index]
+                    ];
+                    break;
+                }
+
+            }
+
+            if ($card_discount != null) {
+
+                // check the discount amount
+                if ($card_discount["type"] == "fixed") {
+                    $discount_amount = $card_discount["amount"];
+                } else {
+                    $discount_amount = $trans_data->cart_amount * $card_discount["amount"] / 100;
+                }
+
+                $total_after_disccount =  $trans_data->cart_amount - $discount_amount;
+
+
+
+                if ($total_after_disccount == $trans_data->tran_total) {
+                    $totals = $this->controller->model_checkout_order->getOrderTotals($order_id);
+                    // Update totals
+
+                    foreach ($totals as $index=>$total) {
+
+                        if ($total["code"] == "paytabs_card_discount") {
+                            return;
+                        }
+
+                        unset($totals[$index]["order_total_id"]);
+                        if ($total["code"] == "total") {
+                            $new_total = $totals[$index];
+                            unset($totals[$index]);
+                        }
+                    }
+
+                    $new_total["value"] = $trans_data->tran_total;
+                    $totals[] = [
+                        "order_id"=>$order_id,
+                        "code"=>"paytabs_card_discount",
+                        "title"=>"Paytabs card discount",
+                        "value"=> -$discount_amount,
+                        "sort_order"=> 8
+                    ];
+                    $totals[] = $new_total;
+
+                    $this->db->query("DELETE FROM " . DB_PREFIX . "order_total WHERE order_id = '" . (int)$order_id . "'");
+                    foreach ($totals as $total) {
+                        $this->db->query("INSERT INTO " . DB_PREFIX . "order_total SET order_id = '" . (int)$order_id . "', code = '" . $this->db->escape($total['code']) . "', title = '" . $this->db->escape($total['title']) . "', `value` = '" . (float)$total['value'] . "', sort_order = '" . (int)$total['sort_order'] . "'");
+                    }
+
+                    $this->db->query("UPDATE `" . DB_PREFIX . "order` SET total = ".(float)$trans_data->tran_total);
+                }
+
+
+            }
+
+        }
+
+
+
+
+
+
+    }
+
+    private function _comparePatterns($patterns,$card_number) {
+        $patterns = explode(",",$patterns);
+        foreach ($patterns as $pattern) {
+            if ($pattern == $card_number || strpos($card_number, $pattern) === 0){
+                return $pattern;
+            }
+        }
+
+        return false;
+    }
+
 
     private function callbackFailure($message)
     {
@@ -707,6 +805,50 @@ class PaytabsCatalogController
         $this->controller->response->setOutput($this->controller->load->view("extension/payment/paytabs_error", $data));
     }
 
+    private function callbackPending($_reference_code)
+    {
+        $this->controller->load->language('extension/payment/paytabs_strings');
+        $this->controller->load->language('checkout/success');
+
+        
+        $title = sprintf($this->controller->language->get('paytabs_pending_heading_title'),$this->controller->_code);
+        $this->controller->document->setTitle($title);
+        
+        $data['breadcrumbs'] = [
+            [
+                'text' => $this->controller->language->get('text_home'),
+                'href' => $this->controller->url->link('common/home', '', true)
+            ],
+            [
+                'text' => $this->controller->language->get('text_basket'),
+                'href' => $this->controller->url->link('checkout/cart')
+            ],
+            [
+                'text' => $this->controller->language->get('text_checkout'),
+                'href' => $this->controller->url->link('checkout/checkout', '', true)
+            ],
+            [
+                'text' => $this->controller->language->get('text_success'),
+                'href' => $this->controller->url->link('checkout/success', '', true)
+            ]
+        ];
+
+        
+        $data['text_message'] = sprintf($this->controller->language->get('paytabs_text_pending'), $this->controller->_code,$_reference_code);
+        $data['heading_title'] = $title;
+        $data['continue'] = $this->controller->url->link('common/home', '', true);
+        $data['column_left'] = $this->controller->load->controller('common/column_left');
+        $data['column_right'] = $this->controller->load->controller('common/column_right');
+        $data['content_top'] = $this->controller->load->controller('common/content_top');
+        $data['content_bottom'] = $this->controller->load->controller('common/content_bottom');
+        $data['footer'] = $this->controller->load->controller('common/footer');
+        $data['header'] = $this->controller->load->controller('common/header');
+
+        
+        $this->controller->response->setOutput($this->controller->load->view("extension/payment/paytabs_pending", $data));
+    }
+
+ 
 
     //
 
@@ -837,6 +979,12 @@ class PaytabsCatalogController
         if ($this->controller->_code === 'valu') {
             $valu_product_id = $this->controller->config->get(PaytabsAdapter::_key('valu_product_id', $this->controller->_code));
             // $holder->set20ValuParams($valu_product_id, 0);
+        }
+
+        $card_discounts = $this->controller->config->get(PaytabsAdapter::_key('payment_paytabs_card_discounts', $this->controller->_code));
+        if (array_key_exists("patterns",$card_discounts) && array_key_exists("amounts",$card_discounts) && array_key_exists("types",$card_discounts)) {
+            $holder->set13CardDiscounts($card_discounts["patterns"],$card_discounts["amounts"],$card_discounts["types"]);
+            $holder->set50UserDefined(null,true);
         }
 
         $post_arr = $holder->pt_build();
@@ -1015,6 +1163,11 @@ class PaytabsAdapter
             'configKey' => 'paytabs_{PAYMENTMETHOD}_alt_currency',
             'required' => false,
         ],
+        'payment_paytabs_card_discounts'=>[
+            'key'       =>'payment_paytabs_card_discounts',
+            'configKey' => 'paytabs_{PAYMENTMETHOD}_card_discounts',
+            'required'  => false
+        ]
     ];
 
     const KEY_PREFIX = PAYTABS_OPENCART_2_3 ? '' : 'payment_'; // OpenCart 2.3
