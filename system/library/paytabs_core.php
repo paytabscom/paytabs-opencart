@@ -2,11 +2,11 @@
 
 /**
  * PayTabs v2 PHP SDK
- * Version: 2.15.0
+ * Version: 2.18.0
  * PHP >= 7.0.0
  */
 
-define('PAYTABS_SDK_VERSION', '2.15.0');
+define('PAYTABS_SDK_VERSION', '2.18.0');
 
 define('PAYTABS_DEBUG_FILE_NAME', 'debug_paytabs.log');
 define('PAYTABS_DEBUG_SEVERITY', ['Info', 'Warning', 'Error']);
@@ -82,6 +82,14 @@ abstract class PaytabsHelper
             }
         }
         return $methods;
+    }
+
+    /**
+     * @return true if the payment method can use the Card methods features
+     */
+    static function canUseCardFeatures($code)
+    {
+        return ($code == 'all') || static::isCardPayment($code);
     }
 
     static function supportTokenization($code)
@@ -230,6 +238,28 @@ abstract class PaytabsHelper
             }
         }
     }
+
+    static function isValidDiscountPattern($pattern)
+    {
+        return preg_match(PaytabsEnum::DISCOUNT_PATTERN_REGEX, $pattern);
+    }
+
+    /**
+     * Validate the patterns for discount option
+     * @param $patterns_str string, comma separated
+     */
+    static function isValidDiscountPatterns($patterns_str)
+    {
+        $patterns = explode(',', $patterns_str);
+
+        if (empty($patterns)) return false;
+
+        foreach ($patterns as $prefix) {
+            if (!static::isValidDiscountPattern($prefix)) {
+                return false;
+            }
+        }
+    }
 }
 
 
@@ -270,6 +300,14 @@ abstract class PaytabsEnum
     const PP_ERR_DUPLICATE = 4;
 
     //
+
+    const DISCOUNT_PERCENTAGE = "percentage";
+    const DISCOUNT_FIXED = "fixed";
+
+    const DISCOUNT_PATTERN_REGEX = '/^[0-9]{4,10}$/';
+
+    //
+
 
     static function TranIsAuth($tran_type)
     {
@@ -742,6 +780,11 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
      */
     private $alt_currency;
 
+    /**
+     * card_discounts
+     */
+    private $card_discounts;
+
     //
 
     /**
@@ -756,7 +799,8 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
             $this->hide_shipping,
             $this->framed,
             $this->config_id,
-            $this->alt_currency
+            $this->alt_currency,
+            $this->card_discounts
         );
 
         return $all;
@@ -807,6 +851,58 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
                 'alt_currency' => $alt_currency
             ];
         }
+        return $this;
+    }
+
+    public function set13CardDiscounts($discount_patterns, $discount_amounts, $discount_types)
+    {
+        if (empty($discount_patterns)) {
+            PaytabsHelper::log('Paytabs admin: Discount arrays must be not empty', 3);
+            return $this;
+        }
+
+        $count = count($discount_patterns);
+
+        if ($count != count($discount_amounts) || $count != count($discount_types)) {
+            PaytabsHelper::log('Paytabs admin: Discount arrays must have the same length', 3);
+            return $this;
+        }
+
+        $cards = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $pattern = $discount_patterns[$i];
+            $amount = $discount_amounts[$i];
+            $type = $discount_types[$i];
+
+            if (!PaytabsHelper::isValidDiscountPattern($pattern)) {
+                PaytabsHelper::log('Paytabs admin: Discount pattern not valid', 2);
+                // uncomment if you want to stop the request, otherwise send the reqeust
+                // return $this;
+            }
+
+            if ($type == PaytabsEnum::DISCOUNT_PERCENTAGE) {
+                $type_key = 'discount_percent';
+                $title = "$discount_amounts[$i]% discount applied on cards starting with $discount_patterns[$i]";
+            } elseif ($type == PaytabsEnum::DISCOUNT_FIXED) {
+                $type_key = 'discount_amount';
+                $title = "$discount_amounts[$i] fixed discount applied on cards starting with $discount_patterns[$i]";
+            } else {
+                PaytabsHelper::log('Paytabs admin: Discount type does not exist', 3);
+                return $this;
+            }
+
+            $cards[$i]['discount_cards'] = $pattern;
+            $cards[$i][$type_key] = $amount;
+            $cards[$i]['discount_title'] = $title;
+        }
+
+        if (count($cards) > 0) {
+            $this->card_discounts = [
+                'card_discounts' => $cards
+            ];
+        }
+
         return $this;
     }
 }
@@ -1049,6 +1145,7 @@ class PaytabsApi
         '23' => ['name' => 'forsa', 'title' => 'PayTabs - Forsa', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
         '24' => ['name' => 'tabby', 'title' => 'PayTabs - Tabby', 'currencies' => ['AED'], 'groups' => []],
         '25' => ['name' => 'souhoola', 'title' => 'PayTabs - Souhoola', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
+        '26' => ['name' => 'amaninstallments', 'title' => 'PayTabs - Aman installments', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
 
     ];
 
@@ -1096,6 +1193,8 @@ class PaytabsApi
 
     const URL_TOKEN_QUERY  = 'payment/token';
     const URL_TOKEN_DELETE = 'payment/token/delete';
+
+    const URL_INQUIRY_VALU = 'payment/info/valu/inquiry';
 
     //
 
@@ -1201,6 +1300,22 @@ class PaytabsApi
         return $res;
     }
 
+    function inqiry_valu($params)
+    {
+        $res1 = $this->sendRequest(self::URL_INQUIRY_VALU, $params);
+
+        $res = json_decode($res1);
+
+        $res->success = false;
+
+        if (isset($res->valuResponse, $res->valuResponse->responseCode)) {
+            if ($res->valuResponse->responseCode == 0) {
+                $res->success = true;
+            }
+        }
+
+        return $res;
+    }
     //
 
     function is_valid_redirect($post_values)
