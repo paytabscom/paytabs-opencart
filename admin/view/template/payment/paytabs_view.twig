@@ -122,6 +122,21 @@
 						</div>
 
 						<div class="row mb-3">
+							<label class="col-sm-2 col-form-label" for="input-order-pending-status">{{ entry_order_pending_status }}</label>
+							<div class="col-sm-10">
+								<select name="payment_paytabs_order_pending_status_id" id="input-order-pending-status" class="form-select">
+									{% for order_status in order_statuses %}
+										{% if order_status.order_status_id == payment_paytabs_order_pending_status_id %}
+											<option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
+										{% else %}
+											<option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+										{% endif %}
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+
+						<div class="row mb-3">
 							<label class="col-sm-2 col-form-label" for="input-order-failed-status">{{ entry_order_failed_status }}</label>
 							<div class="col-sm-10">
 								<select name="payment_paytabs_order_failed_status_id" id="input-order-failed-status" class="form-select">

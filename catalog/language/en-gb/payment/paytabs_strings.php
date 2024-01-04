@@ -1,4 +1,8 @@
 <?php
+
+// Heading
+$_['paytabs_pending_heading_title'] = 'Your order by %s is pending!';
+
 // Text
 $_['all_text_title']         = 'Online payments powered by PayTabs';
 $_['creditcard_text_title']  = 'PayTabs - CreditCard';
@@ -22,3 +26,4 @@ $_['aman_text_title']        = 'PayTabs - Aman';
 $_['forsa_text_title']       = 'PayTabs - Forsa';
 $_['tabby_text_title']       = 'PayTabs - Tabby';
 $_['souhoola_text_title']    = 'PayTabs - Souhoola';
+$_["paytabs_text_pending"]   = "Your order by %s is Pending, your reference code is <b>%s</b>";
