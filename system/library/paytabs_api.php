@@ -224,7 +224,7 @@ abstract class PaytabsAdminController extends \Opencart\System\Engine\Controller
 
         $defaults = [
             PaytabsAdapter::_key('sort_order', $this->_code) => ($this->_code == 'mada') ? 1 : 80,
-            PaytabsAdapter::_key('order_pending_status_id',$this->_code) => 1, // Pending
+            PaytabsAdapter::_key('order_pending_status_id', $this->_code) => 1, // Pending
             PaytabsAdapter::_key('order_status_id',       $this->_code) => 2, // Processing
             PaytabsAdapter::_key('order_fraud_status_id', $this->_code) => 8, // Denied
         ];
@@ -387,7 +387,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
         $order_id = @$response_data->reference_no;
         $cart_amount = @$response_data->cart_amount;
         $cart_currency = $response_data->cart_currency;
-        
+
         $order_info = $this->model_checkout_order->getOrder($order_id);
 
         if (!$order_info) {
@@ -395,8 +395,6 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
             return;
         }
 
-
-      
         if ($success) {
             // Check here if the result is tempered
 
@@ -422,7 +420,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
             $successStatus = $this->config->get(PaytabsAdapter::_key('order_pending_status_id', $this->_code));
 
             $res_msg = "Order with {$this->_code} placed successfuly, Payment reference {$response_data->response_code}";
-            $this->setOrderStatusToPending($order_info,$successStatus,$res_msg);
+            $this->setOrderStatusToPending($order_info, $successStatus, $res_msg);
             return;
         }
 
@@ -493,7 +491,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
 
             $res_msg = "Order with {$this->_code} placed successfuly, Payment reference {$verify_response->response_code}";
 
-            $this->setOrderStatusToPending($order_info,$successStatus,$res_msg);
+            $this->setOrderStatusToPending($order_info, $successStatus, $res_msg);
 
             if (isset($this->session->data['order_id'])) {
                 $this->cart->clear();
@@ -511,10 +509,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
                 unset($this->session->data['totals']);
             }
 
-
-
             return $this->callbackPending($verify_response->response_code);
-
         }
 
 
@@ -605,7 +600,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
         $this->load->language('checkout/success');
 
 
-        $title = sprintf($this->language->get('paytabs_pending_heading_title'),$this->_code);
+        $title = sprintf($this->language->get('paytabs_pending_heading_title'), $this->_code);
         $this->document->setTitle($title);
 
         $data['breadcrumbs'] = [
@@ -628,7 +623,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
         ];
 
 
-        $data['text_message'] = sprintf($this->language->get('paytabs_text_pending'), $this->_code,$_reference_code);
+        $data['text_message'] = sprintf($this->language->get('paytabs_text_pending'), $this->_code, $_reference_code);
         $data['heading_title'] = $title;
         $data['continue'] = $this->url->link('common/home', '', true);
         $data['column_left'] = $this->load->controller('common/column_left');
@@ -642,9 +637,10 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
         $this->response->setOutput($this->load->view("extension/paytabs/payment/paytabs_pending", $data));
     }
 
-    private function setOrderStatusToPending($order_info,$successStatus,$res_msg) {
+    private function setOrderStatusToPending($order_info, $successStatus, $res_msg)
+    {
         if ($order_info["order_status_id"] < 1) {
-            $this->model_checkout_order->addHistory($order_info["order_id"], $successStatus, $res_msg,true,true);
+            $this->model_checkout_order->addHistory($order_info["order_id"], $successStatus, $res_msg, true, true);
         }
     }
 
