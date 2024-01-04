@@ -491,7 +491,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
 
             $res_msg = "Order with {$this->_code} placed successfuly, Payment reference {$verify_response->response_code}";
 
-            $this->setOrderStatusToPending($order_info, $successStatus, $res_msg);
+            // $this->setOrderStatusToPending($order_info, $successStatus, $res_msg);
 
             if (isset($this->session->data['order_id'])) {
                 $this->cart->clear();
@@ -599,7 +599,6 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
         $this->load->language('extension/payment/paytabs_strings');
         $this->load->language('checkout/success');
 
-
         $title = sprintf($this->language->get('paytabs_pending_heading_title'), $this->_code);
         $this->document->setTitle($title);
 
@@ -643,7 +642,6 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
             $this->model_checkout_order->addHistory($order_info["order_id"], $successStatus, $res_msg, true, true);
         }
     }
-
 
     //
 
