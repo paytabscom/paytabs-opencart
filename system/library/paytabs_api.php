@@ -596,7 +596,7 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
 
     private function callbackPending($_reference_code)
     {
-        $this->load->language('extension/payment/paytabs_strings');
+        $this->load->language('extension/paytabs/payment/paytabs_strings');
         $this->load->language('checkout/success');
 
         $title = sprintf($this->language->get('paytabs_pending_heading_title'), $this->_code);
@@ -620,7 +620,6 @@ abstract class PaytabsCatalogController extends \Opencart\System\Engine\Controll
                 'href' => $this->url->link('checkout/success', '', true)
             ]
         ];
-
 
         $data['text_message'] = sprintf($this->language->get('paytabs_text_pending'), $this->_code, $_reference_code);
         $data['heading_title'] = $title;
