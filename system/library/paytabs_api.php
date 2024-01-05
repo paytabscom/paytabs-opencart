@@ -391,6 +391,8 @@ class PaytabsCatalogController
         if ($paypage->success) {
             $payment_url = $paypage->payment_url;
 
+            PaytabsHelper::log("Generate payment page success, Order {$order_id}, {$paypage->tran_ref}, iFrame {$iframe}.", 1);
+
             if ($iframe) {
                 $data['payment_url'] = $payment_url;
 
@@ -425,6 +427,7 @@ class PaytabsCatalogController
 
     public function callback()
     {
+        PaytabsHelper::log('Callback triggered');
         $response_data = $this->ptApi->read_response(true);
         if (!$response_data) {
             return;
@@ -452,6 +455,7 @@ class PaytabsCatalogController
         $is_pending = @$response_data->is_pending;
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         $parent_transaction = @$response_data->previous_tran_ref;
+        $payment_reference = @$response_data->response_code;
 
         if (!$order_info) {
             PaytabsHelper::log("callback failed, No Order found [{$order_id}]", 3);
@@ -459,13 +463,12 @@ class PaytabsCatalogController
         }
 
         if ($is_pending) {
-            $_logResult = json_encode($response_data);
-            PaytabsHelper::log("Callback response :Order has been successfully placed and is now awaiting payment, response [{$_logResult}]");
+            PaytabsHelper::log("Order {$order_id} is Pending, tran ref [{$transactionId}], Payment reference: {$payment_reference}");
 
             $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_pending_status_id', $this->controller->_code));
 
-            $res_msg = "Order with {$this->controller->_code} placed successfuly, Payment reference {$response_data->response_code}";
-            $this->controller->model_checkout_order->addOrderHistory($order_info["order_id"], $successStatus, $res_msg, true, true);
+            $status_msg = "Received successfuly, Payment reference {$payment_reference}, awaiting for the payment";
+            $this->controller->model_checkout_order->addOrderHistory($order_info["order_id"], $successStatus, $status_msg, true, true);
             return;
         }
 
@@ -478,7 +481,7 @@ class PaytabsCatalogController
                 $success = false;
                 $fraud = true;
             } else {
-                PaytabsHelper::log("Callback response : [Order ID $order_id, Tran Ref : $response_data->tran_ref] Result : [Status : $res_msg]");
+                PaytabsHelper::log("Callback response: [Order {$order_id}, Tran Ref: {$transactionId}], Message: {$res_msg}");
 
                 $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_status_id', $this->controller->_code));
 
@@ -491,8 +494,8 @@ class PaytabsCatalogController
                     'transaction_type' => $tran_type
                 ];
                 $this->save_payment_reference($order_id, $transaction_data);
-                PaytabsHelper::log("Change order $order_id status ");
 
+                PaytabsHelper::log("Changing order $order_id status to {$successStatus}");
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
             }
         }
@@ -642,17 +645,12 @@ class PaytabsCatalogController
 
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
-            PaytabsHelper::log("return failed, No Order found [{$order_id}]", 3);
+            PaytabsHelper::log("Return failed, No Order found [{$order_id}]", 3);
             return;
         }
 
         if ($is_pending) {
-            $_logResult = json_encode($verify_response);
-            PaytabsHelper::log("Redirect response :Order has been successfully placed and is now awaiting payment, response [{$_logResult}]");
-
-            $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_pending_status_id', $this->controller->_code));
-
-            $res_msg = "Order with {$this->controller->_code} placed successfuly, Payment reference {$verify_response->response_code}";
+            PaytabsHelper::log("Order {$order_id} is Pending, tran ref [{$transactionId}]");
 
             if (isset($this->controller->session->data['order_id'])) {
                 $this->controller->cart->clear();
@@ -670,7 +668,7 @@ class PaytabsCatalogController
                 unset($this->controller->session->data['totals']);
             }
 
-            return $this->callbackPending($verify_response->response_code);
+            return $this->callbackPending($order_id, $verify_response->response_code);
         }
 
         if ($success) {
@@ -754,7 +752,7 @@ class PaytabsCatalogController
         $this->controller->response->setOutput($this->controller->load->view("extension/payment/paytabs_error", $data));
     }
 
-    private function callbackPending($_reference_code)
+    private function callbackPending($order_id, $_reference_code)
     {
         $this->controller->load->language('extension/payment/paytabs_strings');
         $this->controller->load->language('checkout/success');
@@ -776,10 +774,11 @@ class PaytabsCatalogController
                 'href' => $this->controller->url->link('checkout/checkout', '', true)
             ],
             [
-                'text' => $this->controller->language->get('text_success'),
-                'href' => $this->controller->url->link('checkout/success', '', true)
+                'text' => $this->controller->language->get('text_pending'),
             ]
         ];
+
+        $data['order_url'] = $this->controller->url->link('account/order/info', 'order_id=' . $order_id, true);
 
         $data['text_message'] = sprintf($this->controller->language->get('paytabs_text_pending'), $this->controller->_code, $_reference_code);
         $data['heading_title'] = $title;

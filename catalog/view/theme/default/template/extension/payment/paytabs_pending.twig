@@ -3,7 +3,11 @@
     <ul class="breadcrumb">
         {% for breadcrumb in breadcrumbs %}
             <li class="breadcrumb-item">
-                <a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a>
+                {%if breadcrumb.href %}
+                    <a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a>
+                {% else %}
+                    {{ breadcrumb.text }}
+                {% endif %}
             </li>
         {% endfor %}
     </ul>
@@ -17,8 +21,12 @@
         {% endif %}
         <div id="content" class="{{ class }}">{{ content_top }}
             <h1>{{ heading_title }}</h1>
-            <div class="alert alert-success">
+            <div class="alert alert-warning">
                 {{ text_message }}
+            </div>
+            <div>
+                <p>Your order has been successfully received!</p>
+                <p>You can view your <a href="{{ order_url }}">order history</a> for more details.</p>
             </div>
 
             <div class="buttons">
