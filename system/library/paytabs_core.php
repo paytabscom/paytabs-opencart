@@ -2,11 +2,11 @@
 
 /**
  * PayTabs v2 PHP SDK
- * Version: 2.15.0
+ * Version: 2.18.2
  * PHP >= 7.0.0
  */
 
-define('PAYTABS_SDK_VERSION', '2.15.0');
+define('PAYTABS_SDK_VERSION', '2.18.2');
 
 define('PAYTABS_DEBUG_FILE_NAME', 'debug_paytabs.log');
 define('PAYTABS_DEBUG_SEVERITY', ['Info', 'Warning', 'Error']);
@@ -84,6 +84,14 @@ abstract class PaytabsHelper
         return $methods;
     }
 
+    /**
+     * @return true if the payment method can use the Card methods features
+     */
+    static function canUseCardFeatures($code)
+    {
+        return ($code == 'all') || static::isCardPayment($code);
+    }
+
     static function supportTokenization($code)
     {
         foreach (PaytabsApi::PAYMENT_TYPES as $key => $value) {
@@ -119,6 +127,16 @@ abstract class PaytabsHelper
         foreach (PaytabsApi::PAYMENT_TYPES as $key => $value) {
             if ($value['name'] === $code) {
                 return in_array(PaytabsApi::GROUP_REFUND, $value['groups']);
+            }
+        }
+        return false;
+    }
+
+    static function supportPending($code)
+    {
+        foreach (PaytabsApi::PAYMENT_TYPES as $key => $value) {
+            if ($value['name'] === $code) {
+                return in_array(PaytabsApi::GROUP_PENDING, $value['groups']);
             }
         }
         return false;
@@ -230,6 +248,30 @@ abstract class PaytabsHelper
             }
         }
     }
+
+    static function isValidDiscountPattern($pattern)
+    {
+        return preg_match(PaytabsEnum::DISCOUNT_PATTERN_REGEX, $pattern);
+    }
+
+    /**
+     * Validate the patterns for discount option
+     * @param $patterns_str string, comma separated
+     */
+    static function isValidDiscountPatterns($patterns_str)
+    {
+        $patterns = explode(',', $patterns_str);
+
+        if (empty($patterns)) return false;
+
+        foreach ($patterns as $prefix) {
+            if (!static::isValidDiscountPattern($prefix)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 
@@ -270,6 +312,14 @@ abstract class PaytabsEnum
     const PP_ERR_DUPLICATE = 4;
 
     //
+
+    const DISCOUNT_PERCENTAGE = "percentage";
+    const DISCOUNT_FIXED = "fixed";
+
+    const DISCOUNT_PATTERN_REGEX = '/^[0-9]{4,10}$/';
+
+    //
+
 
     static function TranIsAuth($tran_type)
     {
@@ -742,6 +792,11 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
      */
     private $alt_currency;
 
+    /**
+     * card_discounts
+     */
+    private $card_discounts;
+
     //
 
     /**
@@ -756,7 +811,8 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
             $this->hide_shipping,
             $this->framed,
             $this->config_id,
-            $this->alt_currency
+            $this->alt_currency,
+            $this->card_discounts
         );
 
         return $all;
@@ -807,6 +863,58 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
                 'alt_currency' => $alt_currency
             ];
         }
+        return $this;
+    }
+
+    public function set13CardDiscounts($discount_patterns, $discount_amounts, $discount_types)
+    {
+        if (empty($discount_patterns)) {
+            PaytabsHelper::log('Paytabs admin: Discount arrays must be not empty', 3);
+            return $this;
+        }
+
+        $count = count($discount_patterns);
+
+        if ($count != count($discount_amounts) || $count != count($discount_types)) {
+            PaytabsHelper::log('Paytabs admin: Discount arrays must have the same length', 3);
+            return $this;
+        }
+
+        $cards = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $pattern = $discount_patterns[$i];
+            $amount = $discount_amounts[$i];
+            $type = $discount_types[$i];
+
+            if (!PaytabsHelper::isValidDiscountPattern($pattern)) {
+                PaytabsHelper::log('Paytabs admin: Discount pattern not valid', 2);
+                // uncomment if you want to stop the request, otherwise send the reqeust
+                // return $this;
+            }
+
+            if ($type == PaytabsEnum::DISCOUNT_PERCENTAGE) {
+                $type_key = 'discount_percent';
+                $title = "$discount_amounts[$i]% discount applied on cards starting with $discount_patterns[$i]";
+            } elseif ($type == PaytabsEnum::DISCOUNT_FIXED) {
+                $type_key = 'discount_amount';
+                $title = "$discount_amounts[$i] fixed discount applied on cards starting with $discount_patterns[$i]";
+            } else {
+                PaytabsHelper::log('Paytabs admin: Discount type does not exist', 3);
+                return $this;
+            }
+
+            $cards[$i]['discount_cards'] = $pattern;
+            $cards[$i][$type_key] = $amount;
+            $cards[$i]['discount_title'] = $title;
+        }
+
+        if (count($cards) > 0) {
+            $this->card_discounts = [
+                'card_discounts' => $cards
+            ];
+        }
+
         return $this;
     }
 }
@@ -1021,17 +1129,18 @@ class PaytabsApi
     const GROUP_AUTH_CAPTURE = 'auth_capture';
     const GROUP_REFUND = 'refund';
     const GROUP_IFRAME = 'iframe';
+    const GROUP_PENDING = 'payment_request';
 
     const PAYMENT_TYPES = [
-        '0'  => ['name' => 'all', 'title' => 'PayTabs - All', 'currencies' => null, 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
+        '0'  => ['name' => 'all', 'title' => 'PayTabs - All', 'currencies' => null, 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND, PaytabsApi::GROUP_PENDING]],
         '1'  => ['name' => 'stcpay', 'title' => 'PayTabs - StcPay', 'currencies' => ['SAR'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '2'  => ['name' => 'stcpayqr', 'title' => 'PayTabs - StcPay(QR)', 'currencies' => ['SAR'], 'groups' => []],
         '3'  => ['name' => 'applepay', 'title' => 'PayTabs - ApplePay', 'currencies' => null, 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_REFUND]],
         '4'  => ['name' => 'omannet', 'title' => 'PayTabs - OmanNet', 'currencies' => ['OMR'], 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '5'  => ['name' => 'mada', 'title' => 'PayTabs - mada', 'currencies' => ['SAR'], 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '6'  => ['name' => 'creditcard', 'title' => 'PayTabs - CreditCard', 'currencies' => null, 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_CARDS_INTERNATIONAL, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
-        '7'  => ['name' => 'sadad', 'title' => 'PayTabs - Sadad', 'currencies' => ['SAR'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
-        '8'  => ['name' => 'fawry', 'title' => 'PayTabs - @Fawry', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
+        '7'  => ['name' => 'sadad', 'title' => 'PayTabs - Sadad', 'currencies' => ['SAR'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_PENDING]],
+        '8'  => ['name' => 'fawry', 'title' => 'PayTabs - @Fawry', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND, PaytabsApi::GROUP_PENDING]],
         '9'  => ['name' => 'knet', 'title' => 'PayTabs - KnPay', 'currencies' => ['KWD'], 'groups' => [PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_REFUND]],
         '10' => ['name' => 'amex', 'title' => 'PayTabs - Amex', 'currencies' => ['AED', 'SAR', 'USD'], 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_CARDS_INTERNATIONAL, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '11' => ['name' => 'valu', 'title' => 'PayTabs - valU', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
@@ -1041,7 +1150,7 @@ class PaytabsApi
         '15' => ['name' => 'samsungpay', 'title' => 'PayTabs - SamsungPay', 'currencies' => ['AED', 'SAR'], 'groups' => [PaytabsApi::GROUP_REFUND]],
         '16' => ['name' => 'knetdebit', 'title' => 'PayTabs - KnPay (Debit)', 'currencies' => ['KWD'], 'groups' => [PaytabsApi::GROUP_REFUND]],
         '17' => ['name' => 'knetcredit', 'title' => 'PayTabs - KnPay (Credit)', 'currencies' => ['KWD'], 'groups' => [PaytabsApi::GROUP_REFUND]],
-        '18' => ['name' => 'aman', 'title' => 'PayTabs - Aman', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
+        '18' => ['name' => 'aman', 'title' => 'PayTabs - Aman', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_PENDING]],
         '19' => ['name' => 'urpay', 'title' => 'PayTabs - UrPay', 'currencies' => ['SAR'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '20' => ['name' => 'paypal', 'title' => 'PayTabs - PayPal', 'currencies' => ['AED', 'EGP', 'USD', 'EUR', 'GPB', 'HKD', 'JPY'], 'groups' => [PaytabsApi::GROUP_REFUND]],
         '21' => ['name' => 'installment', 'title' => 'PayTabs - Installment', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_IFRAME]],
@@ -1049,6 +1158,7 @@ class PaytabsApi
         '23' => ['name' => 'forsa', 'title' => 'PayTabs - Forsa', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
         '24' => ['name' => 'tabby', 'title' => 'PayTabs - Tabby', 'currencies' => ['AED'], 'groups' => []],
         '25' => ['name' => 'souhoola', 'title' => 'PayTabs - Souhoola', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
+        '26' => ['name' => 'amaninstallments', 'title' => 'PayTabs - Aman installments', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
 
     ];
 
@@ -1097,6 +1207,8 @@ class PaytabsApi
     const URL_TOKEN_QUERY  = 'payment/token';
     const URL_TOKEN_DELETE = 'payment/token/delete';
 
+    const URL_INQUIRY_VALU = 'payment/info/valu/inquiry';
+
     //
 
     private $base_url;
@@ -1135,7 +1247,11 @@ class PaytabsApi
 
     private function __construct($region, $profile_id, $server_key)
     {
-        $this->base_url = self::BASE_URLS[$region]['endpoint'];
+        if (array_key_exists($region, self::BASE_URLS)) {
+            $this->base_url = self::BASE_URLS[$region]['endpoint'];
+        } else {
+            PaytabsHelper::log("Paytabs Admin: Region {$region} is not valid", 2);
+        }
         $this->setAuth($profile_id, $server_key);
     }
 
@@ -1201,6 +1317,22 @@ class PaytabsApi
         return $res;
     }
 
+    function inqiry_valu($params)
+    {
+        $res1 = $this->sendRequest(self::URL_INQUIRY_VALU, $params);
+
+        $res = json_decode($res1);
+
+        $res->success = false;
+
+        if (isset($res->valuResponse, $res->valuResponse->responseCode)) {
+            if ($res->valuResponse->responseCode == 0) {
+                $res->success = true;
+            }
+        }
+
+        return $res;
+    }
     //
 
     function is_valid_redirect($post_values)

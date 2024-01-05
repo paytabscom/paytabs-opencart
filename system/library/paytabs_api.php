@@ -158,7 +158,8 @@ class PaytabsController
 
         $data['endpoints'] = PaytabsApi::getEndpoints();
         $data['is_card_payment'] = PaytabsHelper::isCardPayment($this->controller->_code);
-        $data['support_iframe'] =  PaytabsHelper::supportIframe($this->controller->_code);
+        $data['support_iframe'] = PaytabsHelper::supportIframe($this->controller->_code);
+        $data['support_pending'] = PaytabsHelper::supportPending($this->controller->_code);
 
         $this->controller->load->model('localisation/order_status');
         $data['order_statuses'] = $this->controller->model_localisation_order_status->getOrderStatuses();
@@ -272,7 +273,6 @@ class PaytabsController
 
         $defaults = [
             PaytabsAdapter::_key('sort_order', $this->controller->_code) => 80,
-            PaytabsAdapter::_key('order_pending_status_id', $this->controller->_code) => 1, // Pending
             PaytabsAdapter::_key('order_status_id',       $this->controller->_code) => 2, // Processing
             PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code) => 8, // Denied
         ];
@@ -283,6 +283,10 @@ class PaytabsController
                 $allow_associated_methods = false;
             }
             $defaults[PaytabsAdapter::_key('allow_associated_methods', $this->controller->_code)] = $allow_associated_methods;
+        }
+
+        if (PaytabsHelper::supportPending($this->controller->_code)) {
+            $defaults[PaytabsAdapter::_key('order_pending_status_id', $this->controller->_code)] = 1; // Pending
         }
 
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
