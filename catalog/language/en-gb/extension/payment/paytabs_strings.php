@@ -26,4 +26,4 @@ $_['aman_text_title']        = 'PayTabs - Aman';
 $_['forsa_text_title']       = 'PayTabs - Forsa';
 $_['tabby_text_title']       = 'PayTabs - Tabby';
 $_['souhoola_text_title']    = 'PayTabs - Souhoola';
-$_["paytabs_text_pending"]   = "Your order by %s is pending your refrence code is <b>%s</b>";
+$_["paytabs_text_pending"]   = "Your order by %s is Pending, your reference code is <b>%s</b>";

@@ -272,7 +272,7 @@ class PaytabsController
 
         $defaults = [
             PaytabsAdapter::_key('sort_order', $this->controller->_code) => 80,
-            PaytabsAdapter::_key('order_pending_status_id',       $this->controller->_code) => 1, // Pending
+            PaytabsAdapter::_key('order_pending_status_id', $this->controller->_code) => 1, // Pending
             PaytabsAdapter::_key('order_status_id',       $this->controller->_code) => 2, // Processing
             PaytabsAdapter::_key('order_fraud_status_id', $this->controller->_code) => 8, // Denied
         ];
@@ -438,7 +438,7 @@ class PaytabsCatalogController
         $this->controller->load->model("extension/payment/paytabs_{$this->controller->_code}");
 
         $success = $response_data->success;
-        
+
         $fraud = false;
         $res_msg = $response_data->message;
         $order_id = @$response_data->reference_no;
@@ -448,6 +448,7 @@ class PaytabsCatalogController
         $is_pending = @$response_data->is_pending;
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         $parent_transaction = @$response_data->previous_tran_ref;
+
         if (!$order_info) {
             PaytabsHelper::log("callback failed, No Order found [{$order_id}]", 3);
             return;
@@ -460,7 +461,7 @@ class PaytabsCatalogController
             $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_pending_status_id', $this->controller->_code));
 
             $res_msg = "Order with {$this->controller->_code} placed successfuly, Payment reference {$response_data->response_code}";
-            $this->controller->model_checkout_order->addOrderHistory($order_info["order_id"], $successStatus, $res_msg,true,true);
+            $this->controller->model_checkout_order->addOrderHistory($order_info["order_id"], $successStatus, $res_msg, true, true);
             return;
         }
 
@@ -648,8 +649,7 @@ class PaytabsCatalogController
             $successStatus = $this->controller->config->get(PaytabsAdapter::_key('order_pending_status_id', $this->controller->_code));
 
             $res_msg = "Order with {$this->controller->_code} placed successfuly, Payment reference {$verify_response->response_code}";
-            
-            
+
             if (isset($this->controller->session->data['order_id'])) {
                 $this->controller->cart->clear();
                 unset($this->controller->session->data['shipping_method']);
@@ -666,12 +666,8 @@ class PaytabsCatalogController
                 unset($this->controller->session->data['totals']);
             }
 
-            
-
-           return $this->callbackPending($verify_response->response_code);
-
+            return $this->callbackPending($verify_response->response_code);
         }
-
 
         if ($success) {
             // Check here if the result is tempered
@@ -759,10 +755,9 @@ class PaytabsCatalogController
         $this->controller->load->language('extension/payment/paytabs_strings');
         $this->controller->load->language('checkout/success');
 
-        
-        $title = sprintf($this->controller->language->get('paytabs_pending_heading_title'),$this->controller->_code);
+        $title = sprintf($this->controller->language->get('paytabs_pending_heading_title'), $this->controller->_code);
         $this->controller->document->setTitle($title);
-        
+
         $data['breadcrumbs'] = [
             [
                 'text' => $this->controller->language->get('text_home'),
@@ -782,8 +777,7 @@ class PaytabsCatalogController
             ]
         ];
 
-        
-        $data['text_message'] = sprintf($this->controller->language->get('paytabs_text_pending'), $this->controller->_code,$_reference_code);
+        $data['text_message'] = sprintf($this->controller->language->get('paytabs_text_pending'), $this->controller->_code, $_reference_code);
         $data['heading_title'] = $title;
         $data['continue'] = $this->controller->url->link('common/home', '', true);
         $data['column_left'] = $this->controller->load->controller('common/column_left');
@@ -793,7 +787,6 @@ class PaytabsCatalogController
         $data['footer'] = $this->controller->load->controller('common/footer');
         $data['header'] = $this->controller->load->controller('common/header');
 
-        
         $this->controller->response->setOutput($this->controller->load->view("extension/payment/paytabs_pending", $data));
     }
 
