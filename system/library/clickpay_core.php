@@ -1,15 +1,19 @@
 <?php
 
+namespace Opencart\System\Library;
+
 /**
- * Clickpay v2 PHP SDK
- * Version: 2.15.0
+ * ClickPay v2 PHP SDK
+ * Version: 2.13.1
+ * PHP >= 7.0.0
  */
 
 define('CLICKPAY_SDK_VERSION', '2.15.0');
 
 define('CLICKPAY_DEBUG_FILE_NAME', 'debug_clickpay.log');
 define('CLICKPAY_DEBUG_SEVERITY', ['Info', 'Warning', 'Error']);
-define('CLICKPAY_PREFIX', 'Clickpay');
+define('CLICKPAY_PREFIX', 'ClickPay');
+
 
 abstract class ClickpayHelper
 {
@@ -40,7 +44,7 @@ abstract class ClickpayHelper
         return in_array($currencyCode, $list);
     }
 
-    static function isClickpayPayment($code)
+    static function isClickPayPayment($code)
     {
         foreach (ClickpayApi::PAYMENT_TYPES as $key => $value) {
             if ($value['name'] === $code) {
@@ -206,7 +210,7 @@ abstract class ClickpayHelper
     }
 
     /**
-     * <b>Clickpay_error_log<b> should be defined,
+     * <b>clickpay_error_log<b> should be defined,
      * Main functionality: use the platform logger to log the error messages
      * If not found: create a new log file and log the messages
      * @param $severity: [1: info, 2: warning, 3: error]
@@ -219,7 +223,9 @@ abstract class ClickpayHelper
             try {
                 $severity_str = CLICKPAY_DEBUG_SEVERITY[--$severity];
                 $_prefix = date('c') . " " . CLICKPAY_PREFIX . ".{$severity_str} (FB): ";
+
                 $_msg = ($_prefix . $msg . PHP_EOL);
+
                 $_file = defined('CLICKPAY_DEBUG_FILE') ? CLICKPAY_DEBUG_FILE : CLICKPAY_DEBUG_FILE_NAME;
                 file_put_contents($_file, $_msg, FILE_APPEND);
             } catch (\Throwable $th) {
@@ -231,7 +237,7 @@ abstract class ClickpayHelper
 
 
 /**
- * @abstract class: Enum for static values of Clickpay requests
+ * @abstract class: Enum for static values of ClickPay requests
  */
 abstract class ClickpayEnum
 {
@@ -251,6 +257,16 @@ abstract class ClickpayEnum
     const TRAN_CLASS_ECOM = 'ecom';
     const TRAN_CLASS_MOTO = 'moto';
     const TRAN_CLASS_RECURRING = 'recurring';
+
+    //
+
+    const TRAN_STATUS_Authorised = 'A';
+    const TRAN_STATUS_OnHold     = 'H';
+    const TRAN_STATUS_Pending    = 'P';
+    const TRAN_STATUS_Voided     = 'V';
+    const TRAN_STATUS_Error      = 'E';
+    const TRAN_STATUS_Declined   = 'D';
+    const TRAN_STATUS_Expired    = 'X';
 
     //
 
@@ -298,6 +314,11 @@ abstract class ClickpayEnum
         return strcasecmp($tran_type, ClickpayEnum::TRAN_TYPE_REFUND) == 0;
     }
 
+    static function TransAreSame($tran_type1, $tran_type2)
+    {
+        return strcasecmp($tran_type1, $tran_type2) == 0;
+    }
+
 
     static function TranIsPaymentComplete($ipn_data)
     {
@@ -322,6 +343,28 @@ abstract class ClickpayEnum
 
     //
 
+    static function TranStatusIsSuccess($tran_response_status)
+    {
+        return $tran_response_status == ClickpayEnum::TRAN_STATUS_Authorised;
+    }
+
+    static function TranStatusIsOnHold($tran_response_status)
+    {
+        return $tran_response_status == ClickpayEnum::TRAN_STATUS_OnHold;
+    }
+
+    static function TranStatusIsPending($tran_response_status)
+    {
+        return $tran_response_status == ClickpayEnum::TRAN_STATUS_Pending;
+    }
+
+    static function TranStatusIsExpired($tran_response_status)
+    {
+        return $tran_response_status == ClickpayEnum::TRAN_STATUS_Expired;
+    }
+
+    //
+
     static function PPIsDuplicate($paypage)
     {
         $err_code = @$paypage->code;
@@ -331,7 +374,7 @@ abstract class ClickpayEnum
 
 
 /**
- * Holder class: Holds & Generates the parameters array that pass to PayClickClickpay' API
+ * Holder class: Holds & Generates the parameters array that pass to ClickPay' API
  * Members:
  * - Transaction Info (Type & Class)
  * - Cart Info (id, desc, amount, currency)
@@ -432,7 +475,7 @@ class ClickpayHolder
 
 /**
  * Holder class, Inherit class ClickpayHolder
- * Holds & Generates the parameters array that pass to Clickpay' API
+ * Holds & Generates the parameters array that pass to ClickPay' API
  * Members:
  * - Payment method (payment_code)
  * - Customer Details
@@ -675,7 +718,7 @@ abstract class ClickpayBasicHolder extends ClickpayHolder
 
 /**
  * Holder class, Inherit class ClickpayBasicHolder
- * Holds & Generates the parameters array that pass to Clickpay' API
+ * Holds & Generates the parameters array that pass to ClickPay' API
  * Members:
  * - Hide shipping
  * - Framed
@@ -692,7 +735,7 @@ class ClickpayRequestHolder extends ClickpayBasicHolder
      */
     private $framed;
 
-     /**
+      /**
      * config_id
      */
     private $config_id;
@@ -769,6 +812,7 @@ class ClickpayRequestHolder extends ClickpayBasicHolder
         }
         return $this;
     }
+    
 }
 
 
@@ -847,7 +891,7 @@ class ClickpayManagedFormHolder extends ClickpayBasicHolder
 
 /**
  * Holder class, Inherit class ClickpayBasicHolder
- * Holds & Generates the parameters array for the Managed form payments
+ * Holds & Generates the parameters array for the Own form payments
  * Members:
  * - Card Info (pan, cvv, expiry_year, expiry_month)
  */
@@ -891,6 +935,39 @@ class ClickpayOwnFormHolder extends ClickpayBasicHolder
     }
 }
 
+
+/**
+ * Holder class, Inherit class ClickpayBasicHolder
+ * Holds & Generates the parameters array for the ApplePay form payments
+ * Members:
+ * - apple_pay_token
+ */
+class ClickpayApplePayHolder extends ClickpayBasicHolder
+{
+    /**
+     * apple_pay_token
+     */
+    private $apple_pay_token;
+
+
+    public function set50ApplePay($apple_pay_token)
+    {
+        $this->apple_pay_token = [
+            'apple_pay_token' => $apple_pay_token
+        ];
+
+        return $this;
+    }
+
+    public function pt_build()
+    {
+        $all = parent::pt_build();
+
+        $all = array_merge($all, $this->apple_pay_token);
+
+        return $all;
+    }
+}
 
 /**
  * Holder class, Inherit class ClickpayHolder
@@ -937,7 +1014,7 @@ class ClickpayFollowupHolder extends ClickpayHolder
 
 
 /**
- * API class which contacts Clickpay server's API
+ * API class which contacts ClickPay server's API
  */
 class ClickpayApi
 {
@@ -949,29 +1026,29 @@ class ClickpayApi
     const GROUP_IFRAME = 'iframe';
 
     const PAYMENT_TYPES = [
-        '0'  => ['name' => 'all', 'title' => 'Clickpay - All', 'currencies' => null, 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
-        '1'  => ['name' => 'stcpay', 'title' => 'Clickpay - StcPay', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
-        '2'  => ['name' => 'stcpayqr', 'title' => 'Clickpay - StcPay(QR)', 'currencies' => ['SAR'], 'groups' => []],
-        '3'  => ['name' => 'applepay', 'title' => 'Clickpay - ApplePay', 'currencies' => ['AED', 'SAR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_REFUND]],
-        '4'  => ['name' => 'omannet', 'title' => 'Clickpay - OmanNet', 'currencies' => ['OMR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
-        '5'  => ['name' => 'mada', 'title' => 'Clickpay - mada', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
-        '6'  => ['name' => 'creditcard', 'title' => 'Clickpay - CreditCard', 'currencies' => null, 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_CARDS_INTERNATIONAL, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
-        '7'  => ['name' => 'sadad', 'title' => 'Clickpay - Sadad', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_IFRAME]],
-        '8'  => ['name' => 'fawry', 'title' => 'Clickpay - @Fawry', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
-        '9'  => ['name' => 'knet', 'title' => 'Clickpay - KnPay', 'currencies' => ['KWD'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_REFUND]],
-        '10' => ['name' => 'amex', 'title' => 'Clickpay - Amex', 'currencies' => ['AED', 'SAR', 'USD'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_CARDS_INTERNATIONAL, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
-        '11' => ['name' => 'valu', 'title' => 'Clickpay - valU', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
-        '12' => ['name' => 'meeza', 'title' => 'Clickpay - Meeza', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
-        '13' => ['name' => 'meezaqr', 'title' => 'Clickpay - Meeza (QR)', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
-        '14' => ['name' => 'unionpay', 'title' => 'Clickpay - UnionPay', 'currencies' => ['AED'], 'groups' => [ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_REFUND]],
-        '15' => ['name' => 'samsungpay', 'title' => 'Clickpay - SamsungPay', 'currencies' => ['AED', 'SAR'], 'groups' => [ClickpayApi::GROUP_REFUND]],
-        '16' => ['name' => 'knetdebit', 'title' => 'Clickpay - KnPay (Debit)', 'currencies' => ['KWD'], 'groups' => [ClickpayApi::GROUP_REFUND]],
-        '17' => ['name' => 'knetcredit', 'title' => 'Clickpay - KnPay (Credit)', 'currencies' => ['KWD'], 'groups' => []],
-        '18' => ['name' => 'aman', 'title' => 'Clickpay - Aman', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME]],
-        '19' => ['name' => 'urpay', 'title' => 'Clickpay - UrPay', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
-        '20' => ['name' => 'paypal', 'title' => 'Clickpay - PayPal', 'currencies' => ['USD', 'EUR', 'GPB', 'HKD', 'JPY'], 'groups' => [ClickpayApi::GROUP_REFUND]],
-        '21' => ['name' => 'installment', 'title' => 'Clickpay - Installment', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_IFRAME]],
-        '22' => ['name' => 'touchpoints', 'title' => 'Clickpay - Touchpoints', 'currencies' => ['AED'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_IFRAME]],
+        '0'  => ['name' => 'all', 'title' => 'ClickPay - All', 'currencies' => null, 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '1'  => ['name' => 'stcpay', 'title' => 'ClickPay - StcPay', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '2'  => ['name' => 'stcpayqr', 'title' => 'ClickPay - StcPay(QR)', 'currencies' => ['SAR'], 'groups' => []],
+        '3'  => ['name' => 'applepay', 'title' => 'ClickPay - ApplePay', 'currencies' => null, 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_REFUND]],
+        '4'  => ['name' => 'omannet', 'title' => 'ClickPay - OmanNet', 'currencies' => ['OMR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '5'  => ['name' => 'mada', 'title' => 'ClickPay - mada', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '6'  => ['name' => 'creditcard', 'title' => 'ClickPay - CreditCard', 'currencies' => null, 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_CARDS_INTERNATIONAL, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '7'  => ['name' => 'sadad', 'title' => 'ClickPay - Sadad', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_IFRAME]],
+        '8'  => ['name' => 'fawry', 'title' => 'ClickPay - @Fawry', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '9'  => ['name' => 'knet', 'title' => 'ClickPay - KnPay', 'currencies' => ['KWD'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_REFUND]],
+        '10' => ['name' => 'amex', 'title' => 'ClickPay - Amex', 'currencies' => ['AED', 'SAR', 'USD'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_CARDS_INTERNATIONAL, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '11' => ['name' => 'valu', 'title' => 'ClickPay - valU', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '12' => ['name' => 'meeza', 'title' => 'ClickPay - Meeza', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '13' => ['name' => 'meezaqr', 'title' => 'ClickPay - Meeza (QR)', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '14' => ['name' => 'unionpay', 'title' => 'ClickPay - UnionPay', 'currencies' => ['AED'], 'groups' => [ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_REFUND]],
+        '15' => ['name' => 'samsungpay', 'title' => 'ClickPay - SamsungPay', 'currencies' => ['AED', 'SAR'], 'groups' => [ClickpayApi::GROUP_REFUND]],
+        '16' => ['name' => 'knetdebit', 'title' => 'ClickPay - KnPay (Debit)', 'currencies' => ['KWD'], 'groups' => [ClickpayApi::GROUP_REFUND]],
+        '17' => ['name' => 'knetcredit', 'title' => 'ClickPay - KnPay (Credit)', 'currencies' => ['KWD'], 'groups' => [ClickpayApi::GROUP_REFUND]],
+        '18' => ['name' => 'aman', 'title' => 'ClickPay - Aman', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME]],
+        '19' => ['name' => 'urpay', 'title' => 'ClickPay - UrPay', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '20' => ['name' => 'paypal', 'title' => 'ClickPay - PayPal', 'currencies' => ['AED', 'EGP', 'USD', 'EUR', 'GPB', 'HKD', 'JPY'], 'groups' => [ClickpayApi::GROUP_REFUND]],
+        '21' => ['name' => 'installment', 'title' => 'ClickPay - Installment', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_IFRAME]],
+        '22' => ['name' => 'touchpoints', 'title' => 'ClickPay - Touchpoints', 'currencies' => ['AED'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_IFRAME]],
     ];
 
     const BASE_URLS = [
@@ -1046,6 +1123,7 @@ class ClickpayApi
         $isTokenize =
             $values['tran_class'] == ClickpayEnum::TRAN_CLASS_RECURRING
             || array_key_exists('payment_token', $values)
+            || array_key_exists('apple_pay_token', $values)
             || array_key_exists('card_details', $values);
 
         $response = $this->sendRequest(self::URL_REQUEST, $values);
@@ -1159,7 +1237,7 @@ class ClickpayApi
             // Lower case all keys
             $headers = array_change_key_case($headers);
 
-            $signature = $headers['signature'] ?? '';
+            $signature = @$headers['signature'] ?? '';
             // $client_key = $headers['Client-Key'];
 
             $is_valid = $this->is_valid_ipn($response, $signature, false);
@@ -1193,7 +1271,7 @@ class ClickpayApi
         if (!$paypage) {
             $_paypage = new stdClass();
             $_paypage->success = false;
-            $_paypage->message = 'Create Clickpay payment failed';
+            $_paypage->message = 'Create clickpay payment failed';
         } else if (isset($_paypage->code)) {
             $_paypage->success = false;
         } else {
@@ -1212,15 +1290,16 @@ class ClickpayApi
         if (!$verify) {
             $_verify = new stdClass();
             $_verify->success = false;
-            $_verify->message = 'Verifying Clickpay payment failed';
+            $_verify->message = 'Verifying clickpay payment failed';
         } else if (isset($verify->code, $verify->message)) {
             $_verify->success = false;
         } else {
             if (isset($verify->payment_result)) {
-                $_verify->success = $verify->payment_result->response_status == "A";
-                $_verify->is_on_hold = $_verify->payment_result->response_status === 'H';
-                $_verify->is_pending = $_verify->payment_result->response_status === 'P';
-                $_verify->is_expired = $_verify->payment_result->response_status === 'X';
+                $_verify->success = ClickpayEnum::TranStatusIsSuccess($verify->payment_result->response_status);
+                $_verify->is_on_hold = ClickpayEnum::TranStatusIsOnHold($verify->payment_result->response_status);
+                $_verify->is_pending = ClickpayEnum::TranStatusIsPending($verify->payment_result->response_status);
+                $_verify->is_expired = ClickpayEnum::TranStatusIsExpired($verify->payment_result->response_status);
+
                 $_verify->response_code = $verify->payment_result->response_code;
             } else {
                 $_verify->success = false;
@@ -1244,6 +1323,7 @@ class ClickpayApi
         $_verify->transaction_id = @$verify->tran_ref;
 
         $_verify->failed = !($_verify->success || $_verify->is_on_hold || $_verify->is_pending);
+
         return $_verify;
     }
 
@@ -1256,20 +1336,22 @@ class ClickpayApi
             $_verify->success = false;
             $_verify->is_on_hold = false;
             $_verify->is_pending = false;
-            $_verify->message = 'Verifying Clickpay payment failed (locally)';
+            $_verify->message = 'Verifying clickpay payment failed (locally)';
         } else {
             $_verify = (object)$return_data;
 
             $response_status = $return_data['respStatus'];
-            $_verify->success = $response_status == "A";
 
-            $_verify->is_on_hold = $response_status === 'H';
-            $_verify->is_pending = $response_status === 'P';
+            $_verify->success = ClickpayEnum::TranStatusIsSuccess($response_status);
+            $_verify->is_on_hold = ClickpayEnum::TranStatusIsOnHold($response_status);
+            $_verify->is_pending = ClickpayEnum::TranStatusIsPending($response_status);
+
             $_verify->message = $return_data['respMessage'];
 
             $_verify->transaction_id = $return_data['tranRef'];
             $_verify->reference_no = $return_data['cartId'];
         }
+
         $_verify->failed = !($_verify->success || $_verify->is_on_hold || $_verify->is_pending);
 
         return $_verify;
@@ -1282,10 +1364,10 @@ class ClickpayApi
         if (!$refund) {
             $_refund = new stdClass();
             $_refund->success = false;
-            $_refund->message = 'Verifying Clickpay Refund failed';
+            $_refund->message = 'Verifying clickpay Refund failed';
         } else {
             if (isset($refund->payment_result)) {
-                $_refund->success = $refund->payment_result->response_status == "A";
+                $_refund->success = ClickpayEnum::TranStatusIsSuccess($refund->payment_result->response_status);
                 $_refund->message = $refund->payment_result->response_message;
             } else {
                 $_refund->success = false;
@@ -1303,7 +1385,7 @@ class ClickpayApi
         if (!$paypage) {
             $_paypage = new stdClass();
             $_paypage->success = false;
-            $_paypage->message = 'Create Clickpay tokenization payment failed';
+            $_paypage->message = 'Create clickpay tokenization payment failed';
         } else {
             $is_redirect = isset($paypage->tran_ref, $paypage->redirect_url) && !empty($paypage->redirect_url);
             $is_completed = isset($paypage->payment_result);
