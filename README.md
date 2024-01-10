@@ -2,8 +2,7 @@
 
 The official **OpenCart** Plugin for Clickpay (PT-2).
 
-Supports OpenCart **2.3** & **3.x**
-
+Supports OpenCart **3.x** & **2.3**.
 - - -
 
 ## Installation
@@ -15,18 +14,43 @@ Supports OpenCart **2.3** & **3.x**
 3. Click `Upload`
 4. Select the downloaded zip file (`clickpay-opencart.zip`)
 5. Wait until the upload *Progress* success
+6. Apply the modifications [Details](#applying-the-modifications)
 
-*Note 1*: The new uploaded plugin will overwrite any previous version.
 
-*Note 2*: By removing the Plugin from the `Extension Installer` admin page, You are removing the configurations of the plugin.
+*Notes*:
+- The new uploaded plugin will overwrite any previous version.
+- By removing the Plugin from the `Extension Installer` admin page, You are removing the configurations of the plugin.
+
 
 ### Install using FTP method
 
 1. Upload the content of this repo to the root folder of your OpenCart's website
+2. Apply the modifications [Details](#applying-the-modifications)
+
 
 *Note: In case a previous version already installed, Replace all previous files when asking.*
 
 - - -
+
+
+## Applying the Modifications
+
+Applying the modifications is essential to enable the actions on the Sale Orders (such as **`Refund`**).
+
+Depends on the installation type:
+
+### Installed using OpenCart Admin panel
+
+1. Navigate to `OpenCart Admin panel >> Extensions >> Modifications`.
+2. Click on the **`Refresh`** button *(top-right next to `Clear` & `Delete` buttons)*, you should see a successful message saying: "`Success: You have modified modifications!`".
+
+### Installed using FTP method
+
+1. Zip the `install.xml` file and name it `install.ocmod.zip`.
+2. Navigate to `OpenCart Admin panel >> Extensions >> Installer`.
+3. Click Upload button and select the `install.ocmod.zip` file.
+4. Navigate to `OpenCart Admin panel >> Extensions >> Modifications`.
+5. Click on the **`Refresh`** button *(top-right next to `Clear` & `Delete` buttons)*, you should see a successful message saying: "`Success: You have modified modifications!`".
 
 ## Activating the Plugin
 
@@ -51,6 +75,11 @@ Supports OpenCart **2.3** & **3.x**
 8. Click the `Save` button *(The blue button on top-right of the page)* button
 
 - - -
+## Enable Refund Functionality
+
+You should apply the modifications in order to have the Refund functionality [More details](#applying-the-modifications).
+
+
 
 ## Log Access
 

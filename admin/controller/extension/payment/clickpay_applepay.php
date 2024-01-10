@@ -7,6 +7,8 @@ class ControllerExtensionPaymentClickpayApplepay extends Controller
 	public $userToken;
 
 	private $clickpayController;
+	private $clickpayCatallogController;
+
 
 	//
 
@@ -15,6 +17,8 @@ class ControllerExtensionPaymentClickpayApplepay extends Controller
 		$this->load->library('clickpay_api');
 
 		$this->clickpayController = new ClickpayController($this);
+		$this->clickpayCatallogController = new ClickpayCatalogController($this);
+
 	}
 
 
@@ -45,5 +49,11 @@ class ControllerExtensionPaymentClickpayApplepay extends Controller
 	{
 		$this->init();
 		$this->clickpayController->install();
+	}
+
+	public function refund()
+	{
+		$this->init();
+		$this->clickpayCatallogController->process_refund();
 	}
 }

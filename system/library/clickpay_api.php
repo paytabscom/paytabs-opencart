@@ -1,9 +1,11 @@
 <?php
 
-define('CLICKPAY_PAYPAGE_VERSION', '3.4.0');
+define('CLICKPAY_PAYPAGE_VERSION', '3.15.0');
 define('CLICKPAY_DEBUG_FILE', 'debug_clickpay.log');
 
 define('CLICKPAY_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
+define('PT_DB_TRANS_TABLE', DB_PREFIX . 'pt_transactions');
+
 
 require_once DIR_SYSTEM . '/library/clickpay_core.php';
 
@@ -11,9 +13,72 @@ class clickpay_api
 {
 }
 
+class ClickpayOrder
+{
+    static function pt_add_actions($order_info, &$data, $controller)
+    {
+        if (isset($controller->request->get['order_id'])) {
+            $order_id = $controller->request->get['order_id'];
+        }
+
+        if (!$order_id) {
+            return;
+        }
+
+        $payment_code = $order_info['payment_code'];
+        $payment_method = $order_info['payment_method'];
+        $order_status_id = $order_info['order_status_id'];
+
+
+        $trx_payment_code = ClickpayOrder::_get_pt_transaction($controller->db, $order_id);
+
+        // ToDo
+        // Confirm if the plugin is installed & the table is exists
+        if (!ClickpayOrder::_is_pt_order($payment_code, $trx_payment_code)) {
+            return;
+        }
+
+
+        // $trx = $controller->db->query("SELECT payment_method FROM " . DB_PREFIX . "pt_transaction_reference WHERE order_id = '" . (int)$order_info['order_id'] . "'")->row;
+
+        if (strpos($payment_code, "clickpay_") !== false) {
+            if ($order_status_id != 11) {
+                $data['pt_refund'] = true;
+                $data['pt_refund_action'] = $controller->url->link("extension/payment/{$payment_code}/refund", 'order_id=' . $order_id . '&user_token=' . $controller->session->data['user_token'], true);
+            }
+        }
+    }
+
+
+    // ToDo
+    // 1. Get only latest Success, Sale or Captured trx
+    // 2. Return only one string
+    // 3. Validate the result
+    static function _get_pt_transaction($db, $order_id)
+    {
+        $payment_code =  $db->query("SELECT payment_method FROM " . PT_DB_TRANS_TABLE . " WHERE order_id = '" . (int)$order_id . "'")->row;
+
+        $payment_code = implode(" ", $payment_code);
+
+        return $payment_code;
+    }
+
+    /**
+     * Check if the Order paid by Clickpay
+     * Check if PT is already installed & the pt table exists
+     */
+    static function _is_pt_order($order_payment_code, $trx_payment_code)
+    {
+        // ClickpayHelper::isClickpayPayment($order_payment_code);
+        // ClickpayHelper::isClickpayPayment($trx_payment_code);
+        return true;
+    }
+}
+
 class ClickpayController
 {
     private $controller;
+    private $db;
 
     private $keys = ClickpayAdapter::KEYS;
 
@@ -28,6 +93,7 @@ class ClickpayController
     function __construct($controller)
     {
         $this->controller = $controller;
+        $this->db = $controller->db;
 
         $this->controller->load->library('clickpay_api');
 
@@ -92,6 +158,8 @@ class ClickpayController
 
         $data['endpoints'] = ClickpayApi::getEndpoints();
         $data['is_card_payment'] = ClickpayHelper::isCardPayment($this->controller->_code);
+        $data['support_iframe'] =  ClickpayHelper::supportIframe($this->controller->_code);
+
 
         $this->controller->load->model('localisation/order_status');
         $data['order_statuses'] = $this->controller->model_localisation_order_status->getOrderStatuses();
@@ -165,7 +233,9 @@ class ClickpayController
             $postKey = $value['key'];
             $configKey = $value['configKey'];
 
-            $values[$configKey] = $this->controller->request->post[$postKey];
+            if (array_key_exists($postKey, $this->controller->request->post)) {
+                $values[$configKey] = $this->controller->request->post[$postKey];
+            }
         }
 
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $values);
@@ -216,6 +286,8 @@ class ClickpayController
         }
 
         $this->controller->model_setting_setting->editSetting($this->settingsKey, $defaults);
+
+        $this->generate_paymentReference_table();
     }
 
     //
@@ -236,6 +308,26 @@ class ClickpayController
             $data[$htmlKey] = isset($arrData[$htmlKey]) ? $arrData[$htmlKey] : $configs->get($configKey);
         }
     }
+
+    private function generate_paymentReference_table()
+    {
+        $this->db->query("
+            CREATE TABLE IF NOT EXISTS `" . PT_DB_TRANS_TABLE . "` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `order_id` INT(11) NOT NULL,
+            `payment_method` VARCHAR(32) NOT NULL,
+            `transaction_ref` VARCHAR(64) NOT NULL,
+            `parent_ref` VARCHAR(64)  NULL,
+            `transaction_type` VARCHAR(32) NOT NULL,
+            `transaction_status` TINYINT(1) NOT NULL,
+            `transaction_amount` DECIMAL(15,4) NOT NULL,
+            `transaction_currency` VARCHAR(8) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`)
+            );
+        ");
+    }
 }
 
 
@@ -243,12 +335,15 @@ class ClickpayCatalogController
 {
     private $controller;
     private $ptApi;
+    private $db;
 
     function __construct($controller)
     {
         $this->controller = $controller;
 
         $this->ptApi = (new ClickpayAdapter($this->controller->config, $this->controller->_code))->pt();
+
+        $this->db = $controller->db;
     }
 
 
@@ -259,6 +354,7 @@ class ClickpayCatalogController
         $orderId = $this->controller->session->data['order_id'];
 
         $data['order_id'] = $orderId;
+        $data['iframe_mode'] = (bool) $this->controller->config->get(ClickpayAdapter::_key('iframe', $this->controller->_code));
         $data['url_confirm'] = $this->controller->url->link("extension/payment/clickpay_{$this->controller->_code}/confirm", '', true);
 
         return $this->controller->load->view("extension/payment/clickpay_view", $data);
@@ -268,27 +364,50 @@ class ClickpayCatalogController
     {
         $order_id = $this->controller->request->post['order'];
         $order_session_id = $this->controller->session->data['order_id'];
+        $order_session_payment = $this->controller->session->data['payment_method']['code'];
+
         if ($order_id != $order_session_id) {
             $this->_re_checkout('The Order has been changed');
             return;
         }
 
+        if ($order_session_payment != "clickpay_{$this->controller->_code}") {
+            $this->_re_checkout('Payment method is required');
+            return;
+        }
+
+        //
+
         $values = $this->prepareOrder();
 
         $paypage = $this->ptApi->create_pay_page($values);
 
+        $iframe = (bool) $this->controller->config->get(ClickpayAdapter::_key('iframe', $this->controller->_code));
+
         if ($paypage->success) {
             $payment_url = $paypage->payment_url;
 
-            $this->controller->response->redirect($payment_url);
+            if ($iframe) {
+                $data['payment_url'] = $payment_url;
+
+                $pnl_iFrame = $this->controller->load->view("extension/payment/clickpay_framed", $data);
+                $this->controller->response->setOutput($pnl_iFrame);
+                return;
+            } else {
+                $this->controller->response->redirect($payment_url);
+            }
         } else {
             $paypage_msg = $paypage->message;
 
             $_logResult = json_encode($paypage);
             $_logData = json_encode($values);
-            ClickpayHelper::log("Callback failed, Data [{$_logData}], response [{$_logResult}]", 3);
+            ClickpayHelper::log("callback failed, Data [{$_logData}], response [{$_logResult}]", 3);
 
-            $this->_re_checkout($paypage_msg);
+            if ($iframe) {
+                $this->controller->response->setOutput($paypage_msg);
+            } else {
+                $this->_re_checkout($paypage_msg);
+            }
         }
     }
 
@@ -312,7 +431,7 @@ class ClickpayCatalogController
             ? $response_data->transaction_id
             : false;
         if (!$transactionId) {
-            return $this->callbackFailure('Transaction ID is missing');
+            return 'Transaction ID is missing';
         }
 
         $this->controller->load->model('checkout/order');
@@ -324,10 +443,11 @@ class ClickpayCatalogController
         $order_id = @$response_data->reference_no;
         $cart_amount = @$response_data->cart_amount;
         $cart_currency = $response_data->cart_currency;
+        $tran_type = @$response_data->tran_type;
 
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
-            ClickpayHelper::log("Callback failed, No Order found [{$order_id}]", 3);
+            ClickpayHelper::log("callback failed, No Order found [{$order_id}]", 3);
             return;
         }
 
@@ -340,17 +460,32 @@ class ClickpayCatalogController
                 $success = false;
                 $fraud = true;
             } else {
-                ClickpayHelper::log("Clickpay {$this->controller->_code} checkout successed");
+                ClickpayHelper::log("Clickpay {$this->controller->_code} checkout succeeded");
 
                 $successStatus = $this->controller->config->get(ClickpayAdapter::_key('order_status_id', $this->controller->_code));
+
+                $transaction_data = [
+                    'status' => $success,
+                    'transaction_ref' => $transactionId,
+                    'parent_transaction_ref' => '',
+                    'transaction_amount'   => $cart_amount,
+                    'transaction_currency' => $cart_currency,
+                    'transaction_type' => $tran_type
+                ];
+                $this->save_payment_reference($order_id, $transaction_data);
+
 
                 $this->controller->model_checkout_order->addOrderHistory($order_id, $successStatus, $res_msg);
             }
         }
+         else if ($response_data->is_on_hold) {
 
+        } else if ($response_data->is_pending) {
+
+        }
         if (!$success) {
             $_logVerify = (json_encode($response_data));
-            ClickpayHelper::log("Callback failed, response [{$_logVerify}]", 3);
+            ClickpayHelper::log("callback failed, response [{$_logVerify}]", 3);
 
             if ($fraud) {
                 $fraudStatus = $this->controller->config->get(ClickpayAdapter::_key('order_fraud_status_id', $this->controller->_code));
@@ -364,17 +499,109 @@ class ClickpayCatalogController
 
             // $this->callbackFailure($res_msg);
         }
+        return $success;
+    }
+
+    public function process_refund()
+    {
+        $order_id = null;
+        if (isset($this->controller->request->get['order_id'])) {
+            $order_id = $this->controller->request->get['order_id'];
+        }
+        if (!$order_id) {
+            return;
+        }
+
+        $payment_refrence = $this->db->query("SELECT transaction_ref FROM " . PT_DB_TRANS_TABLE . " WHERE order_id = '" . (int)$order_id . "'")->row;
+
+        $this->controller->load->model('sale/order');
+        $order_info = $this->controller->model_sale_order->getOrder($order_id);
+
+        $total = $order_info['total'];
+        $amount = $this->getPrice($total, $order_info);
+
+        $order_amount = $amount;
+        $order_currency = $order_info['currency_code'];
+
+        $tran_ref_prev = implode(" ", $payment_refrence);
+
+        $pt_holder = new ClickpayFollowupHolder();
+        $pt_holder
+            ->set02Transaction(ClickpayEnum::TRAN_TYPE_REFUND)
+            ->set03Cart($order_id, $order_currency, $order_amount, "Admin refund request")
+            ->set30TransactionInfo($tran_ref_prev)
+            ->set99PluginInfo('OpenCart', VERSION, CLICKPAY_PAYPAGE_VERSION);
+
+        $values = $pt_holder->pt_build();
+
+        $refund_request = $this->ptApi->request_followup($values);
+
+        $tran_ref = @$refund_request->tran_ref;
+        $success = $refund_request->success;
+        $message = $refund_request->message;
+
+        if ($success) {
+            $order_status_id = 11; // Refunded status id in opencart 3
+            $sql = "UPDATE " . DB_PREFIX . "order SET order_status_id = '" . (int)$order_status_id . "' WHERE order_id = '" . (int)$order_id . "'";
+            $this->db->query($sql);
+
+            $transaction_data = [
+                'status' => $success,
+                'transaction_ref' => $tran_ref,
+                'parent_transaction_ref' => $values['tran_ref'],
+                'transaction_amount' => $values['cart_amount'],
+                'transaction_type' => $values['tran_type'],
+                'transaction_currency' => $values['cart_currency'],
+            ];
+
+            $this->save_payment_reference($order_id, $transaction_data);
+
+            ClickpayHelper::log("Refund success, order [{$order_id} - {$message}]");
+        } else {
+            ClickpayHelper::log("Refund failed, {$order_id} - {$message}", 3);
+        }
+
+        $this->controller->response->redirect($this->controller->url->link('sale/order/info', 'user_token=' . $this->controller->session->data['user_token'] . '&order_id=' . $order_id, true));
+    }
+
+
+    private function save_payment_reference($order_id, $transaction_data)
+    {
+        $sql_data = [
+            'order_id' => (int)$order_id,
+            'payment_method'   => $this->db->escape($this->controller->_code),
+            'transaction_ref'  => $this->db->escape($transaction_data['transaction_ref']),
+            'parent_ref'       => $this->db->escape($transaction_data['parent_transaction_ref']),
+            'transaction_type' => $this->db->escape(strtolower($transaction_data['transaction_type'])),
+            'transaction_status'   => $this->db->escape($transaction_data['status']),
+            'transaction_amount'   => $this->db->escape($transaction_data['transaction_amount']),
+            'transaction_currency' => $this->db->escape($transaction_data['transaction_currency']),
+        ];
+
+        // Map to array of values only
+        $sql_data = array_map(function ($key, $value) {
+            return "`$key` = '$value'";
+        }, array_keys($sql_data), array_values($sql_data));
+
+        // Merge all updates in one string
+        $sql_cmd = implode(", ", $sql_data);
+
+        $result = $this->db->query("INSERT INTO `" . PT_DB_TRANS_TABLE . "` SET $sql_cmd;");
+
+        if (!$result->num_rows) {
+            $_log_msg = json_encode($transaction_data);
+            ClickpayHelper::log("DB insert failed, [$order_id], [$_log_msg]", 3);
+        }
     }
 
 
     public function redirectAfterPayment()
     {
-        $response_data = $this->ptApi->read_response(false);
-        if (!$response_data) {
-            return;
-        }
+        $transactionId =
+            isset($this->controller->request->post['tranRef'])
+            ? $this->controller->request->post['tranRef']
+            : false;
 
-        $transactionId = @$response_data->transaction_id;
         if (!$transactionId) {
             return $this->callbackFailure('Transaction ID is missing');
         }
@@ -382,28 +609,45 @@ class ClickpayCatalogController
         $this->controller->load->model('checkout/order');
         $this->controller->load->model("extension/payment/clickpay_{$this->controller->_code}");
 
-        // $verify_response = $this->ptApi->verify_payment($transactionId);
+        $is_valid_req = $this->ptApi->is_valid_redirect($this->controller->request->post);
+        if (!$is_valid_req) {
+            $_logVerify = json_encode($this->controller->request->request);
+            ClickpayHelper::log("return failed, Fraud request [{$_logVerify}]", 3);
+            return;
+        }
 
-        $success = $response_data->success;
-        $res_msg = $response_data->message;
-        $order_id = @$response_data->reference_no;
+        $verify_response = $this->ptApi->verify_payment($transactionId);
+
+        $success = $verify_response->success;
+        $fraud = false;
+        $res_msg = $verify_response->message;
+        $order_id = @$verify_response->reference_no;
+        $cart_amount = @$verify_response->cart_amount;
+        $cart_currency = @$verify_response->cart_currency;
 
         $order_info = $this->controller->model_checkout_order->getOrder($order_id);
         if (!$order_info) {
-            ClickpayHelper::log("Return failed, No Order found [{$order_id}]", 3);
+            ClickpayHelper::log("return failed, No Order found [{$order_id}]", 3);
             return;
         }
 
         if ($success) {
-            ClickpayHelper::log("Clickpay {$this->controller->_code} checkout successed");
+            // Check here if the result is tempered
 
-            $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
+            if (!$this->_confirmAmountPaid($order_info, $cart_amount, $cart_currency)) {
+                $res_msg = 'The Order has been altered';
+                $success = false;
+                $fraud = true;
+            } else {
+                ClickpayHelper::log("Clickpay {$this->controller->_code} checkout succeeded");
+
+                $this->controller->response->redirect($this->controller->url->link('checkout/success', '', true));
+            }
         }
 
         if (!$success) {
-            $_logVerify = (json_encode($response_data));
-            ClickpayHelper::log("Return failed, response [{$_logVerify}]", 3);
-
+            $_logVerify = (json_encode($verify_response));
+            ClickpayHelper::log("return failed, response [{$_logVerify}]", 3);
             $this->callbackFailure($res_msg);
         }
     }
@@ -547,8 +791,11 @@ class ClickpayCatalogController
         //
 
         $hide_shipping = (bool) $this->controller->config->get(ClickpayAdapter::_key('hide_shipping', $this->controller->_code));
+        $iframe = (bool) $this->controller->config->get(ClickpayAdapter::_key('iframe', $this->controller->_code));
         $allow_associated_methods = (bool) $this->controller->config->get(ClickpayAdapter::_key('allow_associated_methods', $this->controller->_code));
+        $alt_currency = $this->controller->config->get(ClickpayAdapter::_key('alt_currency', $this->controller->_code));
 
+        $theme_config_id = $this->controller->config->get(ClickpayAdapter::_key('config_id', $this->controller->_code));
         //
 
         $holder = new ClickpayRequestHolder();
@@ -587,6 +834,9 @@ class ClickpayCatalogController
             ->set06HideShipping($hide_shipping)
             ->set07URLs($return_url, $callback_url)
             ->set08Lang($lang_code)
+            ->set09Framed($iframe, 'top')
+            ->set11ThemeConfigId($theme_config_id)
+            ->set12AltCurrency($alt_currency)
             ->set99PluginInfo('OpenCart', VERSION, CLICKPAY_PAYPAGE_VERSION);
 
         if ($this->controller->_code === 'valu') {
@@ -740,6 +990,11 @@ class ClickpayAdapter
             'configKey' => 'clickpay_{PAYMENTMETHOD}_hide_shipping',
             'required' => false,
         ],
+        'iframe' => [
+            'key' => 'payment_clickpay_iframe',
+            'configKey' => 'clickpay_{PAYMENTMETHOD}_iframe',
+            'required' => false,
+        ],
         'geo_zone_id' => [
             'key' => 'payment_clickpay_geo_zone_id',
             'configKey' => 'clickpay_{PAYMENTMETHOD}_geo_zone_id',
@@ -753,6 +1008,16 @@ class ClickpayAdapter
         'allow_associated_methods' => [
             'key' => 'payment_clickpay_allow_associated_methods',
             'configKey' => 'clickpay_{PAYMENTMETHOD}_allow_associated_methods',
+            'required' => false,
+        ],
+        'config_id' => [
+            'key' => 'payment_clickpay_config_id',
+            'configKey' => 'clickpay_{PAYMENTMETHOD}_config_id',
+            'required' => false,
+        ],
+        'alt_currency' => [
+            'key' => 'payment_clickpay_alt_currency',
+            'configKey' => 'clickpay_{PAYMENTMETHOD}_alt_currency',
             'required' => false,
         ],
     ];

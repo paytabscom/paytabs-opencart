@@ -2,12 +2,14 @@
 
 /**
  * Clickpay v2 PHP SDK
- * Version: 2.8.0
+ * Version: 2.15.0
  */
 
-define('CLICKPAY_SDK_VERSION', '2.8.0');
+define('CLICKPAY_SDK_VERSION', '2.15.0');
 
-
+define('CLICKPAY_DEBUG_FILE_NAME', 'debug_clickpay.log');
+define('CLICKPAY_DEBUG_SEVERITY', ['Info', 'Warning', 'Error']);
+define('CLICKPAY_PREFIX', 'Clickpay');
 
 abstract class ClickpayHelper
 {
@@ -110,6 +112,16 @@ abstract class ClickpayHelper
         return false;
     }
 
+    static function supportRefund($code)
+    {
+        foreach (ClickpayApi::PAYMENT_TYPES as $key => $value) {
+            if ($value['name'] === $code) {
+                return in_array(ClickpayApi::GROUP_REFUND, $value['groups']);
+            }
+        }
+        return false;
+    }
+
     //
 
     static function read_ipn_response()
@@ -205,9 +217,11 @@ abstract class ClickpayHelper
             clickpay_error_log($msg, $severity);
         } catch (\Throwable $th) {
             try {
-                $_prefix = date('c') . " Clickpay-[{$severity}]: ";
+                $severity_str = CLICKPAY_DEBUG_SEVERITY[--$severity];
+                $_prefix = date('c') . " " . CLICKPAY_PREFIX . ".{$severity_str} (FB): ";
                 $_msg = ($_prefix . $msg . PHP_EOL);
-                file_put_contents('debug_clickpay.log', $_msg, FILE_APPEND);
+                $_file = defined('CLICKPAY_DEBUG_FILE') ? CLICKPAY_DEBUG_FILE : CLICKPAY_DEBUG_FILE_NAME;
+                file_put_contents($_file, $_msg, FILE_APPEND);
             } catch (\Throwable $th) {
                 // var_export($th);
             }
@@ -560,6 +574,12 @@ abstract class ClickpayBasicHolder extends ClickpayHolder
 
         // 'creditcard' => ['creditcard', 'mada', 'omannet', 'meeza']
 
+        foreach ($codes as &$code) {
+            if (substr($code, 0, 3) === "pt_") {
+                $code = substr($code, 3);
+            }
+        }
+
         $this->payment_code = ['payment_methods' => $codes];
 
         return $this;
@@ -672,6 +692,16 @@ class ClickpayRequestHolder extends ClickpayBasicHolder
      */
     private $framed;
 
+     /**
+     * config_id
+     */
+    private $config_id;
+
+    /**
+     * alt_currency
+     */
+    private $alt_currency;
+
     //
 
     /**
@@ -684,7 +714,9 @@ class ClickpayRequestHolder extends ClickpayBasicHolder
         $this->pt_merges(
             $all,
             $this->hide_shipping,
-            $this->framed
+            $this->framed,
+            $this->config_id,
+            $this->alt_currency
         );
 
         return $all;
@@ -710,6 +742,31 @@ class ClickpayRequestHolder extends ClickpayBasicHolder
             'framed_return_top' => $redirect_target == 'top'
         ];
 
+        return $this;
+    }
+
+    public function set11ThemeConfigId($config_id)
+    {
+        $config_id = (int) trim($config_id ?? "");
+
+        if (is_int($config_id) && $config_id > 0) {
+            $this->config_id = [
+                'config_id' => $config_id
+            ];
+        }
+
+        return $this;
+    }
+
+    public function set12AltCurrency($alt_currency)
+    {
+        $alt_currency = trim($alt_currency ?? "");
+
+        if (!empty($alt_currency)) {
+            $this->alt_currency = [
+                'alt_currency' => $alt_currency
+            ];
+        }
         return $this;
     }
 }
@@ -888,29 +945,33 @@ class ClickpayApi
     const GROUP_CARDS_INTERNATIONAL = 'cards_international';
     const GROUP_TOKENIZE = 'tokenise';
     const GROUP_AUTH_CAPTURE = 'auth_capture';
+    const GROUP_REFUND = 'refund';
     const GROUP_IFRAME = 'iframe';
 
     const PAYMENT_TYPES = [
-        '0'  => ['name' => 'all', 'title' => 'Clickpay - All', 'currencies' => null, 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME]],
-        '1'  => ['name' => 'stcpay', 'title' => 'Clickpay - StcPay', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_IFRAME]],
+        '0'  => ['name' => 'all', 'title' => 'Clickpay - All', 'currencies' => null, 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '1'  => ['name' => 'stcpay', 'title' => 'Clickpay - StcPay', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
         '2'  => ['name' => 'stcpayqr', 'title' => 'Clickpay - StcPay(QR)', 'currencies' => ['SAR'], 'groups' => []],
-        '3'  => ['name' => 'applepay', 'title' => 'Clickpay - ApplePay', 'currencies' => ['AED', 'SAR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_AUTH_CAPTURE]],
-        '4'  => ['name' => 'omannet', 'title' => 'Clickpay - OmanNet', 'currencies' => ['OMR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_IFRAME]],
-        '5'  => ['name' => 'mada', 'title' => 'Clickpay - Mada', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME]],
-        '6'  => ['name' => 'creditcard', 'title' => 'Clickpay - CreditCard', 'currencies' => null, 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_CARDS_INTERNATIONAL, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME]],
-        '7'  => ['name' => 'sadad', 'title' => 'Clickpay - Sadad', 'currencies' => ['SAR'], 'groups' => []],
-        '8'  => ['name' => 'fawry', 'title' => 'Clickpay - @Fawry', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME]],
-        '9'  => ['name' => 'knet', 'title' => 'Clickpay - KnPay', 'currencies' => ['KWD'], 'groups' => [ClickpayApi::GROUP_CARDS]],
-        '10' => ['name' => 'amex', 'title' => 'Clickpay - Amex', 'currencies' => ['AED', 'SAR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_CARDS_INTERNATIONAL, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME]],
-        '11' => ['name' => 'valu', 'title' => 'Clickpay - valU', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME]],
-        '12' => ['name' => 'meeza', 'title' => 'Clickpay - Meeza', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME]],
-        '13' => ['name' => 'meezaqr', 'title' => 'Clickpay - Meeza (QR)', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME]],
-        '14' => ['name' => 'unionpay', 'title' => 'Clickpay - UnionPay', 'currencies' => ['AED'], 'groups' => [ClickpayApi::GROUP_AUTH_CAPTURE]],
-        '15' => ['name' => 'samsungpay', 'title' => 'Clickpay - SamsungPay', 'currencies' => ['AED', 'SAR'], 'groups' => []],
-        '16' => ['name' => 'knetdebit', 'title' => 'Clickpay - KnPay (Debit)', 'currencies' => ['KWD'], 'groups' => []],
+        '3'  => ['name' => 'applepay', 'title' => 'Clickpay - ApplePay', 'currencies' => ['AED', 'SAR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_REFUND]],
+        '4'  => ['name' => 'omannet', 'title' => 'Clickpay - OmanNet', 'currencies' => ['OMR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '5'  => ['name' => 'mada', 'title' => 'Clickpay - mada', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '6'  => ['name' => 'creditcard', 'title' => 'Clickpay - CreditCard', 'currencies' => null, 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_CARDS_INTERNATIONAL, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '7'  => ['name' => 'sadad', 'title' => 'Clickpay - Sadad', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_IFRAME]],
+        '8'  => ['name' => 'fawry', 'title' => 'Clickpay - @Fawry', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '9'  => ['name' => 'knet', 'title' => 'Clickpay - KnPay', 'currencies' => ['KWD'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_REFUND]],
+        '10' => ['name' => 'amex', 'title' => 'Clickpay - Amex', 'currencies' => ['AED', 'SAR', 'USD'], 'groups' => [ClickpayApi::GROUP_TOKENIZE, ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_CARDS_INTERNATIONAL, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '11' => ['name' => 'valu', 'title' => 'Clickpay - valU', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '12' => ['name' => 'meeza', 'title' => 'Clickpay - Meeza', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '13' => ['name' => 'meezaqr', 'title' => 'Clickpay - Meeza (QR)', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '14' => ['name' => 'unionpay', 'title' => 'Clickpay - UnionPay', 'currencies' => ['AED'], 'groups' => [ClickpayApi::GROUP_AUTH_CAPTURE, ClickpayApi::GROUP_REFUND]],
+        '15' => ['name' => 'samsungpay', 'title' => 'Clickpay - SamsungPay', 'currencies' => ['AED', 'SAR'], 'groups' => [ClickpayApi::GROUP_REFUND]],
+        '16' => ['name' => 'knetdebit', 'title' => 'Clickpay - KnPay (Debit)', 'currencies' => ['KWD'], 'groups' => [ClickpayApi::GROUP_REFUND]],
         '17' => ['name' => 'knetcredit', 'title' => 'Clickpay - KnPay (Credit)', 'currencies' => ['KWD'], 'groups' => []],
         '18' => ['name' => 'aman', 'title' => 'Clickpay - Aman', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_IFRAME]],
-        '19' => ['name' => 'urpay', 'title' => 'Clickpay - UrPay', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_IFRAME]],
+        '19' => ['name' => 'urpay', 'title' => 'Clickpay - UrPay', 'currencies' => ['SAR'], 'groups' => [ClickpayApi::GROUP_IFRAME, ClickpayApi::GROUP_REFUND]],
+        '20' => ['name' => 'paypal', 'title' => 'Clickpay - PayPal', 'currencies' => ['USD', 'EUR', 'GPB', 'HKD', 'JPY'], 'groups' => [ClickpayApi::GROUP_REFUND]],
+        '21' => ['name' => 'installment', 'title' => 'Clickpay - Installment', 'currencies' => ['EGP'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_IFRAME]],
+        '22' => ['name' => 'touchpoints', 'title' => 'Clickpay - Touchpoints', 'currencies' => ['AED'], 'groups' => [ClickpayApi::GROUP_CARDS, ClickpayApi::GROUP_IFRAME]],
     ];
 
     const BASE_URLS = [
@@ -1098,7 +1159,7 @@ class ClickpayApi
             // Lower case all keys
             $headers = array_change_key_case($headers);
 
-            $signature = $headers['signature'];
+            $signature = $headers['signature'] ?? '';
             // $client_key = $headers['Client-Key'];
 
             $is_valid = $this->is_valid_ipn($response, $signature, false);
@@ -1112,7 +1173,8 @@ class ClickpayApi
         }
 
         if (!$is_valid) {
-            ClickpayHelper::log("Clickpay Admin: Invalid Signature", 3);
+            $hashed_key = explode('-', @$this->server_key ?? '')[0];
+            ClickpayHelper::log("Clickpay Admin: Invalid Signature ({$hashed_key}, {$signature})", 3);
             return false;
         }
 
@@ -1132,6 +1194,8 @@ class ClickpayApi
             $_paypage = new stdClass();
             $_paypage->success = false;
             $_paypage->message = 'Create Clickpay payment failed';
+        } else if (isset($_paypage->code)) {
+            $_paypage->success = false;
         } else {
             $_paypage->success = isset($paypage->tran_ref, $paypage->redirect_url) && !empty($paypage->redirect_url);
 
@@ -1179,6 +1243,7 @@ class ClickpayApi
         $_verify->reference_no = @$verify->cart_id;
         $_verify->transaction_id = @$verify->tran_ref;
 
+        $_verify->failed = !($_verify->success || $_verify->is_on_hold || $_verify->is_pending);
         return $_verify;
     }
 
@@ -1205,6 +1270,7 @@ class ClickpayApi
             $_verify->transaction_id = $return_data['tranRef'];
             $_verify->reference_no = $return_data['cartId'];
         }
+        $_verify->failed = !($_verify->success || $_verify->is_on_hold || $_verify->is_pending);
 
         return $_verify;
     }
