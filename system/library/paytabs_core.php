@@ -4,11 +4,11 @@ namespace Opencart\System\Library;
 
 /**
  * PayTabs v2 PHP SDK
- * Version: 2.21.2
+ * Version: 2.22.0
  * PHP >= 7.0.0
  */
 
-define('PAYTABS_SDK_VERSION', '2.21.2');
+define('PAYTABS_SDK_VERSION', '2.22.0');
 
 define('PAYTABS_DEBUG_FILE_NAME', 'debug_paytabs.log');
 define('PAYTABS_DEBUG_SEVERITY', ['Info', 'Warning', 'Error']);
@@ -1432,6 +1432,7 @@ class PaytabsApi
         '24' => ['name' => 'tabby', 'title' => 'PayTabs - Tabby', 'currencies' => ['AED', 'SAR'], 'groups' => []],
         '25' => ['name' => 'souhoola', 'title' => 'PayTabs - Souhoola', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '26' => ['name' => 'amaninstallments', 'title' => 'PayTabs - Aman installments', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
+        '27' => ['name' => 'tamara', 'title' => 'PayTabs - Tamara', 'currencies' => ['AED', 'SAR'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
 
     ];
 
