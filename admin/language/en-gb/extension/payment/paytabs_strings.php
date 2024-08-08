@@ -23,6 +23,7 @@ $_['forsa_heading_title']           = 'PayTabs - Forsa';
 $_['tabby_heading_title']           = 'PayTabs - Tabby';
 $_['souhoola_heading_title']        = 'PayTabs - Souhoola';
 $_['tamara_heading_title']          = 'PayTabs - Tamara';
+$_['halan_heading_title']           = 'PayTabs - Halan';
 
 // Text
 $_['text_extension']                = 'Extensions';

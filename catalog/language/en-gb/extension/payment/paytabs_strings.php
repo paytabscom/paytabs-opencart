@@ -24,3 +24,4 @@ $_['forsa_text_title']       = 'PayTabs - Forsa';
 $_['tabby_text_title']       = 'PayTabs - Tabby';
 $_['souhoola_text_title']    = 'PayTabs - Souhoola';
 $_['tamara_text_title']      = 'PayTabs - Tamara';
+$_['halan_text_title']       = 'PayTabs - Halan';
