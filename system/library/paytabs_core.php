@@ -4,11 +4,11 @@ namespace Opencart\System\Library;
 
 /**
  * PayTabs v2 PHP SDK
- * Version: 2.23.0
+ * Version: 2.24.0
  * PHP >= 7.0.0
  */
 
-define('PAYTABS_SDK_VERSION', '2.23.0');
+define('PAYTABS_SDK_VERSION', '2.24.0');
 
 define('PAYTABS_DEBUG_FILE_NAME', 'debug_paytabs.log');
 define('PAYTABS_DEBUG_SEVERITY', ['Info', 'Warning', 'Error']);
@@ -178,7 +178,7 @@ abstract class PaytabsHelper
 
     /**
      * convert non-english digits to English
-     * used for fileds that accepts only English digits like: "postal_code"
+     * used for fields that accepts only English digits like: "postal_code"
      */
     public static function convertAr2En($string)
     {
@@ -682,7 +682,7 @@ class PaytabsHolder
 
 
 /**
- * Holder class: Holds & Generates the paramters array.
+ * Holder class: Holds & Generates the parameters array.
  * Holds & Generates the parameters array for the payments
  * Members:
  * - airline_data
@@ -1114,7 +1114,7 @@ class PaytabsRequestHolder extends PaytabsBasicHolder
 
             if (!PaytabsHelper::isValidDiscountPattern($pattern)) {
                 PaytabsHelper::log('Paytabs admin: Discount pattern not valid', 2);
-                // uncomment if you want to stop the request, otherwise send the reqeust
+                // uncomment if you want to stop the request, otherwise send the request
                 // return $this;
             }
 
@@ -1414,7 +1414,7 @@ class PaytabsApi
         '6'  => ['name' => 'creditcard', 'title' => 'PayTabs - CreditCard', 'currencies' => null, 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_CARDS_INTERNATIONAL, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '7'  => ['name' => 'sadad', 'title' => 'PayTabs - Sadad', 'currencies' => ['SAR'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_PENDING]],
         // '8'  => ['name' => 'fawry', 'title' => 'PayTabs - @Fawry', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND, PaytabsApi::GROUP_PENDING]],
-        '9'  => ['name' => 'knet', 'title' => 'PayTabs - KnPay', 'currencies' => ['KWD'], 'groups' => [PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_REFUND]],
+        '9'  => ['name' => 'knet', 'title' => 'PayTabs - KnPay', 'currencies' => ['KWD', 'USD'], 'groups' => [PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_REFUND]],
         '10' => ['name' => 'amex', 'title' => 'PayTabs - Amex', 'currencies' => ['AED', 'SAR', 'USD'], 'groups' => [PaytabsApi::GROUP_TOKENIZE, PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_CARDS_INTERNATIONAL, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '11' => ['name' => 'valu', 'title' => 'PayTabs - valU', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '12' => ['name' => 'meeza', 'title' => 'PayTabs - Meeza', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_CARDS, PaytabsApi::GROUP_AUTH_CAPTURE, PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
@@ -1434,7 +1434,6 @@ class PaytabsApi
         '26' => ['name' => 'amaninstallments', 'title' => 'PayTabs - Aman installments', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '27' => ['name' => 'tamara', 'title' => 'PayTabs - Tamara', 'currencies' => ['AED', 'SAR'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '28' => ['name' => 'halan', 'title' => 'PayTabs - Halan', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
-
     ];
 
     const BASE_URLS = [
@@ -1465,6 +1464,10 @@ class PaytabsApi
         'PSE' => [
             'title' => 'Palestine',
             'endpoint' => 'https://secure-palestine.paytabs.com/'
+        ],
+        'KWT' => [
+            'title' => 'Kuwait',
+            'endpoint' => 'https://secure-kuwait.paytabs.com/'
         ],
         'GLOBAL' => [
             'title' => 'Global',
@@ -1609,7 +1612,7 @@ class PaytabsApi
         return $res;
     }
 
-    function inqiry_valu($params)
+    function inquiry_valu($params)
     {
         $res1 = $this->sendRequest(self::URL_INQUIRY_VALU, $params);
 
