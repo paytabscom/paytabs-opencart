@@ -1,4 +1,3 @@
-@@ -0,0 +1,7 @@
 <?php
 // Heading
 $_['heading_title'] = 'PayTabs - Basata';
