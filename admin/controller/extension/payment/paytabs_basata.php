@@ -1,8 +1,8 @@
 <?php
 
-class ControllerExtensionPaymentPaytabsTru extends Controller
+class ControllerExtensionPaymentPaytabsBasata extends Controller
 {
-	public $_code = 'tru';
+	public $_code = 'basata';
 	public $error = array();
 	public $userToken;
 	private $paytabsController;
