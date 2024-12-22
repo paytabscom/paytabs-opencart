@@ -24,6 +24,7 @@ $_['tabby_heading_title']           = 'PayTabs - Tabby';
 $_['souhoola_heading_title']        = 'PayTabs - Souhoola';
 $_['tamara_heading_title']          = 'PayTabs - Tamara';
 $_['halan_heading_title']           = 'PayTabs - Halan';
+$_['tru_heading_title']             = 'PayTabs - Tru';
 
 // Text
 $_['text_extension']                = 'Extensions';
