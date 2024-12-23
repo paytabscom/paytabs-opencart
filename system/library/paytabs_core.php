@@ -1,7 +1,5 @@
 <?php
 
-namespace Opencart\System\Library;
-
 /**
  * PayTabs v2 PHP SDK
  * Version: 2.26.0
@@ -1434,9 +1432,9 @@ class PaytabsApi
         '26' => ['name' => 'amaninstallments', 'title' => 'PayTabs - Aman installments', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '27' => ['name' => 'tamara', 'title' => 'PayTabs - Tamara', 'currencies' => ['AED', 'SAR'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
         '28' => ['name' => 'halan', 'title' => 'PayTabs - Halan', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
-        '28' => ['name' => 'basata', 'title' => 'PayTabs - Basata', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME]],
+        '29' => ['name' => 'tru', 'title' => 'PayTabs - TRU', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_REFUND]],
+        '30' => ['name' => 'basata', 'title' => 'PayTabs - Basata', 'currencies' => ['EGP'], 'groups' => [PaytabsApi::GROUP_IFRAME, PaytabsApi::GROUP_PENDING]],
     ];
-    
 
     const BASE_URLS = [
         'ARE' => [
