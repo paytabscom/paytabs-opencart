@@ -1,4 +1,3 @@
-@@ -0,0 +1,12 @@
 <?php
 
 namespace Opencart\Admin\Controller\Extension\Paytabs\Payment;
