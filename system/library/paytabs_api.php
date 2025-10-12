@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '3.23.0');
+define('PAYTABS_PAYPAGE_VERSION', '3.24.0');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
@@ -886,9 +886,14 @@ class PaytabsCatalogModel
         $method_data = array();
 
         if ($status) {
+            $title = $this->controller->language->get("{$this->controller->_code}_text_title");
+
+            if ($this->controller->_code === 'tamara') {
+                $title .= '<br><small><a href="https://tamara.co" target="_blank" rel="noopener noreferrer" style="color:#007bff;text-decoration:underline;">Learn more about Tamara</a></small>';
+            }
             $method_data = array(
                 'code'       => "paytabs_{$this->controller->_code}",
-                'title'      => $this->controller->language->get("{$this->controller->_code}_text_title"),
+                'title'      => $title,
                 'terms'      => '',
                 'sort_order' => $this->controller->config->get(PaytabsAdapter::_key('sort_order', $this->controller->_code))
             );
