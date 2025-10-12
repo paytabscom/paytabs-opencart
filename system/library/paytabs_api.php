@@ -741,10 +741,14 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
         $method_data = [];
 
         if ($status) {
+            $title = $this->language->get("{$this->_code}_text_title");
+            if ($this->_code === 'tamara') {
+                $title .= '<br><small><a href="https://tamara.co" target="_blank" rel="noopener noreferrer" style="color:#007bff;text-decoration:underline;">Learn more about Tamara</a></small>';
+            }
             if (VERSION >= '4.0.2.0') {
                 $option_data["paytabs_{$this->_code}"] = [
                     'code' => "paytabs_{$this->_code}" . ".paytabs_{$this->_code}",
-                    'name' => $this->language->get("{$this->_code}_text_title"),
+                    'name' => $title,
                 ];
 
                 $method_data = [
@@ -756,7 +760,7 @@ abstract class PaytabsCatalogModel extends \Opencart\System\Engine\Model
             } else {
                 $method_data = array(
                     'code'       => "paytabs_{$this->_code}",
-                    'title'      => $this->language->get("{$this->_code}_text_title"),
+                    'title'      => $title,
                     'terms'      => '',
                     'sort_order' => $this->config->get(PaytabsAdapter::_key('sort_order', $this->_code))
                 );
