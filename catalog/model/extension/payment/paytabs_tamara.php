@@ -21,4 +21,9 @@ class ModelExtensionPaymentPaytabsTamara extends Model
 
 		return $this->paytabsController->getMethod($address, $total);
 	}
+
+	public function _getTitle()
+	{
+		return '&nbsp;<p style="color: grey">Monthly payments, No late fees. <a href="https://tamara.co" target="_blank" className="see-more-link">More options</a></p>';
+	}
 }
