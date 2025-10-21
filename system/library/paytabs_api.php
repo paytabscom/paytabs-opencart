@@ -1,6 +1,6 @@
 <?php
 
-define('PAYTABS_PAYPAGE_VERSION', '3.24.0');
+define('PAYTABS_PAYPAGE_VERSION', '3.23.1');
 define('PAYTABS_DEBUG_FILE', 'debug_paytabs.log');
 
 define('PAYTABS_OPENCART_2_3', substr(VERSION, 0, 3) == '2.3');
@@ -858,6 +858,16 @@ class PaytabsCatalogModel
         $this->controller->load->language("extension/payment/paytabs_strings");
     }
 
+    public function _getTitle() {
+        $mainTitle = $this->controller->language->get("{$this->controller->_code}_text_title");
+
+        $title = '';
+        if (method_exists($this->controller, '_getTitle')) {
+            $title = $this->controller->_getTitle();
+        }
+
+        return $mainTitle . $title;
+    }
 
     public function getMethod($address, $total)
     {
@@ -886,11 +896,8 @@ class PaytabsCatalogModel
         $method_data = array();
 
         if ($status) {
-            $title = $this->controller->language->get("{$this->controller->_code}_text_title");
+            $title = $this->_getTitle();
 
-            if ($this->controller->_code === 'tamara') {
-                $title .= '<br><small><a href="https://tamara.co" target="_blank" rel="noopener noreferrer" style="color:#007bff;text-decoration:underline;">Learn more about Tamara</a></small>';
-            }
             $method_data = array(
                 'code'       => "paytabs_{$this->controller->_code}",
                 'title'      => $title,
