@@ -68,7 +68,7 @@ https://github.com/paytabscom/paytabs-opencart/tree/opencart-3.x#installation
 
 ## Log Access
 
-### PayTabs custome log
+### PayTabs custom log
 
 1. Access `debug_paytabs.log` file found at: `/system/storage/logs/debug_paytabs.log`
 
